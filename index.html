@@ -4994,9 +4994,72 @@
       background: transparent !important;
       padding: 0 !important;
     }
+    .url-bar {
+      box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.45),
+        0 0 18px rgba(var(--accent), 0.14),
+        0 0 32px rgba(var(--accent-soft), 0.08) !important;
+    }
+    .search-wrapper {
+      box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.56),
+        0 0 26px rgba(var(--accent), 0.16),
+        0 0 48px rgba(var(--accent-soft), 0.09) !important;
+    }
+    .url-bar:hover,
+    .search-wrapper:hover {
+      box-shadow:
+        0 12px 34px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(var(--accent), 0.24),
+        0 0 44px rgba(var(--accent-soft), 0.14) !important;
+    }
     .url-bar:focus-within,
     .search-wrapper:focus-within {
-      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.58), 0 0 0 2px rgba(var(--accent), 0.22) !important;
+      box-shadow:
+        0 14px 42px rgba(0, 0, 0, 0.62),
+        0 0 28px rgba(var(--accent), 0.34),
+        0 0 56px rgba(var(--accent-soft), 0.18) !important;
+    }
+    .side-dock-item {
+      box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.36),
+        0 0 14px rgba(var(--accent), 0.11) !important;
+    }
+    .side-dock-item:hover {
+      box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.48),
+        0 0 20px rgba(var(--accent), 0.24),
+        0 0 36px rgba(var(--accent-soft), 0.12) !important;
+    }
+    .side-dock-item.active {
+      box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.5),
+        0 0 22px rgba(var(--accent), 0.32),
+        0 0 40px rgba(var(--accent-soft), 0.15) !important;
+    }
+    .tab-item,
+    .regular-plus-btn,
+    #switchToSideBtn {
+      box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.38),
+        0 0 14px rgba(var(--accent), 0.12) !important;
+    }
+    .tab-item:hover,
+    .tab-item.active,
+    .regular-plus-btn:hover,
+    #switchToSideBtn:hover {
+      box-shadow:
+        0 6px 22px rgba(0, 0, 0, 0.5),
+        0 0 22px rgba(var(--accent), 0.28),
+        0 0 40px rgba(var(--accent-soft), 0.14) !important;
+    }
+    .search-proxy-toggle {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.3),
+        0 0 14px rgba(var(--accent), 0.12);
+    }
+    .search-proxy-btn.active {
+      box-shadow: 0 0 14px rgba(var(--accent), 0.28);
     }
     .side-shield-btn.off::after {
       border: none !important;
