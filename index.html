@@ -6005,6 +6005,207 @@
       flex-direction: column;
       gap: 2px;
     }
+    .chat-role-badges-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      vertical-align: middle;
+    }
+    .chat-role-icon-badge {
+      position: relative;
+      width: 19px;
+      height: 19px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.09);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: default;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+    }
+    .chat-role-icon-badge img {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      object-fit: cover;
+      display: block;
+    }
+    .chat-role-icon-badge[data-role-name]:hover::after {
+      content: attr(data-role-name);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(8, 9, 14, 0.96);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 60;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 0 10px rgba(var(--accent), 0.3);
+    }
+    .chat-msg-media-gif {
+      margin-top: 5px;
+      max-width: min(270px, 100%);
+      max-height: 220px;
+      border-radius: 12px;
+      display: block;
+      object-fit: cover;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .chat-msg-media-sticker {
+      margin-top: 4px;
+      width: 128px;
+      height: 128px;
+      border-radius: 14px;
+      display: block;
+      object-fit: contain;
+    }
+    .chat-gif-tray {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      margin: 0 16px 6px;
+      border-radius: 14px;
+      background: rgba(13, 14, 22, 0.96);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65), 0 0 22px rgba(var(--accent), 0.2);
+    }
+    .chat-gif-tray.open {
+      display: flex;
+    }
+    .chat-gif-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      max-height: 210px;
+      overflow-y: auto;
+    }
+    .chat-gif-tile {
+      border: none;
+      padding: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+    }
+    .chat-gif-tile:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 12px rgba(var(--accent), 0.45);
+    }
+    .chat-gif-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .chat-role-studio-card {
+      margin-top: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(155deg, rgba(18, 20, 32, 0.9), rgba(10, 11, 18, 0.94));
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 24px rgba(var(--accent), 0.18);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 620px;
+    }
+    .chat-role-chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chat-role-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.88);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .chat-role-chip:hover {
+      background: rgba(255, 255, 255, 0.13);
+      transform: translateY(-1px);
+    }
+    .chat-role-chip.equipped {
+      background: rgba(var(--accent), 0.25);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(var(--accent), 0.35);
+    }
+    .chat-role-chip img {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    .chat-profile-card-shell {
+      position: relative;
+      width: min(370px, 100%);
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(14, 15, 24, 0.98);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.85), 0 0 38px rgba(var(--accent), 0.3);
+    }
+    .chat-profile-banner {
+      height: 108px;
+      width: 100%;
+      background: linear-gradient(135deg, rgba(var(--accent), 0.65), rgba(30, 27, 75, 0.92));
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .chat-profile-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .chat-profile-body {
+      padding: 0 18px 18px;
+      position: relative;
+    }
+    .chat-profile-avatar-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: -36px;
+      margin-bottom: 10px;
+    }
+    .chat-profile-status-bubble {
+      padding: 6px 11px;
+      border-radius: 14px;
+      background: rgba(20, 22, 34, 0.96);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 11.5px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+      max-width: 210px;
+    }
+    .chat-profile-badges-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 9px 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      margin-top: 8px;
+    }
     .chat-msg-compact-time {
       width: 34px;
       flex-shrink: 0;
@@ -7091,10 +7292,23 @@
                 <button type="button" class="chat-emoji-pick">🚀</button>
                 <button type="button" class="chat-emoji-pick">💜</button>
               </div>
+              <div class="chat-gif-tray" id="chatGifTray">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <div style="display:flex;gap:6px;">
+                    <button type="button" class="ext-btn active" id="chatTrayModeGifBtn" style="padding:4px 10px;font-size:11px;">GIFs</button>
+                    <button type="button" class="ext-btn" id="chatTrayModeStickerBtn" style="padding:4px 10px;font-size:11px;">Stickers</button>
+                  </div>
+                  <input type="text" id="chatGifSearchInput" class="settings-input" style="flex:1;padding:5px 10px;font-size:12px;" placeholder="Search Tenor GIFs..." autocomplete="off" />
+                  <button type="button" class="chat-msg-act-btn" id="chatCloseGifTrayBtn">✕</button>
+                </div>
+                <div class="chat-gif-grid" id="chatGifGrid"></div>
+              </div>
               <div class="chat-typing-bar" id="chatTypingBar"></div>
               <div class="chat-composer-wrap">
                 <form class="chat-composer-form" id="chatComposerForm">
                   <button type="button" class="chat-msg-act-btn" id="chatEmojiToggleBtn" title="Insert emoji">☺</button>
+                  <button type="button" class="chat-msg-act-btn" id="chatGifToggleBtn" title="Send GIF" style="font-size:11px;font-weight:800;">GIF</button>
+                  <button type="button" class="chat-msg-act-btn" id="chatStickerToggleBtn" title="Send Sticker">🏷️</button>
                   <input type="text" id="chatMessageInput" placeholder="Message #general" autocomplete="off" />
                   <button type="submit" class="ext-btn" id="chatSendBtn">send</button>
                 </form>
@@ -7167,18 +7381,22 @@
           </div>
         </div>
 
-        <!-- Discord Profile Edit, Genuine Decorations & Custom Status Modal -->
+        <!-- Discord Profile Edit, Animated GIF PFP, Banner & Genuine Decorations Modal -->
         <div class="chat-modal-backdrop" id="chatDecorationModal">
-          <div class="chat-modal-card" style="width:min(510px,100%);">
+          <div class="chat-modal-card" style="width:min(540px,100%);max-height:92vh;overflow-y:auto;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-size:16px;font-weight:700;color:#fff;">Edit Profile &amp; Decorations</div>
+              <div style="font-size:16px;font-weight:700;color:#fff;">Edit Profile, Banner &amp; Decorations</div>
               <button type="button" class="chat-msg-act-btn" id="chatCloseDecoModalBtn">✕</button>
             </div>
-            <div class="chat-deco-preview-box">
-              <div class="chat-avatar-wrap" id="chatDecoPreviewAvatar" style="width:54px;height:54px;font-size:20px;"></div>
-              <div style="min-width:0;flex:1;">
-                <div style="font-size:14px;font-weight:700;color:#fff;" id="chatDecoPreviewName">user</div>
-                <div style="font-size:12px;color:rgba(255,255,255,0.58);" id="chatDecoPreviewLabel">None</div>
+            <div class="chat-profile-card-shell" style="width:100%;">
+              <div class="chat-profile-banner" id="chatDecoPreviewBanner"></div>
+              <div class="chat-profile-body">
+                <div class="chat-profile-avatar-row">
+                  <div class="chat-avatar-wrap" id="chatDecoPreviewAvatar" style="width:64px;height:64px;font-size:22px;background:#0b0c12;border:3px solid #0e0f18;"></div>
+                  <div class="chat-profile-status-bubble" id="chatDecoPreviewBubble" style="display:none;"></div>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#fff;" id="chatDecoPreviewName">user</div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,0.58);" id="chatDecoPreviewLabel">Effect: None</div>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -7191,15 +7409,57 @@
                 <input type="text" id="chatProfileUsernameInput" class="settings-input" placeholder="username" maxlength="24" autocomplete="off" />
               </div>
             </div>
-            <div>
-              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Custom Status</div>
-              <input type="text" id="chatDecoStatusInput" class="settings-input" placeholder="e.g. vibing on astra / playing roblox" maxlength="48" autocomplete="off" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Custom Status</div>
+                <input type="text" id="chatDecoStatusInput" class="settings-input" placeholder="e.g. vibing on astra" maxlength="48" autocomplete="off" />
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">About Me / Bio</div>
+                <input type="text" id="chatProfileBioInput" class="settings-input" placeholder="short bio..." maxlength="140" autocomplete="off" />
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Animated GIF / Image PFP</div>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="ext-btn" id="chatUploadGifPfpBtn" style="font-size:11px;padding:6px 10px;">Upload GIF / Photo</button>
+                  <input type="text" id="chatGifPfpUrlInput" class="settings-input" placeholder="or paste .gif URL..." style="flex:1;font-size:11.5px;padding:6px 8px;" autocomplete="off" />
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Profile Banner (GIF / Image)</div>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="ext-btn" id="chatUploadBannerBtn" style="font-size:11px;padding:6px 10px;">Upload</button>
+                  <input type="text" id="chatProfileBannerUrlInput" class="settings-input" placeholder="banner .gif URL or clear" style="flex:1;font-size:11.5px;padding:6px 8px;" autocomplete="off" />
+                  <input type="file" id="chatBannerFileInput" accept="image/*" style="display:none;" />
+                </div>
+              </div>
             </div>
             <div id="chatProfileErrorMsg" style="display:none;font-size:12px;color:#fca5a5;"></div>
             <div class="chat-deco-grid" id="chatDecoGrid"></div>
             <div style="display:flex;justify-content:flex-end;gap:8px;">
               <button type="button" class="roblox-secondary-btn" id="chatDecoCancelBtn">Cancel</button>
               <button type="button" class="roblox-primary-btn" id="chatDecoSaveBtn">Save Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Discord User Profile Popover Card (Banner + Status + Roles + Bio) -->
+        <div class="chat-modal-backdrop" id="chatUserProfilePopover">
+          <div class="chat-profile-card-shell">
+            <div class="chat-profile-banner" id="chatPopBanner">
+              <button type="button" class="chat-msg-act-btn" id="chatPopCloseBtn" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.55);color:#fff;">✕</button>
+            </div>
+            <div class="chat-profile-body">
+              <div class="chat-profile-avatar-row">
+                <div class="chat-avatar-wrap" id="chatPopAvatar" style="width:70px;height:70px;font-size:24px;background:#0b0c12;border:3px solid #0e0f18;"></div>
+                <div class="chat-profile-status-bubble" id="chatPopStatusBubble" style="display:none;"></div>
+              </div>
+              <div style="font-size:18px;font-weight:800;color:#fff;" id="chatPopDisplayName">user</div>
+              <div style="font-size:12.5px;color:rgba(255,255,255,0.58);" id="chatPopHandle">@user</div>
+              <div class="chat-profile-badges-box" id="chatPopRolesBox" style="display:none;"></div>
+              <div style="margin-top:10px;font-size:12.5px;color:rgba(255,255,255,0.82);line-height:1.45;" id="chatPopBio"></div>
             </div>
           </div>
         </div>
@@ -12688,7 +12948,9 @@
     const chatCreateChannelError = document.getElementById('chatCreateChannelError');
 
     let chatChannelsList = [
-      { id: 'announcements', name: 'announcements', topic: 'admin updates & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+      { id: 'announcements', name: 'announcements', topic: 'admin announcements & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+      { id: 'updates', name: 'updates', topic: 'astra bot update drops & patch notes', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+      { id: 'roles', name: 'roles', topic: 'create & pick custom visual chat role icons', type: 'text', category: 'Text Channels', locked: true },
       { id: 'general', name: 'general', topic: 'main server chat', type: 'text', category: 'Text Channels', locked: true },
       { id: 'off-topic', name: 'off-topic', topic: 'memes, gaming & anything goes', type: 'text', category: 'Text Channels' },
       { id: 'roblox-squads', name: 'roblox-squads', topic: 'share place IDs & party up for roblox', type: 'text', category: 'Text Channels' },
@@ -12698,6 +12960,8 @@
     let chatActiveVoiceChannel = 'voice-lounge';
     let chatCreateChannelType = 'text';
     let chatMessagesByChannel = {};
+    let chatMembersCache = [];
+    let chatRolesCatalog = [];
     let chatUnreadChannels = new Set();
     let chatReplyTarget = null;
     let chatTypingUsers = new Map();
@@ -12716,6 +12980,97 @@
       esc = esc.replace(/(^|\s)(#[a-z0-9-_]+)/gi, '$1<span style="background:rgba(var(--accent),0.2);color:#dbeafe;padding:1px 5px;border-radius:5px;font-weight:600;">$2</span>');
       esc = esc.replace(/(^|\s)(@[a-z0-9_.-]+)/gi, '$1<span style="background:rgba(167,139,250,0.22);color:#ede9fe;padding:1px 5px;border-radius:5px;font-weight:600;">$2</span>');
       return esc;
+    }
+
+    function renderUserRoleIcons(roles) {
+      const list = Array.isArray(roles) ? roles : [];
+      if (!list.length) return '';
+      return `<span class="chat-role-badges-inline">${list.map((r) => {
+        const name = String((r && r.name) || (r && r.id) || 'Role');
+        const col = String((r && r.color) || '#a855f7');
+        const inner = (r && r.iconType === 'image' && r.icon)
+          ? `<img src="${escapeMusicHtml(r.icon)}" alt="${escapeMusicHtml(name)}" />`
+          : `<span>${escapeMusicHtml((r && r.icon) || '🏷️')}</span>`;
+        return `<span class="chat-role-icon-badge" data-role-name="${escapeMusicHtml(name)}" title="${escapeMusicHtml(name)}" style="border:1px solid ${escapeMusicHtml(col)}66;box-shadow:0 0 8px ${escapeMusicHtml(col)}33;">${inner}</span>`;
+      }).join('')}</span>`;
+    }
+
+    function resolveChatUserSnapshot(usernameOrObj) {
+      if (usernameOrObj && typeof usernameOrObj === 'object') return usernameOrObj;
+      const uname = String(usernameOrObj || '').trim().toLowerCase();
+      if (!uname) return null;
+      const cached = (chatMembersCache || []).find((m) => String(m.username || '').toLowerCase() === uname);
+      if (cached) return cached;
+      if (currentUser && String(currentUser.username || '').toLowerCase() === uname) return currentUser;
+      const allMsgs = Object.values(chatMessagesByChannel || {}).flat();
+      return allMsgs.find((m) => m && String(m.username || '').toLowerCase() === uname) || null;
+    }
+
+    function openChatUserProfilePopover(target) {
+      const pop = document.getElementById('chatUserProfilePopover');
+      const u = resolveChatUserSnapshot(target);
+      if (!pop || !u) return;
+      const popBanner = document.getElementById('chatPopBanner');
+      const popCloseBtn = document.getElementById('chatPopCloseBtn');
+      const popAvatar = document.getElementById('chatPopAvatar');
+      const popStatus = document.getElementById('chatPopStatusBubble');
+      const popDisp = document.getElementById('chatPopDisplayName');
+      const popHandle = document.getElementById('chatPopHandle');
+      const popRolesBox = document.getElementById('chatPopRolesBox');
+      const popBio = document.getElementById('chatPopBio');
+
+      if (popBanner) {
+        const prevImg = popBanner.querySelector('.chat-pop-banner-img');
+        if (prevImg) prevImg.remove();
+        popBanner.style.background = 'linear-gradient(135deg, rgba(var(--accent), 0.72), rgba(30, 27, 75, 0.94))';
+        if (u.banner) {
+          if (/^linear-gradient/i.test(u.banner)) {
+            popBanner.style.background = u.banner;
+          } else {
+            const bImg = document.createElement('img');
+            bImg.className = 'chat-pop-banner-img';
+            bImg.src = u.banner;
+            bImg.alt = '';
+            if (popCloseBtn) popBanner.insertBefore(bImg, popCloseBtn);
+            else popBanner.appendChild(bImg);
+          }
+        }
+      }
+      if (popAvatar) {
+        const initCh = String(u.displayName || u.username || '?').slice(0, 1).toUpperCase();
+        const avInner = u.avatar
+          ? `<img src="${escapeMusicHtml(u.avatar)}" class="chat-avatar-img" alt="" />`
+          : `<span>${escapeMusicHtml(initCh)}</span>`;
+        popAvatar.innerHTML = renderAvatarBoxInner(avInner, u.decoration || '');
+      }
+      if (popStatus) {
+        const st = String(u.customStatus || '').trim();
+        popStatus.textContent = st;
+        popStatus.style.display = st ? 'block' : 'none';
+      }
+      if (popDisp) popDisp.textContent = u.displayName || u.username || 'user';
+      if (popHandle) popHandle.textContent = `@${u.username || 'user'}`;
+      if (popRolesBox) {
+        const vRoles = Array.isArray(u.visualRoles) ? u.visualRoles : [];
+        if (vRoles.length) {
+          popRolesBox.style.display = 'flex';
+          popRolesBox.innerHTML = vRoles.map((r) => {
+            const name = String((r && r.name) || (r && r.id) || 'Role');
+            const col = String((r && r.color) || '#a855f7');
+            const ic = (r && r.iconType === 'image' && r.icon)
+              ? `<img src="${escapeMusicHtml(r.icon)}" alt="" style="width:16px;height:16px;border-radius:4px;object-fit:cover;" />`
+              : `<span>${escapeMusicHtml((r && r.icon) || '🏷️')}</span>`;
+            return `<span class="chat-role-icon-badge" data-role-name="${escapeMusicHtml(name)}" title="${escapeMusicHtml(name)}" style="width:auto;height:24px;padding:0 7px;gap:5px;border:1px solid ${escapeMusicHtml(col)}66;background:${escapeMusicHtml(col)}22;color:#fff;font-size:11px;font-weight:600;">${ic}<span>${escapeMusicHtml(name)}</span></span>`;
+          }).join('');
+        } else {
+          popRolesBox.style.display = 'none';
+          popRolesBox.innerHTML = '';
+        }
+      }
+      if (popBio) {
+        popBio.textContent = u.bio || (u.isBot ? 'Astra Chat & Updates Bot' : 'Vibing in Astra Chat ✨');
+      }
+      pop.classList.add('open');
     }
 
     function openCreateChannelModal(defaultType = 'text') {
@@ -13027,10 +13382,15 @@
         const roleBadge = isBotMsg
           ? '<span class="chat-bot-tag">✓ BOT</span>'
           : (m.role === 'admin' ? '<span class="chat-admin-tag">admin</span>' : '');
+        const visualRoleBadges = renderUserRoleIcons(m.visualRoles);
         const avatarHtml = m.avatar
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : escapeMusicHtml(initial);
         const canDelMsg = meAdmin || (meUser && m.username === meUser);
+
+        const mediaHtml = m.mediaUrl
+          ? `<img src="${escapeMusicHtml(m.mediaUrl)}" class="${m.mediaType === 'sticker' ? 'chat-msg-media-sticker' : 'chat-msg-media-gif'}" alt="" loading="lazy" />`
+          : '';
 
         const embedHtml = m.embed && typeof m.embed === 'object'
           ? `<div class="chat-bot-embed">
@@ -13074,7 +13434,8 @@
               ${hoverActions}
               <div class="chat-msg-compact-time">${escapeMusicHtml(dt)}</div>
               <div class="chat-msg-body">
-                <div class="chat-msg-text">${formatChatBodyText(m.text)}</div>
+                ${m.text ? `<div class="chat-msg-text">${formatChatBodyText(m.text)}</div>` : ''}
+                ${mediaHtml}
                 ${reactHtml}
               </div>
             </div>
@@ -13084,15 +13445,17 @@
         return `
           <div class="chat-msg-row">
             ${hoverActions}
-            <div class="chat-msg-avatar">${renderAvatarBoxInner(avatarHtml, m.decoration)}</div>
+            <div class="chat-msg-avatar" data-open-profile="${escapeMusicHtml(m.username)}" style="cursor:pointer;" title="View profile">${renderAvatarBoxInner(avatarHtml, m.decoration)}</div>
             <div class="chat-msg-body">
               ${replyHtml}
               <div class="chat-msg-meta">
-                <span class="chat-msg-author">${escapeMusicHtml(m.displayName || m.username)}</span>
+                <span class="chat-msg-author" data-open-profile="${escapeMusicHtml(m.username)}" style="cursor:pointer;" title="View profile">${escapeMusicHtml(m.displayName || m.username)}</span>
                 ${roleBadge}
+                ${visualRoleBadges}
                 <span class="chat-msg-time">${escapeMusicHtml(dt)}</span>
               </div>
-              <div class="chat-msg-text">${formatChatBodyText(m.text)}</div>
+              ${m.text ? `<div class="chat-msg-text">${formatChatBodyText(m.text)}</div>` : ''}
+              ${mediaHtml}
               ${embedHtml}
               ${reactHtml}
             </div>
@@ -13100,7 +13463,57 @@
         `;
       }).join('');
 
-      chatMessagesFeed.innerHTML = welcomeHtml + rowsHtml;
+      let roleStudioHtml = '';
+      if (chatActiveChannel === 'roles') {
+        const myRoleIds = Array.isArray(currentUser && currentUser.visualRoles)
+          ? currentUser.visualRoles.map((r) => (typeof r === 'string' ? r : (r && r.id))).filter(Boolean)
+          : [];
+        const rolesList = Array.isArray(chatRolesCatalog) ? chatRolesCatalog : [];
+        const chipsHtml = rolesList.map((r) => {
+          const equipped = myRoleIds.includes(r.id);
+          const lockedOwner = !!(r.ownerOnly && meUser !== 'coolbacon');
+          const ic = (r.iconType === 'image' && r.icon)
+            ? `<img src="${escapeMusicHtml(r.icon)}" alt="" />`
+            : `<span>${escapeMusicHtml(r.icon || '🏷️')}</span>`;
+          const canDelRole = !r.locked && (meAdmin || (meUser && r.createdBy === meUser));
+          return `
+            <button type="button" class="chat-role-chip ${equipped ? 'equipped' : ''}" data-toggle-role="${escapeMusicHtml(r.id)}" ${lockedOwner ? 'disabled style="opacity:0.45;cursor:not-allowed;" title="Exclusive to coolbacon (Astra Owner)"' : `title="Click to ${equipped ? 'unequip' : 'equip'} ${escapeMusicHtml(r.name)}"`} style="${equipped ? `box-shadow:0 0 14px ${escapeMusicHtml(r.color || '#a855f7')}55;border:1px solid ${escapeMusicHtml(r.color || '#a855f7')}88;` : ''}">
+              ${ic}
+              <span>${escapeMusicHtml(r.name)}</span>
+              ${canDelRole ? `<span data-delete-role="${escapeMusicHtml(r.id)}" style="margin-left:4px;opacity:0.7;font-size:11px;" title="Delete custom role">✕</span>` : ''}
+            </button>
+          `;
+        }).join('');
+
+        roleStudioHtml = `
+          <div class="chat-role-studio-card" id="chatRoleStudioCard">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#fff;">🎭 Astra Visual Role Studio</div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,0.62);">Cosmetic only — role icons appear next to your name in chat &amp; on your profile card (permissions never change).</div>
+              </div>
+              <span class="settings-card-badge">VISUAL ONLY</span>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);text-transform:uppercase;margin-bottom:6px;">Pick Your Role Icons</div>
+              <div class="chat-role-chip-grid" id="chatRoleChipGrid">${chipsHtml || '<span style="font-size:12px;color:rgba(255,255,255,0.5);">Loading roles...</span>'}</div>
+            </div>
+            <form id="chatCreateRoleForm" style="display:grid;grid-template-columns:1.2fr 0.7fr auto auto;gap:8px;align-items:center;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);">
+              <input type="text" id="chatNewRoleNameInput" class="settings-input" placeholder="Create your own role (e.g. Gamer)" maxlength="26" required autocomplete="off" style="padding:7px 10px;font-size:12px;" />
+              <input type="text" id="chatNewRoleIconInput" class="settings-input" placeholder="Emoji (e.g. ⚡)" value="⚡" maxlength="16" autocomplete="off" style="padding:7px 10px;font-size:12px;" />
+              <input type="color" id="chatNewRoleColorInput" value="#a855f7" title="Role accent color" style="width:36px;height:32px;border:none;border-radius:8px;background:transparent;cursor:pointer;" />
+              <button type="submit" class="roblox-primary-btn" id="chatCreateRoleBtn" style="padding:7px 13px;font-size:12px;">Create Role</button>
+            </form>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="ext-btn" id="chatNewRoleImgBtn" style="font-size:11px;padding:4px 10px;">Upload Custom Icon Image</button>
+              <input type="file" id="chatNewRoleImgFile" accept="image/*" style="display:none;" />
+              <span id="chatNewRoleImgStatus" style="font-size:11px;color:rgba(255,255,255,0.55);">Or pick emoji above</span>
+            </div>
+          </div>
+        `;
+      }
+
+      chatMessagesFeed.innerHTML = welcomeHtml + rowsHtml + roleStudioHtml;
       chatMessagesFeed.querySelectorAll('[data-react-msg], [data-quick-react]').forEach((btn) => {
         btn.addEventListener('click', () => {
           const mid = btn.dataset.reactMsg || btn.dataset.quickReact;
@@ -13117,6 +13530,112 @@
       chatMessagesFeed.querySelectorAll('[data-del-msg]').forEach((btn) => {
         btn.addEventListener('click', () => deleteChatMessage(btn.dataset.delMsg));
       });
+      chatMessagesFeed.querySelectorAll('[data-open-profile]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (el.dataset.openProfile) openChatUserProfilePopover(el.dataset.openProfile);
+        });
+      });
+      if (chatActiveChannel === 'roles') {
+        if (!chatRolesCatalog.length && typeof refreshChatRolesCatalog === 'function') {
+          refreshChatRolesCatalog();
+        }
+        let customRoleIconData = '';
+        const imgBtn = document.getElementById('chatNewRoleImgBtn');
+        const imgFile = document.getElementById('chatNewRoleImgFile');
+        const imgStatus = document.getElementById('chatNewRoleImgStatus');
+        if (imgBtn && imgFile) {
+          imgBtn.addEventListener('click', () => imgFile.click());
+          imgFile.addEventListener('change', () => {
+            const f = imgFile.files && imgFile.files[0];
+            if (!f) return;
+            const rd = new FileReader();
+            rd.onload = () => {
+              customRoleIconData = String(rd.result || '');
+              if (imgStatus) imgStatus.textContent = `Custom icon ready: ${f.name}`;
+            };
+            rd.readAsDataURL(f);
+          });
+        }
+        chatMessagesFeed.querySelectorAll('[data-delete-role]').forEach((delEl) => {
+          delEl.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const roleId = delEl.dataset.deleteRole;
+            if (!roleId) return;
+            try {
+              await proxyHealthPromise;
+              const r = await fetch(`${proxyOrigin}/api/chat/roles`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', roleId })
+              });
+              const j = await r.json();
+              if (r.ok && j && j.ok) {
+                if (Array.isArray(j.roles)) chatRolesCatalog = j.roles;
+                if (j.members) renderChatMembers(j.members);
+                renderChatMessages();
+                if (typeof showToast === 'function') showToast('custom visual role deleted');
+              }
+            } catch {}
+          });
+        });
+        chatMessagesFeed.querySelectorAll('[data-toggle-role]').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const roleId = btn.dataset.toggleRole;
+            if (!roleId) return;
+            try {
+              await proxyHealthPromise;
+              const r = await fetch(`${proxyOrigin}/api/chat/roles`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'toggle', roleId })
+              });
+              const j = await r.json();
+              if (r.ok && j && j.ok) {
+                if (Array.isArray(j.roles)) chatRolesCatalog = j.roles;
+                if (j.members) renderChatMembers(j.members);
+                renderChatMessages();
+              } else if (typeof showToast === 'function') {
+                showToast((j && j.error) || 'Could not toggle role');
+              }
+            } catch {}
+          });
+        });
+        const createRoleForm = document.getElementById('chatCreateRoleForm');
+        if (createRoleForm) {
+          createRoleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nameEl = document.getElementById('chatNewRoleNameInput');
+            const iconEl = document.getElementById('chatNewRoleIconInput');
+            const colorEl = document.getElementById('chatNewRoleColorInput');
+            const name = nameEl ? nameEl.value.trim() : '';
+            const icon = customRoleIconData || (iconEl ? iconEl.value.trim() : '⚡');
+            const color = colorEl ? colorEl.value : '#a855f7';
+            if (name.length < 2) return;
+            try {
+              await proxyHealthPromise;
+              const r = await fetch(`${proxyOrigin}/api/chat/roles`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create', name, icon, color })
+              });
+              const j = await r.json();
+              if (r.ok && j && j.ok) {
+                customRoleIconData = '';
+                if (Array.isArray(j.roles)) chatRolesCatalog = j.roles;
+                if (j.members) renderChatMembers(j.members);
+                renderChatMessages();
+                if (typeof showToast === 'function') showToast(`created visual role "${name}"!`);
+              } else if (typeof showToast === 'function') {
+                showToast((j && j.error) || 'Could not create role');
+              }
+            } catch {}
+          });
+        }
+      }
       chatMessagesFeed.scrollTop = chatMessagesFeed.scrollHeight;
     }
 
@@ -13205,11 +13724,15 @@
       const selfSubEl = document.getElementById('chatSelfSub');
       const selfAvatarWrap = document.getElementById('chatSelfAvatarWrap');
       const list = Array.isArray(members) ? members : [];
+      chatMembersCache = list;
       const me = currentUser ? list.find((u) => u.username === currentUser.username) : null;
       if (me && currentUser) {
         if (me.avatar) currentUser.avatar = me.avatar;
         currentUser.decoration = me.decoration || '';
         currentUser.customStatus = me.customStatus || '';
+        currentUser.banner = me.banner || '';
+        currentUser.bio = me.bio || '';
+        currentUser.visualRoles = Array.isArray(me.visualRoles) ? me.visualRoles : [];
       }
       if (selfNameEl && currentUser) {
         selfNameEl.textContent = currentUser.displayName || currentUser.username || 'user';
@@ -13237,20 +13760,29 @@
         const crown = m.role === 'bot' || m.isBot
           ? ' <span class="chat-bot-tag" style="margin-left:4px;">BOT</span>'
           : (m.role === 'admin' ? ' <span title="Admin" style="color:#fbbf24;">★</span>' : '');
+        const roleIcons = renderUserRoleIcons(m.visualRoles);
         const subText = m.customStatus ? escapeMusicHtml(m.customStatus) : (m.online ? 'online' : 'offline');
         return `
-          <div class="chat-member-row" style="opacity:${m.online ? '1' : '0.48'};">
+          <div class="chat-member-row" data-open-profile="${escapeMusicHtml(m.username)}" title="View ${escapeMusicHtml(m.displayName || m.username)}'s profile" style="cursor:pointer;opacity:${m.online ? '1' : '0.48'};">
             <div class="chat-avatar-wrap">
               ${renderAvatarBoxInner(av, m.decoration || '')}
               <span class="chat-status-dot ${m.online ? '' : 'offline'}"></span>
             </div>
             <div style="min-width:0;flex:1;">
-              <div style="font-size:12.5px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeMusicHtml(m.displayName || m.username)}${crown}</div>
+              <div style="font-size:12.5px;font-weight:500;color:#fff;display:flex;align-items:center;gap:4px;min-width:0;">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeMusicHtml(m.displayName || m.username)}${crown}</span>
+                ${roleIcons}
+              </div>
               <div style="font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${subText}</div>
             </div>
           </div>
         `;
       }).join('');
+      membersListEl.querySelectorAll('[data-open-profile]').forEach((row) => {
+        row.addEventListener('click', () => {
+          if (row.dataset.openProfile) openChatUserProfilePopover(row.dataset.openProfile);
+        });
+      });
     }
 
     function renderVoicePeers(peers) {
@@ -13307,6 +13839,10 @@
               if (data.members) renderChatMembers(data.members);
             } else if (data.type === 'members-update') {
               renderChatMembers(data.members);
+            } else if (data.type === 'roles-update') {
+              if (Array.isArray(data.roles)) chatRolesCatalog = data.roles;
+              if (data.members) renderChatMembers(data.members);
+              if (chatActiveChannel === 'roles') renderChatMessages();
             } else if (data.type === 'channels-update' && Array.isArray(data.channels)) {
               chatChannelsList = data.channels;
               if (data.deletedChannelId && chatActiveChannel === data.deletedChannelId) {
@@ -13396,8 +13932,23 @@
       } catch {}
     }
 
+    async function refreshChatRolesCatalog() {
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/chat/roles`, { credentials: 'same-origin' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.ok && Array.isArray(j.roles)) {
+            chatRolesCatalog = j.roles;
+            if (chatActiveChannel === 'roles') renderChatMessages();
+          }
+        }
+      } catch {}
+    }
+
     async function ensureChatHubLoaded() {
       connectChatWebSocket();
+      refreshChatRolesCatalog();
       await loadChatChannel(chatActiveChannel);
     }
 
@@ -13470,7 +14021,11 @@
 
     if (chatCancelReplyBtn) chatCancelReplyBtn.addEventListener('click', () => setChatReplyTarget(null));
     if (chatEmojiToggleBtn && chatEmojiTray) {
-      chatEmojiToggleBtn.addEventListener('click', () => chatEmojiTray.classList.toggle('open'));
+      chatEmojiToggleBtn.addEventListener('click', () => {
+        const tray = document.getElementById('chatGifTray');
+        if (tray) tray.classList.remove('open');
+        chatEmojiTray.classList.toggle('open');
+      });
       chatEmojiTray.querySelectorAll('.chat-emoji-pick').forEach((btn) => {
         btn.addEventListener('click', () => {
           if (chatMessageInput && !chatMessageInput.disabled) {
@@ -13479,6 +14034,125 @@
           }
           chatEmojiTray.classList.remove('open');
         });
+      });
+    }
+
+    const chatGifTray = document.getElementById('chatGifTray');
+    const chatGifToggleBtn = document.getElementById('chatGifToggleBtn');
+    const chatStickerToggleBtn = document.getElementById('chatStickerToggleBtn');
+    const chatCloseGifTrayBtn = document.getElementById('chatCloseGifTrayBtn');
+    const chatTrayModeGifBtn = document.getElementById('chatTrayModeGifBtn');
+    const chatTrayModeStickerBtn = document.getElementById('chatTrayModeStickerBtn');
+    const chatGifSearchInput = document.getElementById('chatGifSearchInput');
+    const chatGifGrid = document.getElementById('chatGifGrid');
+    let chatGifTrayMode = 'gif';
+    let chatGifSearchTimer = null;
+
+    const FEATURED_ASTRA_STICKERS = [
+      { url: '/assets/chat/lbp-sticker.jpg', label: 'LBP Sackboy' },
+      { url: '/assets/chat/lego-starwars-pfp.png', label: 'Clone Trooper' },
+      { url: '/assets/chat/snoop-dogg-pfp.jpg', label: 'Snoop Dogg' },
+      { url: '/assets/astra-logo.png', label: 'Astra Logo' }
+    ];
+
+    async function sendChatMediaMessage(mediaUrl, mediaType) {
+      if (!mediaUrl) return;
+      if (chatGifTray) chatGifTray.classList.remove('open');
+      try {
+        await proxyHealthPromise;
+        const payload = { channel: chatActiveChannel, text: '', mediaUrl, mediaType: mediaType || 'gif' };
+        if (chatReplyTarget && chatReplyTarget.id) payload.replyToId = chatReplyTarget.id;
+        const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json();
+        if (r.ok && j && j.ok) {
+          setChatReplyTarget(null);
+          chatMessagesByChannel[chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
+          renderChatMessages();
+        } else if (typeof showToast === 'function') {
+          showToast((j && j.error) || 'Cannot send media in this channel');
+        }
+      } catch {}
+    }
+
+    async function loadChatGifOrStickerGrid(query = '') {
+      if (!chatGifGrid) return;
+      const isSticker = chatGifTrayMode === 'sticker';
+      const baseHtml = isSticker
+        ? FEATURED_ASTRA_STICKERS.map((s) => `
+            <button type="button" class="chat-gif-tile" data-send-media="${escapeMusicHtml(s.url)}" data-media-type="sticker" title="${escapeMusicHtml(s.label)}" style="padding:4px;background:rgba(255,255,255,0.06);">
+              <img src="${escapeMusicHtml(s.url)}" alt="${escapeMusicHtml(s.label)}" style="object-fit:contain;" />
+            </button>
+          `).join('')
+        : '';
+      chatGifGrid.innerHTML = baseHtml + '<div style="grid-column:1/-1;font-size:11.5px;color:rgba(255,255,255,0.55);padding:8px;">Loading ' + (isSticker ? 'stickers' : 'GIFs') + '...</div>';
+      try {
+        await proxyHealthPromise;
+        const searchQ = isSticker ? ((query ? query + ' sticker' : 'cute sticker')) : query;
+        const r = await fetch(`${proxyOrigin}/api/chat/gifs?q=${encodeURIComponent(searchQ)}`, { credentials: 'same-origin' });
+        const j = await r.json();
+        const urls = (r.ok && j && Array.isArray(j.gifs)) ? j.gifs : [];
+        const netHtml = urls.map((u) => `
+          <button type="button" class="chat-gif-tile" data-send-media="${escapeMusicHtml(u)}" data-media-type="${isSticker ? 'sticker' : 'gif'}">
+            <img src="${escapeMusicHtml(u)}" loading="lazy" alt="${isSticker ? 'sticker' : 'gif'}" style="object-fit:${isSticker ? 'contain' : 'cover'};" />
+          </button>
+        `).join('');
+        chatGifGrid.innerHTML = (baseHtml + netHtml) || '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.5);padding:12px;">No GIFs found — try another search.</div>';
+      } catch {
+        if (!baseHtml) chatGifGrid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.5);padding:12px;">Could not load GIFs right now.</div>';
+      }
+      chatGifGrid.querySelectorAll('[data-send-media]').forEach((tile) => {
+        tile.addEventListener('click', () => {
+          sendChatMediaMessage(tile.dataset.sendMedia, tile.dataset.mediaType);
+        });
+      });
+    }
+
+    function openChatGifTray(mode = 'gif') {
+      chatGifTrayMode = mode === 'sticker' ? 'sticker' : 'gif';
+      if (chatEmojiTray) chatEmojiTray.classList.remove('open');
+      if (chatTrayModeGifBtn) chatTrayModeGifBtn.classList.toggle('active', chatGifTrayMode === 'gif');
+      if (chatTrayModeStickerBtn) chatTrayModeStickerBtn.classList.toggle('active', chatGifTrayMode === 'sticker');
+      if (chatGifSearchInput) {
+        chatGifSearchInput.placeholder = chatGifTrayMode === 'sticker' ? 'Search Stickers (or pick custom above)...' : 'Search Tenor GIFs...';
+      }
+      if (chatGifTray) chatGifTray.classList.add('open');
+      loadChatGifOrStickerGrid(chatGifSearchInput ? chatGifSearchInput.value.trim() : '');
+    }
+
+    if (chatGifToggleBtn) {
+      chatGifToggleBtn.addEventListener('click', () => {
+        if (chatGifTray && chatGifTray.classList.contains('open') && chatGifTrayMode === 'gif') {
+          chatGifTray.classList.remove('open');
+        } else {
+          openChatGifTray('gif');
+        }
+      });
+    }
+    if (chatStickerToggleBtn) {
+      chatStickerToggleBtn.addEventListener('click', () => {
+        if (chatGifTray && chatGifTray.classList.contains('open') && chatGifTrayMode === 'sticker') {
+          chatGifTray.classList.remove('open');
+        } else {
+          openChatGifTray('sticker');
+        }
+      });
+    }
+    if (chatCloseGifTrayBtn && chatGifTray) {
+      chatCloseGifTrayBtn.addEventListener('click', () => chatGifTray.classList.remove('open'));
+    }
+    if (chatTrayModeGifBtn) chatTrayModeGifBtn.addEventListener('click', () => openChatGifTray('gif'));
+    if (chatTrayModeStickerBtn) chatTrayModeStickerBtn.addEventListener('click', () => openChatGifTray('sticker'));
+    if (chatGifSearchInput) {
+      chatGifSearchInput.addEventListener('input', () => {
+        clearTimeout(chatGifSearchTimer);
+        chatGifSearchTimer = setTimeout(() => {
+          loadChatGifOrStickerGrid(chatGifSearchInput.value.trim());
+        }, 280);
       });
     }
     if (chatToggleMembersBtn && chatMembersSidebar && chatLayoutGrid) {
@@ -13851,18 +14525,42 @@
       chatAvatarInput.addEventListener('change', () => {
         const file = chatAvatarInput.files && chatAvatarInput.files[0];
         if (!file) return;
+        const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name || '');
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
+          const dataUrl = String(reader.result || '');
+          if (isGif) {
+            try {
+              await proxyHealthPromise;
+              const r = await fetch(`${proxyOrigin}/api/chat/avatar`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ avatar: dataUrl })
+              });
+              const j = await r.json();
+              if (r.ok && j && j.ok) {
+                if (currentUser) currentUser.avatar = dataUrl;
+                if (j.members) renderChatMembers(j.members);
+                if (typeof renderDecorationModalUI === 'function') renderDecorationModalUI();
+                loadChatChannel(chatActiveChannel);
+                if (typeof showToast === 'function') showToast('animated GIF PFP saved!');
+              } else if (typeof showToast === 'function') {
+                showToast((j && j.error) || 'Could not upload animated GIF PFP');
+              }
+            } catch {}
+            return;
+          }
           const img = new Image();
           img.onload = () => openPfpCropModal(img);
-          img.src = String(reader.result || '');
+          img.src = dataUrl;
         };
         reader.readAsDataURL(file);
         chatAvatarInput.value = '';
       });
     }
 
-    // Profile Decorations & Custom Status Modal Controller
+    // Profile Decorations, Banner, Animated GIF PFP & Popover Controller
     const chatOpenDecoBtn = document.getElementById('chatOpenDecoBtn');
     const chatDecorationModal = document.getElementById('chatDecorationModal');
     const chatCloseDecoModalBtn = document.getElementById('chatCloseDecoModalBtn');
@@ -13870,31 +14568,39 @@
     const chatDecoSaveBtn = document.getElementById('chatDecoSaveBtn');
     const chatDecoGrid = document.getElementById('chatDecoGrid');
     const chatDecoPreviewAvatar = document.getElementById('chatDecoPreviewAvatar');
+    const chatDecoPreviewBanner = document.getElementById('chatDecoPreviewBanner');
+    const chatDecoPreviewBubble = document.getElementById('chatDecoPreviewBubble');
     const chatDecoPreviewName = document.getElementById('chatDecoPreviewName');
     const chatDecoPreviewLabel = document.getElementById('chatDecoPreviewLabel');
     const chatDecoStatusInput = document.getElementById('chatDecoStatusInput');
     const chatProfileDisplayInput = document.getElementById('chatProfileDisplayInput');
     const chatProfileUsernameInput = document.getElementById('chatProfileUsernameInput');
+    const chatProfileBioInput = document.getElementById('chatProfileBioInput');
+    const chatUploadGifPfpBtn = document.getElementById('chatUploadGifPfpBtn');
+    const chatGifPfpUrlInput = document.getElementById('chatGifPfpUrlInput');
+    const chatUploadBannerBtn = document.getElementById('chatUploadBannerBtn');
+    const chatProfileBannerUrlInput = document.getElementById('chatProfileBannerUrlInput');
+    const chatBannerFileInput = document.getElementById('chatBannerFileInput');
     const chatProfileErrorMsg = document.getElementById('chatProfileErrorMsg');
+    const chatUserProfilePopover = document.getElementById('chatUserProfilePopover');
+    const chatPopCloseBtn = document.getElementById('chatPopCloseBtn');
     const chatBotUpdatesBtn = document.getElementById('chatBotUpdatesBtn');
     let selectedChatDecoration = '';
+    let pendingBannerData = '';
+    let bannerTouched = false;
+
+    if (chatPopCloseBtn && chatUserProfilePopover) {
+      chatPopCloseBtn.addEventListener('click', () => chatUserProfilePopover.classList.remove('open'));
+      chatUserProfilePopover.addEventListener('click', (e) => {
+        if (e.target === chatUserProfilePopover) chatUserProfilePopover.classList.remove('open');
+      });
+    }
 
     if (chatBotUpdatesBtn) {
       chatBotUpdatesBtn.addEventListener('click', async () => {
         try {
           await proxyHealthPromise;
-          const chObj = chatChannelsList.find((c) => c.id === chatActiveChannel);
-          const targetCh = (chObj && chObj.adminOnly && (!currentUser || currentUser.role !== 'admin')) ? 'general' : chatActiveChannel;
-          if (targetCh !== chatActiveChannel) await loadChatChannel(targetCh);
-          const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel: targetCh, text: '!updates' })
-          });
-          if (r.ok) {
-            loadChatChannel(targetCh);
-          }
+          await loadChatChannel('updates');
         } catch {}
       });
     }
@@ -13902,10 +14608,34 @@
     function renderDecorationModalUI() {
       const dispVal = (chatProfileDisplayInput && chatProfileDisplayInput.value.trim()) || (currentUser && (currentUser.displayName || currentUser.username)) || 'user';
       const initial = String(dispVal || 'A').slice(0, 1).toUpperCase();
-      const myAv = (currentUser && currentUser.avatar) || '';
+      const typedAv = chatGifPfpUrlInput ? chatGifPfpUrlInput.value.trim() : '';
+      const myAv = /^https:\/\//i.test(typedAv) ? typedAv : ((currentUser && currentUser.avatar) || '');
       const avInner = myAv ? `<img src="${escapeMusicHtml(myAv)}" class="chat-avatar-img" alt="" />` : `<span>${escapeMusicHtml(initial)}</span>`;
       if (chatDecoPreviewAvatar) {
         chatDecoPreviewAvatar.innerHTML = renderAvatarBoxInner(avInner, selectedChatDecoration);
+      }
+      if (chatDecoPreviewBanner) {
+        const typedBanner = chatProfileBannerUrlInput ? chatProfileBannerUrlInput.value.trim() : '';
+        const previewBannerVal = bannerTouched
+          ? (typedBanner.toLowerCase() === 'clear' ? '' : (pendingBannerData || typedBanner))
+          : ((currentUser && currentUser.banner) || '');
+        chatDecoPreviewBanner.innerHTML = '';
+        chatDecoPreviewBanner.style.background = 'linear-gradient(135deg, rgba(var(--accent), 0.72), rgba(30, 27, 75, 0.92))';
+        if (previewBannerVal) {
+          if (/^linear-gradient/i.test(previewBannerVal)) {
+            chatDecoPreviewBanner.style.background = previewBannerVal;
+          } else {
+            const img = document.createElement('img');
+            img.src = previewBannerVal;
+            img.alt = '';
+            chatDecoPreviewBanner.appendChild(img);
+          }
+        }
+      }
+      if (chatDecoPreviewBubble) {
+        const st = chatDecoStatusInput ? chatDecoStatusInput.value.trim() : ((currentUser && currentUser.customStatus) || '');
+        chatDecoPreviewBubble.textContent = st;
+        chatDecoPreviewBubble.style.display = st ? 'block' : 'none';
       }
       if (chatDecoPreviewName) {
         const uHandle = (chatProfileUsernameInput && chatProfileUsernameInput.value.trim()) || (currentUser && currentUser.username) || '';
@@ -13933,7 +14663,12 @@
 
     function openChatDecorationModal() {
       selectedChatDecoration = (currentUser && currentUser.decoration) || '';
+      pendingBannerData = '';
+      bannerTouched = false;
       if (chatDecoStatusInput) chatDecoStatusInput.value = (currentUser && currentUser.customStatus) || '';
+      if (chatProfileBioInput) chatProfileBioInput.value = (currentUser && currentUser.bio) || '';
+      if (chatGifPfpUrlInput) chatGifPfpUrlInput.value = (currentUser && currentUser.avatar && /^https:\/\//i.test(currentUser.avatar)) ? currentUser.avatar : '';
+      if (chatProfileBannerUrlInput) chatProfileBannerUrlInput.value = (currentUser && currentUser.banner && /^https:\/\//i.test(currentUser.banner)) ? currentUser.banner : '';
       if (chatProfileDisplayInput && currentUser) chatProfileDisplayInput.value = currentUser.displayName || currentUser.username || '';
       if (chatProfileUsernameInput && currentUser) {
         chatProfileUsernameInput.value = currentUser.username || '';
@@ -13948,6 +14683,34 @@
       if (chatDecorationModal) chatDecorationModal.classList.add('open');
     }
 
+    if (chatUploadGifPfpBtn && chatAvatarInput) {
+      chatUploadGifPfpBtn.addEventListener('click', () => chatAvatarInput.click());
+    }
+    if (chatUploadBannerBtn && chatBannerFileInput) {
+      chatUploadBannerBtn.addEventListener('click', () => chatBannerFileInput.click());
+      chatBannerFileInput.addEventListener('change', () => {
+        const f = chatBannerFileInput.files && chatBannerFileInput.files[0];
+        if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          pendingBannerData = String(rd.result || '');
+          bannerTouched = true;
+          if (chatProfileBannerUrlInput) chatProfileBannerUrlInput.value = '';
+          renderDecorationModalUI();
+        };
+        rd.readAsDataURL(f);
+        chatBannerFileInput.value = '';
+      });
+    }
+    if (chatProfileBannerUrlInput) {
+      chatProfileBannerUrlInput.addEventListener('input', () => {
+        pendingBannerData = '';
+        bannerTouched = true;
+        renderDecorationModalUI();
+      });
+    }
+    if (chatGifPfpUrlInput) chatGifPfpUrlInput.addEventListener('input', renderDecorationModalUI);
+    if (chatDecoStatusInput) chatDecoStatusInput.addEventListener('input', renderDecorationModalUI);
     if (chatProfileDisplayInput) chatProfileDisplayInput.addEventListener('input', renderDecorationModalUI);
     if (chatProfileUsernameInput) chatProfileUsernameInput.addEventListener('input', renderDecorationModalUI);
     if (chatOpenDecoBtn) chatOpenDecoBtn.addEventListener('click', openChatDecorationModal);
@@ -13968,19 +14731,46 @@
         chatDecoSaveBtn.textContent = 'Saving...';
         try {
           await proxyHealthPromise;
+          const gifUrl = chatGifPfpUrlInput ? chatGifPfpUrlInput.value.trim() : '';
+          if (gifUrl && gifUrl !== ((currentUser && currentUser.avatar) || '')) {
+            const ar = await fetch(`${proxyOrigin}/api/chat/avatar`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatar: gifUrl })
+            });
+            const aj = await ar.json();
+            if (!ar.ok || !aj || !aj.ok) {
+              if (chatProfileErrorMsg) {
+                chatProfileErrorMsg.textContent = (aj && aj.error) || 'Invalid animated GIF PFP URL';
+                chatProfileErrorMsg.style.display = 'block';
+              }
+              chatDecoSaveBtn.disabled = false;
+              chatDecoSaveBtn.textContent = 'Save Profile';
+              return;
+            }
+            if (currentUser) currentUser.avatar = gifUrl;
+          }
           const customStatus = chatDecoStatusInput ? chatDecoStatusInput.value.trim() : '';
+          const bio = chatProfileBioInput ? chatProfileBioInput.value.trim() : '';
           const displayName = chatProfileDisplayInput ? chatProfileDisplayInput.value.trim() : undefined;
           const nextUsername = (chatProfileUsernameInput && !chatProfileUsernameInput.disabled) ? chatProfileUsernameInput.value.trim() : undefined;
+          const payload = {
+            decoration: selectedChatDecoration,
+            customStatus,
+            bio,
+            displayName,
+            username: nextUsername
+          };
+          if (bannerTouched) {
+            const typedBanner = chatProfileBannerUrlInput ? chatProfileBannerUrlInput.value.trim() : '';
+            payload.banner = typedBanner.toLowerCase() === 'clear' ? '' : (pendingBannerData || typedBanner);
+          }
           const r = await fetch(`${proxyOrigin}/api/chat/decoration`, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              decoration: selectedChatDecoration,
-              customStatus,
-              displayName,
-              username: nextUsername
-            })
+            body: JSON.stringify(payload)
           });
           const j = await r.json();
           if (r.ok && j && j.ok) {
@@ -13989,6 +14779,9 @@
               if (j.displayName) currentUser.displayName = j.displayName;
               currentUser.decoration = j.decoration || '';
               currentUser.customStatus = j.customStatus || '';
+              if (j.banner !== undefined) currentUser.banner = j.banner || '';
+              if (j.bio !== undefined) currentUser.bio = j.bio || '';
+              if (Array.isArray(j.visualRoles)) currentUser.visualRoles = j.visualRoles;
               if (sideUserBadge) sideUserBadge.textContent = `out: ${currentUser.username}`;
               if (typeof updateHeroGreetingBanner === 'function') updateHeroGreetingBanner();
             }

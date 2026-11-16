@@ -14,14 +14,71 @@ const { WebSocketServer } = require('ws');
 
 const PORT = Number(process.env.PORT) || 6740;
 const ROOT_DIR = __dirname;
-const DATA_DIR = process.env.ASTRA_DATA_DIR || (fs.existsSync('/data') ? '/data' : ROOT_DIR);
+const DATA_DIR = (() => {
+  const candidates = [
+    process.env.ASTRA_DATA_DIR,
+    fs.existsSync('/data') ? '/data' : null,
+    fs.existsSync('/var/data') ? '/var/data' : null,
+    ROOT_DIR
+  ].filter(Boolean);
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch {}
+  }
+  return ROOT_DIR;
+})();
+
+function migrateLegacyStoreFile(filename) {
+  const dest = path.join(DATA_DIR, filename);
+  if (DATA_DIR !== ROOT_DIR && !fs.existsSync(dest)) {
+    const legacy = path.join(ROOT_DIR, filename);
+    try {
+      if (fs.existsSync(legacy)) fs.copyFileSync(legacy, dest);
+    } catch {}
+  }
+  return dest;
+}
+
+function readJsonStoreSafe(filePath, fallback = null) {
+  for (const p of [filePath, filePath + '.bak']) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const raw = fs.readFileSync(p, 'utf8');
+      if (!raw || !raw.trim()) continue;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {}
+  }
+  return fallback;
+}
+
+function writeJsonStoreAtomic(filePath, data) {
+  const serialized = JSON.stringify(data, null, 2);
+  const tmpPath = `${filePath}.tmp.${process.pid}`;
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(tmpPath, serialized, 'utf8');
+    fs.renameSync(tmpPath, filePath);
+    try {
+      fs.writeFileSync(filePath + '.bak', serialized, 'utf8');
+    } catch {}
+  } catch {
+    try { fs.unlinkSync(tmpPath); } catch {}
+    fs.writeFileSync(filePath, serialized, 'utf8');
+  }
+}
+
 const EPOXY_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'epoxy-transport', 'dist');
 const LIBCURL_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'libcurl-transport', 'dist');
 const SERVER_START_MS = Date.now();
 const SERVER_BOOT_ID = String(Math.round((Date.now() - os.uptime() * 1000) / 300000));
-const AUTH_FILE = path.join(ROOT_DIR, 'auth-store.json');
-const CONFIG_FILE = path.join(ROOT_DIR, 'astra-server-config.json');
-const CHAT_FILE = path.join(ROOT_DIR, 'chat-messages.json');
+const AUTH_FILE = migrateLegacyStoreFile('auth-store.json');
+const CONFIG_FILE = migrateLegacyStoreFile('astra-server-config.json');
+const CHAT_FILE = migrateLegacyStoreFile('chat-messages.json');
+let chatStoreCache = null;
 
 const musicStreamCache = new Map();
 let ytdlInstancePromise = null;
@@ -227,6 +284,52 @@ function getVoicePeerList() {
   }));
 }
 
+const CHAT_ROLES_FILE = path.join(DATA_DIR, 'chat-roles.json');
+const DEFAULT_VISUAL_ROLES = [
+  { id: 'astra-owner', name: 'Astra Owner', iconType: 'emoji', icon: '👑', color: '#fbbf24', locked: true, ownerOnly: true },
+  { id: 'lbp-fans', name: 'LBP Fans', iconType: 'image', icon: '/assets/chat/lbp-sticker.jpg', color: '#60a5fa', locked: true },
+  { id: 'snoop-dogg-fan', name: 'Snoop Dogg Fan', iconType: 'image', icon: '/assets/chat/snoop-dogg-pfp.jpg', color: '#a855f7', locked: true },
+  { id: 'star-wars-fan', name: 'Star Wars Fan', iconType: 'image', icon: '/assets/chat/lego-starwars-pfp.png', color: '#38bdf8', locked: true },
+  { id: 'vip-vibes', name: 'Astra VIP', iconType: 'emoji', icon: '✨', color: '#c084fc', locked: true },
+  { id: 'gamer', name: 'Gamer', iconType: 'emoji', icon: '🎮', color: '#4ade80', locked: true }
+];
+
+function readVisualRolesStore() {
+  const parsed = readJsonStoreSafe(CHAT_ROLES_FILE, []);
+  const custom = Array.isArray(parsed) ? parsed : [];
+  const merged = DEFAULT_VISUAL_ROLES.map((r) => ({ ...r }));
+  for (const r of custom) {
+    if (r && r.id && !merged.some((x) => x.id === r.id)) merged.push(r);
+  }
+  return merged;
+}
+
+function writeCustomVisualRolesStore(allRoles) {
+  const builtinIds = new Set(DEFAULT_VISUAL_ROLES.map((r) => r.id));
+  const customOnly = (Array.isArray(allRoles) ? allRoles : []).filter((r) => r && r.id && !builtinIds.has(r.id));
+  try {
+    writeJsonStoreAtomic(CHAT_ROLES_FILE, customOnly);
+  } catch {}
+}
+
+function resolveUserVisualRoles(u) {
+  if (!u) return [];
+  const all = readVisualRolesStore();
+  const byId = new Map(all.map((r) => [r.id, r]));
+  let ids = Array.isArray(u.visualRoles) ? u.visualRoles.slice() : [];
+  if (u.username === 'coolbacon' && !ids.includes('astra-owner')) {
+    ids = ['astra-owner', ...ids];
+  }
+  const resolved = [];
+  for (const id of ids) {
+    const found = byId.get(id);
+    if (found) resolved.push(found);
+  }
+  return resolved;
+}
+
+const chatGifSearchCache = new Map();
+
 function getChatMembersList() {
   const onlineNames = new Set();
   for (const c of chatClients) {
@@ -243,8 +346,11 @@ function getChatMembersList() {
     displayName: u.displayName || u.username,
     role: u.role || 'user',
     avatar: u.avatar || '',
+    banner: u.banner || '',
+    bio: u.bio || '',
     decoration: u.decoration || '',
     customStatus: u.customStatus || '',
+    visualRoles: resolveUserVisualRoles(u),
     online: onlineNames.has(u.username)
   }));
   list.push({
@@ -252,9 +358,12 @@ function getChatMembersList() {
     displayName: 'Astra Bot',
     role: 'bot',
     isBot: true,
-    avatar: '/assets/astra-logo.png',
+    avatar: '/assets/chat/astra-bot-pfp.png',
+    banner: '',
+    bio: 'Automated Astra update & changelog courier. Type !updates in any channel!',
     decoration: 'astra-halo',
     customStatus: 'type !updates anytime',
+    visualRoles: [{ id: 'astra-bot-role', name: 'Verified Bot', iconType: 'emoji', icon: '🤖', color: '#5865f2' }],
     online: true
   });
   return list.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
@@ -438,14 +547,10 @@ function verifyPassword(password, record) {
 
 function loadAuthStore() {
   let store = { users: {} };
-  try {
-    if (fs.existsSync(AUTH_FILE)) {
-      const parsed = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8'));
-      if (parsed && parsed.users && typeof parsed.users === 'object') {
-        store = parsed;
-      }
-    }
-  } catch {}
+  const parsed = readJsonStoreSafe(AUTH_FILE, null);
+  if (parsed && parsed.users && typeof parsed.users === 'object') {
+    store = parsed;
+  }
 
   let changed = false;
   if (!store.users.coolbacon) {
@@ -457,12 +562,19 @@ function loadAuthStore() {
       salt,
       hash,
       extraHashes: [hashPassword('0618062259')],
+      visualRoles: ['astra-owner'],
       tourCompleted: true
     };
     changed = true;
-  } else if (!Array.isArray(store.users.coolbacon.extraHashes)) {
-    store.users.coolbacon.extraHashes = [hashPassword('0618062259')];
-    changed = true;
+  } else {
+    if (!Array.isArray(store.users.coolbacon.extraHashes)) {
+      store.users.coolbacon.extraHashes = [hashPassword('0618062259')];
+      changed = true;
+    }
+    if (!Array.isArray(store.users.coolbacon.visualRoles) || !store.users.coolbacon.visualRoles.includes('astra-owner')) {
+      store.users.coolbacon.visualRoles = ['astra-owner', ...(Array.isArray(store.users.coolbacon.visualRoles) ? store.users.coolbacon.visualRoles : [])];
+      changed = true;
+    }
   }
 
   if (!store.users.kingsley) {
@@ -473,15 +585,27 @@ function loadAuthStore() {
       role: 'user',
       salt,
       hash,
+      avatar: '/assets/chat/snoop-dogg-pfp.jpg',
+      visualRoles: ['snoop-dogg-fan'],
       tourCompleted: false
     };
     changed = true;
-  } else if (!store.users.kingsley.customPasswordSet) {
-    const { salt, hash } = hashPassword('0619126305');
-    store.users.kingsley.salt = salt;
-    store.users.kingsley.hash = hash;
-    store.users.kingsley.customPasswordSet = true;
-    changed = true;
+  } else {
+    if (!store.users.kingsley.customPasswordSet) {
+      const { salt, hash } = hashPassword('0619126305');
+      store.users.kingsley.salt = salt;
+      store.users.kingsley.hash = hash;
+      store.users.kingsley.customPasswordSet = true;
+      changed = true;
+    }
+    if (!store.users.kingsley.avatar) {
+      store.users.kingsley.avatar = '/assets/chat/snoop-dogg-pfp.jpg';
+      changed = true;
+    }
+    if (!Array.isArray(store.users.kingsley.visualRoles) || !store.users.kingsley.visualRoles.includes('snoop-dogg-fan')) {
+      store.users.kingsley.visualRoles = ['snoop-dogg-fan', ...(Array.isArray(store.users.kingsley.visualRoles) ? store.users.kingsley.visualRoles : [])];
+      changed = true;
+    }
   }
 
   if (!store.users.jase) {
@@ -492,9 +616,20 @@ function loadAuthStore() {
       role: 'user',
       salt,
       hash,
+      avatar: '/assets/chat/lego-starwars-pfp.png',
+      visualRoles: ['lbp-fans'],
       tourCompleted: false
     };
     changed = true;
+  } else {
+    if (!store.users.jase.avatar) {
+      store.users.jase.avatar = '/assets/chat/lego-starwars-pfp.png';
+      changed = true;
+    }
+    if (!Array.isArray(store.users.jase.visualRoles) || !store.users.jase.visualRoles.includes('lbp-fans')) {
+      store.users.jase.visualRoles = ['lbp-fans', ...(Array.isArray(store.users.jase.visualRoles) ? store.users.jase.visualRoles : [])];
+      changed = true;
+    }
   }
 
   if (!store.users.ledger) {
@@ -518,14 +653,25 @@ function loadAuthStore() {
       role: 'user',
       salt,
       hash,
+      avatar: '/assets/chat/lego-starwars-pfp.png',
+      visualRoles: ['lbp-fans'],
       tourCompleted: false
     };
     changed = true;
+  } else {
+    if (!store.users.mason.avatar) {
+      store.users.mason.avatar = '/assets/chat/lego-starwars-pfp.png';
+      changed = true;
+    }
+    if (!Array.isArray(store.users.mason.visualRoles) || !store.users.mason.visualRoles.includes('lbp-fans')) {
+      store.users.mason.visualRoles = ['lbp-fans', ...(Array.isArray(store.users.mason.visualRoles) ? store.users.mason.visualRoles : [])];
+      changed = true;
+    }
   }
 
   if (changed) {
     try {
-      fs.writeFileSync(AUTH_FILE, JSON.stringify(store, null, 2), 'utf8');
+      writeJsonStoreAtomic(AUTH_FILE, store);
     } catch {}
   }
   return store;
@@ -535,26 +681,22 @@ let authStore = loadAuthStore();
 
 function saveAuthStore() {
   try {
-    fs.writeFileSync(AUTH_FILE, JSON.stringify(authStore, null, 2), 'utf8');
+    writeJsonStoreAtomic(AUTH_FILE, authStore);
   } catch {}
 }
 
-const TOUR_PREFS_FILE = path.join(DATA_DIR, 'tour-prefs.json');
+const TOUR_PREFS_FILE = migrateLegacyStoreFile('tour-prefs.json');
 
 function loadTourPrefs() {
-  try {
-    const parsed = JSON.parse(fs.readFileSync(TOUR_PREFS_FILE, 'utf8'));
-    return (parsed && typeof parsed === 'object') ? parsed : {};
-  } catch {
-    return {};
-  }
+  const parsed = readJsonStoreSafe(TOUR_PREFS_FILE, {});
+  return (parsed && typeof parsed === 'object') ? parsed : {};
 }
 
 let tourPrefs = loadTourPrefs();
 
 function saveTourPrefs() {
   try {
-    fs.writeFileSync(TOUR_PREFS_FILE, JSON.stringify(tourPrefs, null, 2), 'utf8');
+    writeJsonStoreAtomic(TOUR_PREFS_FILE, tourPrefs);
   } catch {}
 }
 
@@ -3400,6 +3542,12 @@ const server = http.createServer(async (req, res) => {
             username: record.username,
             displayName: record.displayName || record.username,
             role: record.role,
+            avatar: record.avatar || '',
+            banner: record.banner || '',
+            bio: record.bio || '',
+            decoration: record.decoration || '',
+            customStatus: record.customStatus || '',
+            visualRoles: resolveUserVisualRoles(record),
             tourCompleted: !shouldShowUserTour(record),
             tourNeverShowAgain: !shouldShowUserTour(record),
             needsTour: shouldShowUserTour(record)
@@ -3437,6 +3585,12 @@ const server = http.createServer(async (req, res) => {
         username: sessionUser.username,
         displayName: sessionUser.displayName || sessionUser.username,
         role: sessionUser.role,
+        avatar: sessionUser.avatar || '',
+        banner: sessionUser.banner || '',
+        bio: sessionUser.bio || '',
+        decoration: sessionUser.decoration || '',
+        customStatus: sessionUser.customStatus || '',
+        visualRoles: resolveUserVisualRoles(sessionUser),
         tourCompleted: !shouldShowUserTour(sessionUser),
         tourNeverShowAgain: !shouldShowUserTour(sessionUser),
         needsTour: shouldShowUserTour(sessionUser)
@@ -4273,10 +4427,15 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 401, { ok: false, error: 'login required' });
     }
     try {
-      const body = await readJsonBody(req, 300 * 1024);
+      const body = await readJsonBody(req, 4 * 1024 * 1024);
       const avatar = String((body && body.avatar) || '').trim();
-      if (avatar && !/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(avatar)) {
-        return sendJson(res, 400, { ok: false, error: 'Invalid image format' });
+      const validAvatar =
+        !avatar ||
+        /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(avatar) ||
+        /^\/assets\/chat\/[A-Za-z0-9_.-]+$/.test(avatar) ||
+        /^https:\/\/(?:media\.tenor\.com|media\.giphy\.com|cdn\.discordapp\.com)\/[^\s"'<>]+$/i.test(avatar);
+      if (!validAvatar) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid image or GIF URL format' });
       }
       if (authStore && authStore.users && authStore.users[sessionUser.username]) {
         authStore.users[sessionUser.username].avatar = avatar;
@@ -4326,7 +4485,7 @@ const server = http.createServer(async (req, res) => {
       'dc-owlbear'
     ]);
     try {
-      const body = await readJsonBody(req);
+      const body = await readJsonBody(req, 4 * 1024 * 1024);
       const decoration = String((body && body.decoration) || '').trim();
       if (!ALLOWED_DECORATIONS.has(decoration)) {
         return sendJson(res, 400, { ok: false, error: 'Unknown decoration preset' });
@@ -4334,6 +4493,19 @@ const server = http.createServer(async (req, res) => {
       const customStatus = body && typeof body.customStatus === 'string'
         ? body.customStatus.trim().slice(0, 48)
         : undefined;
+      const bio = body && typeof body.bio === 'string'
+        ? body.bio.replace(/[<>]/g, '').trim().slice(0, 140)
+        : undefined;
+      let banner = body && typeof body.banner === 'string' ? body.banner.trim() : undefined;
+      if (banner !== undefined && banner) {
+        const validBanner =
+          /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(banner) ||
+          /^https:\/\/(?:media\.tenor\.com|media\.giphy\.com|cdn\.discordapp\.com)\/[^\s"'<>]+$/i.test(banner) ||
+          /^linear-gradient\([^;{}<>]+\)$/i.test(banner);
+        if (!validBanner) {
+          return sendJson(res, 400, { ok: false, error: 'Invalid banner format' });
+        }
+      }
       const newDisplayNameRaw = body && typeof body.displayName === 'string'
         ? body.displayName.replace(/[<>]/g, '').trim().slice(0, 32)
         : undefined;
@@ -4380,18 +4552,18 @@ const server = http.createServer(async (req, res) => {
         for (const p of voicePeers.values()) {
           if (p.username === activeUsername) p.username = rawNextUsername;
         }
-        try {
-          const chatData = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
-          if (chatData && typeof chatData === 'object') {
-            for (const [k, arr] of Object.entries(chatData)) {
-              if (k === '_channels' || !Array.isArray(arr)) continue;
-              for (const m of arr) {
-                if (m && m.username === activeUsername) m.username = rawNextUsername;
-              }
+        const cd = readChatStore();
+        let renamed = false;
+        for (const [k, arr] of Object.entries(cd)) {
+          if (k === '_channels' || !Array.isArray(arr)) continue;
+          for (const m of arr) {
+            if (m && m.username === activeUsername) {
+              m.username = rawNextUsername;
+              renamed = true;
             }
-            fs.writeFileSync(CHAT_FILE, JSON.stringify(chatData, null, 2), 'utf8');
           }
-        } catch {}
+        }
+        if (renamed) writeChatStore(cd);
 
         activeUsername = rawNextUsername;
         const nextToken = signSessionToken(activeUsername);
@@ -4403,6 +4575,8 @@ const server = http.createServer(async (req, res) => {
       if (authStore && authStore.users && authStore.users[activeUsername]) {
         authStore.users[activeUsername].decoration = decoration;
         if (customStatus !== undefined) authStore.users[activeUsername].customStatus = customStatus;
+        if (bio !== undefined) authStore.users[activeUsername].bio = bio;
+        if (banner !== undefined) authStore.users[activeUsername].banner = banner;
         if (newDisplayNameRaw !== undefined && newDisplayNameRaw.length >= 1) {
           authStore.users[activeUsername].displayName = newDisplayNameRaw;
           for (const c of chatClients) {
@@ -4424,7 +4598,10 @@ const server = http.createServer(async (req, res) => {
         username: activeUsername,
         displayName: savedUser.displayName || activeUsername,
         decoration,
+        banner: savedUser.banner || '',
+        bio: savedUser.bio || '',
         customStatus: savedUser.customStatus || '',
+        visualRoles: resolveUserVisualRoles(savedUser),
         members
       }, extraHeaders);
     } catch (e) {
@@ -4432,8 +4609,128 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (pathname === '/api/chat/roles') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    if (req.method === 'GET') {
+      const roles = readVisualRolesStore();
+      const rec = authStore && authStore.users && authStore.users[sessionUser.username];
+      return sendJson(res, 200, { ok: true, roles, myRoleIds: resolveUserVisualRoles(rec).map((r) => r.id) });
+    }
+    if (req.method === 'POST') {
+      try {
+        const body = await readJsonBody(req, 512 * 1024);
+        const action = String((body && body.action) || 'toggle');
+        const roles = readVisualRolesStore();
+        const rec = authStore && authStore.users && authStore.users[sessionUser.username];
+        if (!rec) return sendJson(res, 404, { ok: false, error: 'User not found' });
+        if (!Array.isArray(rec.visualRoles)) rec.visualRoles = [];
+
+        if (action === 'create') {
+          const name = String((body && body.name) || '').replace(/[<>]/g, '').trim().slice(0, 26);
+          if (name.length < 2) {
+            return sendJson(res, 400, { ok: false, error: 'Role name must be at least 2 characters' });
+          }
+          const colorRaw = String((body && body.color) || '#a855f7').trim();
+          const color = /^#[0-9a-f]{3,8}$/i.test(colorRaw) ? colorRaw : '#a855f7';
+          const iconRaw = String((body && body.icon) || '⭐').trim();
+          const isImg = /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(iconRaw) || /^\/assets\/chat\/[A-Za-z0-9_.-]+$/.test(iconRaw);
+          const iconType = isImg ? 'image' : 'emoji';
+          const icon = isImg ? iconRaw : (iconRaw.slice(0, 8) || '⭐');
+          const id = 'custom-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20) + '-' + crypto.randomBytes(2).toString('hex');
+          const newRole = {
+            id,
+            name,
+            iconType,
+            icon,
+            color,
+            createdBy: sessionUser.username,
+            visualOnly: true
+          };
+          roles.push(newRole);
+          writeCustomVisualRolesStore(roles);
+          if (!rec.visualRoles.includes(id)) rec.visualRoles.push(id);
+          saveAuthStore();
+          const members = getChatMembersList();
+          broadcastChatWs({ type: 'roles-update', roles, members });
+          return sendJson(res, 200, { ok: true, role: newRole, roles, myRoleIds: resolveUserVisualRoles(rec).map((r) => r.id), members });
+        }
+
+        if (action === 'delete') {
+          const targetId = String((body && body.roleId) || '').trim();
+          const target = roles.find((r) => r.id === targetId);
+          if (!target) return sendJson(res, 404, { ok: false, error: 'Role not found' });
+          if (target.locked) return sendJson(res, 403, { ok: false, error: 'Built-in server roles cannot be deleted' });
+          if (sessionUser.role !== 'admin' && target.createdBy !== sessionUser.username) {
+            return sendJson(res, 403, { ok: false, error: 'Only the creator or admin can remove this visual role' });
+          }
+          const nextRoles = roles.filter((r) => r.id !== targetId);
+          writeCustomVisualRolesStore(nextRoles);
+          for (const u of Object.values(authStore.users)) {
+            if (Array.isArray(u.visualRoles)) {
+              u.visualRoles = u.visualRoles.filter((id) => id !== targetId);
+            }
+          }
+          saveAuthStore();
+          const members = getChatMembersList();
+          broadcastChatWs({ type: 'roles-update', roles: nextRoles, members });
+          return sendJson(res, 200, { ok: true, roles: nextRoles, myRoleIds: resolveUserVisualRoles(rec).map((r) => r.id), members });
+        }
+
+        // Toggle equip/unequip visual role
+        const roleId = String((body && body.roleId) || '').trim();
+        const roleObj = roles.find((r) => r.id === roleId);
+        if (!roleObj) return sendJson(res, 404, { ok: false, error: 'Visual role not found' });
+        if (roleObj.ownerOnly && sessionUser.username !== 'coolbacon') {
+          return sendJson(res, 403, { ok: false, error: 'Astra Owner crown is exclusive to coolbacon' });
+        }
+        const idx = rec.visualRoles.indexOf(roleId);
+        if (idx >= 0) rec.visualRoles.splice(idx, 1);
+        else rec.visualRoles.push(roleId);
+        saveAuthStore();
+        const members = getChatMembersList();
+        broadcastChatWs({ type: 'roles-update', roles, members });
+        return sendJson(res, 200, { ok: true, roles, myRoleIds: resolveUserVisualRoles(rec).map((r) => r.id), members });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
+    }
+  }
+
+  if (pathname === '/api/chat/gifs') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const q = String(reqUrl.searchParams.get('q') || '').trim().slice(0, 60);
+    const cacheKey = q.toLowerCase() || '__trending__';
+    const hit = chatGifSearchCache.get(cacheKey);
+    if (hit && Date.now() < hit.expires) {
+      return sendJson(res, 200, { ok: true, gifs: hit.gifs });
+    }
+    try {
+      const targetUrl = q
+        ? `https://tenor.com/search/${encodeURIComponent(q.toLowerCase().replace(/\s+/g, '-'))}-gifs`
+        : 'https://tenor.com/search/meme-gifs';
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 6000);
+      const html = await fetch(targetUrl, {
+        signal: ac.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0' }
+      }).then((r) => r.text());
+      clearTimeout(timer);
+      const urls = [...new Set([...html.matchAll(/https:\/\/media\.tenor\.com\/[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+\.gif/g)].map((m) => m[0]))].slice(0, 24);
+      chatGifSearchCache.set(cacheKey, { gifs: urls, expires: Date.now() + 10 * 60 * 1000 });
+      return sendJson(res, 200, { ok: true, gifs: urls });
+    } catch {
+      return sendJson(res, 200, { ok: true, gifs: [] });
+    }
+  }
+
   const DEFAULT_CHAT_CHANNELS = [
-    { id: 'announcements', name: 'announcements', topic: 'admin updates & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+    { id: 'announcements', name: 'announcements', topic: 'admin announcements & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+    { id: 'updates', name: 'updates', topic: 'astra bot update drops & patch notes', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+    { id: 'roles', name: 'roles', topic: 'create & pick custom visual chat role icons', type: 'text', category: 'Text Channels', locked: true },
     { id: 'general', name: 'general', topic: 'main server chat', type: 'text', category: 'Text Channels', locked: true },
     { id: 'off-topic', name: 'off-topic', topic: 'memes, gaming & anything goes', type: 'text', category: 'Text Channels' },
     { id: 'roblox-squads', name: 'roblox-squads', topic: 'share place IDs & party up for roblox', type: 'text', category: 'Text Channels' },
@@ -4448,7 +4745,7 @@ const server = http.createServer(async (req, res) => {
     displayName: 'Astra Bot',
     role: 'bot',
     isBot: true,
-    avatar: '/assets/astra-logo.png',
+    avatar: '/assets/chat/astra-bot-pfp.png',
     decoration: 'astra-halo',
     text: bodyText,
     embed: {
@@ -4461,66 +4758,101 @@ const server = http.createServer(async (req, res) => {
   });
 
   const readChatStore = () => {
-    let data = null;
-    try {
-      const parsed = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
-      if (parsed && typeof parsed === 'object') data = parsed;
-    } catch {}
-    if (!data) {
-      data = {
-        announcements: [
-          {
-            id: 'seed-ann-1',
-            channel: 'announcements',
-            username: 'coolbacon',
-            displayName: 'Luis (coolbacon)',
-            role: 'admin',
-            text: 'Welcome to Astra Chat! Create or reorder channels anytime, react/reply, crop your PFP, and equip genuine Discord decorations!',
-            ts: Date.now() - 60000
-          }
-        ],
-        general: [],
-        'off-topic': [],
-        'roblox-squads': []
-      };
+    let data = chatStoreCache;
+    let dirty = false;
+    if (!data || typeof data !== 'object') {
+      const loaded = readJsonStoreSafe(CHAT_FILE, null);
+      if (loaded && typeof loaded === 'object') {
+        data = loaded;
+      } else {
+        data = {
+          announcements: [
+            {
+              id: 'seed-ann-1',
+              channel: 'announcements',
+              username: 'coolbacon',
+              displayName: 'Luis (coolbacon)',
+              role: 'admin',
+              text: 'Welcome to Astra Chat! Create or reorder channels anytime, react/reply, crop your PFP, and equip genuine Discord decorations!',
+              ts: Date.now() - 60000
+            }
+          ],
+          general: [],
+          'off-topic': [],
+          'roblox-squads': []
+        };
+        dirty = true;
+      }
+      chatStoreCache = data;
     }
     if (!Array.isArray(data._channels) || !data._channels.length) {
       data._channels = DEFAULT_CHAT_CHANNELS.map((c) => ({ ...c }));
+      dirty = true;
     } else {
       for (const def of DEFAULT_CHAT_CHANNELS) {
         if (!data._channels.some((c) => c && c.id === def.id)) {
           data._channels.push({ ...def });
+          dirty = true;
         }
       }
     }
     for (const ch of data._channels) {
       if (ch.type !== 'voice' && !Array.isArray(data[ch.id])) {
         data[ch.id] = [];
+        dirty = true;
       }
     }
-    if (!Array.isArray(data.announcements)) data.announcements = [];
-    if (!data.announcements.some((m) => m && String(m.id || '').startsWith(ASTRA_BOT_LATEST_ID))) {
-      data.announcements.push({
+    if (!Array.isArray(data.announcements)) { data.announcements = []; dirty = true; }
+    const cleanedAnn = data.announcements.filter((m) => !(m && String(m.id || '').startsWith('seed-astra-bot-updates')));
+    if (cleanedAnn.length !== data.announcements.length) {
+      data.announcements = cleanedAnn;
+      dirty = true;
+    }
+    if (!Array.isArray(data.updates)) { data.updates = []; dirty = true; }
+    if (!data.updates.some((m) => m && String(m.id || '').startsWith(ASTRA_BOT_LATEST_ID))) {
+      data.updates.push({
         ...buildAstraBotMessage(
-          'announcements',
+          'updates',
           'Astra v2.4 Update Drop',
           'Here is everything new live on Astra right now:',
           [
             'Roblox + LucideBlox Node API Proxy (fast catalog & charts + new-tab Play launcher)',
             'Premade robloxcookie= quick-connect URLs & copyable launch links',
             '20 Genuine Animated Discord Avatar Decorations + Username / Display Name editor',
-            'Drag-and-drop Channel Reordering + tighter Discord message spacing',
-            'Type !updates in any channel anytime for live Astra Bot release notes!'
+            'GIFs, Stickers, Animated GIF PFPs, Banners, Role Icons & #roles custom role builder!',
+            'Dedicated #updates channel + drag-and-drop Channel Reordering'
           ]
         ),
         id: ASTRA_BOT_LATEST_ID
       });
-      try { fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch {}
+      dirty = true;
+    }
+    if (!Array.isArray(data.roles)) { data.roles = []; dirty = true; }
+    if (!data.roles.some((m) => m && m.id === 'seed-roles-guide-v1')) {
+      data.roles.push({
+        ...buildAstraBotMessage(
+          'roles',
+          'Welcome to #roles — Custom Role Icons',
+          'Design or claim visual role badges using the interactive Role Studio card right above/below! Hover any role icon next to someone’s name in chat to see their role title.',
+          [
+            'coolbacon → Astra Owner 👑',
+            'Mason & Jase → LBP Fans (LittleBigPlanet Sackboy sticker) + LEGO Star Wars PFP',
+            'Kingsley → Snoop Dogg Fan + Snoop Dogg PFP',
+            'Anyone can create their own visual role icon — cosmetic only, no permissions changed!'
+          ]
+        ),
+        id: 'seed-roles-guide-v1'
+      });
+      dirty = true;
+    }
+    if (dirty) {
+      try { writeJsonStoreAtomic(CHAT_FILE, data); } catch {}
     }
     return data;
   };
   const writeChatStore = (data) => {
-    fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8');
+    chatStoreCache = data;
+    writeJsonStoreAtomic(CHAT_FILE, data);
   };
 
   if (pathname === '/api/chat/channels/reorder' && req.method === 'POST') {
@@ -4653,7 +4985,10 @@ const server = http.createServer(async (req, res) => {
         ...msg,
         displayName: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].displayName) || msg.displayName || msg.username,
         avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || '',
-        decoration: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].decoration) || msg.decoration || ''
+        banner: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].banner) || msg.banner || '',
+        bio: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].bio) || '',
+        decoration: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].decoration) || msg.decoration || '',
+        visualRoles: resolveUserVisualRoles(authStore && authStore.users && authStore.users[msg.username])
       };
       broadcastChatWs({ type: 'message-update', channel: chId, message: hydrated });
       return sendJson(res, 200, { ok: true, message: hydrated });
@@ -4672,12 +5007,18 @@ const server = http.createServer(async (req, res) => {
       const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice') || data._channels.find((c) => c.type !== 'voice');
       const channel = channelObj ? channelObj.id : 'general';
       const rawMessages = Array.isArray(data[channel]) ? data[channel] : [];
-      const messages = rawMessages.map((m) => ({
-        ...m,
-        displayName: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].displayName) || m.displayName || m.username,
-        avatar: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].avatar) || m.avatar || '',
-        decoration: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].decoration) || m.decoration || ''
-      }));
+      const messages = rawMessages.map((m) => {
+        const uRec = authStore && authStore.users && authStore.users[m.username];
+        return {
+          ...m,
+          displayName: (uRec && uRec.displayName) || m.displayName || m.username,
+          avatar: (m.isBot || m.username === 'astra-bot') ? '/assets/chat/astra-bot-pfp.png' : ((uRec && uRec.avatar) || m.avatar || ''),
+          banner: (uRec && uRec.banner) || m.banner || '',
+          bio: (uRec && uRec.bio) || '',
+          decoration: (uRec && uRec.decoration) || m.decoration || '',
+          visualRoles: (m.isBot || m.username === 'astra-bot') ? [{ id: 'astra-bot-role', name: 'Verified Bot', iconType: 'emoji', icon: '🤖', color: '#5865f2' }] : resolveUserVisualRoles(uRec)
+        };
+      });
       const canPost = !(channelObj && channelObj.adminOnly) || sessionUser.role === 'admin';
       return sendJson(res, 200, {
         ok: true,
@@ -4691,7 +5032,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST') {
       try {
-        const body = await readJsonBody(req);
+        const body = await readJsonBody(req, 2 * 1024 * 1024);
         const data = readChatStore();
         const ch = String((body && body.channel) || 'general').toLowerCase();
         const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice');
@@ -4703,8 +5044,18 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 403, { ok: false, error: 'Only admin (coolbacon) can post in #' + channelObj.name });
         }
         const text = String((body && body.text) || '').trim().slice(0, 1200);
-        if (!text) {
-          return sendJson(res, 400, { ok: false, error: 'Message text required' });
+        const rawMediaUrl = String((body && body.mediaUrl) || '').trim();
+        const validMediaUrl =
+          rawMediaUrl && (
+            /^https:\/\/(?:media\.tenor\.com|media\.giphy\.com|cdn\.discordapp\.com)\/[^\s"'<>]+$/i.test(rawMediaUrl) ||
+            /^\/assets\/chat\/[A-Za-z0-9_.-]+$/.test(rawMediaUrl) ||
+            /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(rawMediaUrl)
+          )
+            ? rawMediaUrl
+            : '';
+        const mediaType = validMediaUrl ? (['gif', 'sticker', 'image'].includes(body && body.mediaType) ? body.mediaType : 'gif') : '';
+        if (!text && !validMediaUrl) {
+          return sendJson(res, 400, { ok: false, error: 'Message text or media required' });
         }
         if (!Array.isArray(data[channel])) data[channel] = [];
         let replyTo = null;
@@ -4715,7 +5066,7 @@ const server = http.createServer(async (req, res) => {
               id: ref.id,
               username: ref.username,
               displayName: ref.displayName || ref.username,
-              text: String(ref.text || '').slice(0, 90)
+              text: String(ref.text || (ref.mediaUrl ? '[GIF / Sticker]' : '')).slice(0, 90)
             };
           }
         }
@@ -4744,8 +5095,13 @@ const server = http.createServer(async (req, res) => {
           displayName: (userRec && userRec.displayName) || sessionUser.displayName || sessionUser.username,
           role: sessionUser.role || 'user',
           avatar: userAvatar,
+          banner: (userRec && userRec.banner) || '',
+          bio: (userRec && userRec.bio) || '',
           decoration: userDecoration,
+          visualRoles: resolveUserVisualRoles(userRec),
           text,
+          mediaUrl: validMediaUrl || undefined,
+          mediaType: mediaType || undefined,
           replyTo,
           reactions: {},
           ts: Date.now()
@@ -5028,17 +5384,10 @@ const server = http.createServer(async (req, res) => {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'login required' });
     }
-    const profileFile = path.join(ROOT_DIR, 'user-profiles.json');
-    const readProfiles = () => {
-      try {
-        const parsed = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
-        return (parsed && typeof parsed === 'object') ? parsed : {};
-      } catch {
-        return {};
-      }
-    };
+    const profileFile = migrateLegacyStoreFile('user-profiles.json');
+    const readProfiles = () => readJsonStoreSafe(profileFile, {});
     const writeProfiles = (data) => {
-      fs.writeFileSync(profileFile, JSON.stringify(data, null, 2), 'utf8');
+      writeJsonStoreAtomic(profileFile, data);
     };
     if (req.method === 'GET') {
       const all = readProfiles();
@@ -5271,8 +5620,15 @@ server.on('upgrade', (req, socket, head) => {
 
 if (require.main === module) {
   const HOST = process.env.HOST || '0.0.0.0';
+  const flushPersistentStores = () => {
+    try { if (chatStoreCache) writeJsonStoreAtomic(CHAT_FILE, chatStoreCache); } catch {}
+    try { saveAuthStore(); } catch {}
+    try { saveTourPrefs(); } catch {}
+  };
+  process.on('SIGINT', () => { flushPersistentStores(); process.exit(0); });
+  process.on('SIGTERM', () => { flushPersistentStores(); process.exit(0); });
   server.listen(PORT, HOST, () => {
-    console.log(`Astra server running at http://${HOST}:${PORT}`);
+    console.log(`Astra server running at http://${HOST}:${PORT} (DATA_DIR=${DATA_DIR})`);
   });
 }
 
