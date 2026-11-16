@@ -1,0 +1,6 @@
+node_modules/
+auth-store.json
+chat-history.json
+music-playlists.json
+.env
+*.log
