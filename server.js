@@ -1922,7 +1922,63 @@ async function serveWebbloxAsset(subPathRaw, reqUrl, req, res) {
         } else if (isCoreJs) {
           txt = txt.replace(
             /export function leaveFor\(url\)\s*\{[\s\S]*?location\.href\s*=\s*url;\s*\}/,
-            'export function leaveFor(url) {\n  let finalUrl = String(url);\n  try {\n    const parsedLaunch = new URL(finalUrl, location.href);\n    if (parsedLaunch.searchParams.has("placeId")) {\n      parsedLaunch.searchParams.set("mode", "wisp");\n      if (!parsedLaunch.searchParams.get("wisp")) {\n        parsedLaunch.searchParams.set("wisp", (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/");\n      }\n      finalUrl = parsedLaunch.href;\n    }\n  } catch {}\n  if (window.self !== window.top && /[?&]placeId=/.test(finalUrl)) {\n    try { window.parent.postMessage({ type: "astra-roblox-launch-url", url: finalUrl }, location.origin); return; } catch {}\n  }\n  document.body.append(el("div", "leaving"));\n  location.href = finalUrl;\n}'
+            `export function leaveFor(url) {
+  let finalUrl = String(url);
+  try {
+    const parsedLaunch = new URL(finalUrl, location.href);
+    if (parsedLaunch.searchParams.has("placeId")) {
+      parsedLaunch.searchParams.set("mode", "wisp");
+      if (!parsedLaunch.searchParams.get("wisp")) {
+        parsedLaunch.searchParams.set("wisp", (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/");
+      }
+      finalUrl = parsedLaunch.href;
+    }
+  } catch {}
+  if (/[?&]placeId=/.test(finalUrl)) {
+    let win = null;
+    try { win = window.open(finalUrl, "_blank"); } catch {}
+    if (win) {
+      try { win.focus(); } catch {}
+      return;
+    }
+    if (window.self !== window.top) {
+      try { window.parent.postMessage({ type: "astra-roblox-launch-url", url: finalUrl }, location.origin); } catch {}
+    }
+    const existing = document.getElementById("astra-play-tab-modal");
+    if (existing) existing.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "astra-play-tab-modal";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(7,8,12,0.82);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,system-ui,sans-serif;";
+    const card = document.createElement("div");
+    card.style.cssText = "max-width:400px;width:100%;background:rgba(16,17,24,0.96);border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:24px;color:#fff;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.65);";
+    const h = document.createElement("h3");
+    h.textContent = "Launch Game in New Tab";
+    h.style.cssText = "margin:0 0 8px;font-size:17px;font-weight:700;";
+    const p = document.createElement("p");
+    p.textContent = "Your browser paused automatic tab opening. Click below to open Roblox in a dedicated isolated tab:";
+    p.style.cssText = "margin:0 0 16px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.68);";
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:10px;justify-content:center;flex-wrap:wrap;";
+    const linkBtn = document.createElement("a");
+    linkBtn.href = finalUrl;
+    linkBtn.target = "_blank";
+    linkBtn.textContent = "Open Game Tab ↗";
+    linkBtn.style.cssText = "padding:10px 18px;border-radius:10px;background:#fff;color:#08090d;font-weight:700;font-size:13.5px;text-decoration:none;display:inline-flex;align-items:center;";
+    linkBtn.addEventListener("click", () => { setTimeout(() => wrap.remove(), 150); });
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.style.cssText = "padding:10px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;cursor:pointer;";
+    cancelBtn.addEventListener("click", () => wrap.remove());
+    row.append(linkBtn, cancelBtn);
+    card.append(h, p, row);
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+    return;
+  }
+  document.body.append(el("div", "leaving"));
+  location.href = finalUrl;
+}`
           );
         } else if (isSwJs) {
           txt = 'self.addEventListener("fetch",function(e){try{if(e.request&&e.request.url&&e.request.url.indexOf("/__nodeproxy__/")!==-1)return;}catch{}});\n' + txt.replace(

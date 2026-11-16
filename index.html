@@ -7615,7 +7615,7 @@
               <button type="button" class="ext-btn" id="robloxOpenSiteTopBtn">roblox.com</button>
               <button type="button" class="ext-btn" id="robloxSetupGuideBtn">setup guide</button>
               <button type="button" class="ext-btn" id="robloxReloadLauncherBtn" style="display:none;">reload</button>
-              <button type="button" class="ext-btn" id="robloxPopoutLauncherBtn" style="display:none;">pop out</button>
+              <button type="button" class="ext-btn" id="robloxPopoutLauncherBtn" style="display:none;" title="Open LucideBlox in a new browser tab">new tab ↗</button>
             </div>
           </div>
 
@@ -15162,22 +15162,54 @@
       showRobloxWizardStep(startStep);
     }
 
-    async function openIsolatedRobloxGameWindow(fullUrl) {
-      const cVal = robloxVerifiedState.cookie || (await extractProxiedRoblosecurityAsync(false));
-      writeCobaltSessionStorage(cVal);
-      const w = Math.round(window.screen.availWidth * 0.9);
-      const h = Math.round(window.screen.availHeight * 0.9);
-      const l = Math.round((window.screen.availWidth - w) / 2);
-      const t = Math.round((window.screen.availHeight - h) / 2);
-      const win = window.open(fullUrl, 'webblox-game', `popup=yes,width=${w},height=${h},left=${l},top=${t}`);
-      if (!win) {
-        if (typeof showToast === 'function') {
-          showToast('allow popups for astra to launch the 3D WASM game window!');
-        }
-        return false;
+    function openIsolatedRobloxGameWindow(fullUrl) {
+      if (robloxVerifiedState.cookie) {
+        writeCobaltSessionStorage(robloxVerifiedState.cookie);
       }
-      try { win.focus(); } catch {}
-      return true;
+      let win = null;
+      try {
+        win = window.open(fullUrl, '_blank');
+      } catch {}
+      if (win) {
+        try { win.focus(); } catch {}
+        return true;
+      }
+      try {
+        const old = document.getElementById('astraParentPlayModal');
+        if (old) old.remove();
+        const wrap = document.createElement('div');
+        wrap.id = 'astraParentPlayModal';
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(7,8,12,0.82);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;';
+        const card = document.createElement('div');
+        card.style.cssText = 'max-width:400px;width:100%;background:rgba(16,17,24,0.96);border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:24px;color:#fff;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.65);';
+        const h = document.createElement('h3');
+        h.textContent = 'Launch in New Tab';
+        h.style.cssText = 'margin:0 0 8px;font-size:17px;font-weight:700;';
+        const p = document.createElement('p');
+        p.textContent = 'Click below to open Roblox in a dedicated new tab with full WebAssembly support:';
+        p.style.cssText = 'margin:0 0 16px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.68);';
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;';
+        const a = document.createElement('a');
+        a.href = fullUrl;
+        a.target = '_blank';
+        a.textContent = 'Open Game Tab ↗';
+        a.style.cssText = 'padding:10px 18px;border-radius:10px;background:#fff;color:#08090d;font-weight:700;font-size:13.5px;text-decoration:none;display:inline-flex;align-items:center;';
+        a.addEventListener('click', () => { setTimeout(() => wrap.remove(), 150); });
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.textContent = 'Cancel';
+        cancel.className = 'ext-btn';
+        cancel.addEventListener('click', () => wrap.remove());
+        row.append(a, cancel);
+        card.append(h, p, row);
+        wrap.appendChild(card);
+        document.body.appendChild(wrap);
+      } catch {}
+      if (typeof showToast === 'function') {
+        showToast('click "Open Game Tab ↗" to launch in a new tab');
+      }
+      return false;
     }
 
     function launchRobloxPlaceById(placeId, serverId = '') {
@@ -15190,7 +15222,7 @@
         document.cookie = `launcher_join=${cleanId}:g:${serverId}; Path=/; Max-Age=120; SameSite=Strict`;
       }
       const wispUrl = getAstraWispUrl();
-      const target = `${window.location.origin}/3to1s93ve/index.html?placeId=${encodeURIComponent(cleanId)}&wisp=${encodeURIComponent(wispUrl)}`;
+      const target = `${window.location.origin}/3to1s93ve/?placeId=${encodeURIComponent(cleanId)}&mode=wisp&wisp=${encodeURIComponent(wispUrl)}`;
       openIsolatedRobloxGameWindow(target);
     }
 
