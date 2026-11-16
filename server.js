@@ -2417,7 +2417,9 @@ const server = http.createServer(async (req, res) => {
       }
       const remember = !!(body && body.remember);
       const token = signSessionToken(record.username);
-      const cookieFlags = `astra_session=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax${remember ? '; Max-Age=604800' : ''}`;
+      const isHttps = req.headers['x-forwarded-proto'] === 'https' || !!(req.socket && req.socket.encrypted);
+      const sameSitePart = isHttps ? 'SameSite=None; Secure' : 'SameSite=Lax';
+      const cookieFlags = `astra_session=${encodeURIComponent(token)}; HttpOnly; Path=/; ${sameSitePart}${remember ? '; Max-Age=604800' : ''}`;
       return sendJson(
         res,
         200,
@@ -2442,11 +2444,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/auth/logout' && req.method === 'POST') {
+    const isHttps = req.headers['x-forwarded-proto'] === 'https' || !!(req.socket && req.socket.encrypted);
+    const sameSitePart = isHttps ? 'SameSite=None; Secure' : 'SameSite=Lax';
     return sendJson(
       res,
       200,
       { ok: true },
-      { 'Set-Cookie': 'astra_session=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0' }
+      { 'Set-Cookie': `astra_session=; HttpOnly; Path=/; ${sameSitePart}; Max-Age=0` }
     );
   }
 
