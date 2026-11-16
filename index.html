@@ -43,6 +43,29 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
     @keyframes spinFallback {
       0% { transform: translate(-50%, -50%) rotate(0deg); }
       100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -11296,6 +11319,10 @@
     function syncFloatingMusicPillPosition() {
       if (!homeVisualizerWrap || floatingPillDragging) return;
       if (!homeVisualizerWrap.classList.contains('active')) return;
+      const curTab = typeof tabs !== 'undefined' ? tabs.find(t => t.id === activeTabId) : null;
+      const inMusicHub = !!(curTab && curTab.route === '/music' && !curTab.url);
+      homeVisualizerWrap.style.opacity = inMusicHub ? '0' : '1';
+      homeVisualizerWrap.style.pointerEvents = inMusicHub ? 'none' : 'auto';
       const vw = window.innerWidth || 1280;
       const vh = window.innerHeight || 720;
       const pw = homeVisualizerWrap.offsetWidth || 240;
@@ -11320,14 +11347,16 @@
           left = Math.round(floatingPillPos.xPct * vw - (pw / 2));
           top = Math.round(floatingPillPos.yPct * vh - (ph / 2));
         } else {
-          left = Math.round(vw - (boxW / 2) - 24 - (pw / 2) + (boxW / 2));
-          top = Math.round(vh - 102 - (boxH / 2) - (ph / 2) + (boxH / 2));
+          left = Math.round(vw - 24 - (boxW / 2) - (pw / 2));
+          top = Math.round(vh - 28 - (boxH / 2) - (ph / 2));
         }
       }
-      const minX = Math.max(8, Math.round((boxW - pw) / 2) + 8);
-      const maxX = Math.max(minX, Math.round(vw - pw - ((boxW - pw) / 2) - 8));
-      const minY = Math.max(54, Math.round((boxH - ph) / 2) + 54);
-      const maxY = Math.max(minY, Math.round(vh - ph - ((boxH - ph) / 2) - 16));
+      const halfDeltaX = Math.round((boxW - pw) / 2);
+      const halfDeltaY = Math.round((boxH - ph) / 2);
+      const minX = 14 + halfDeltaX;
+      const maxX = Math.max(minX, vw - pw - halfDeltaX - 14);
+      const minY = 58 + halfDeltaY;
+      const maxY = Math.max(minY, vh - ph - halfDeltaY - 16);
       homeVisualizerWrap.style.left = `${Math.max(minX, Math.min(maxX, left))}px`;
       homeVisualizerWrap.style.top = `${Math.max(minY, Math.min(maxY, top))}px`;
     }
