@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@distube/ytdl-core": "^5.2.1",
     "@mercuryworkshop/bare-mux": "^2.1.9",
     "@mercuryworkshop/epoxy-transport": "2.1.29",
     "@mercuryworkshop/libcurl-transport": "1.5.2",

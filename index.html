@@ -3950,13 +3950,15 @@
     .connecting-overlay {
       position: absolute;
       inset: 0;
-      z-index: 10;
+      z-index: 15;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      background: rgba(5, 5, 8, 0.55);
+      background: rgba(5, 6, 11, 0.84);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       pointer-events: none !important;
     }
 
@@ -8906,7 +8908,10 @@
       clearTimeout(frameLoadTimer);
       clearTimeout(frameWatchdogTimer);
       clearTimeout(frameRetryTimer);
-      stopConnectingScreen();
+      startConnectingScreen();
+      frameLoadTimer = setTimeout(() => {
+        stopConnectingScreen();
+      }, 12000);
       browserFrame.classList.add('active-frame', 'loaded');
 
       try {
@@ -8936,6 +8941,7 @@
         browserFrame.dataset.loadedUrl = cleanHtmlUrl;
         browserFrame.srcdoc = gameHtml;
         frameDidLoad = true;
+        stopConnectingScreen();
         browserFrame.classList.add('active-frame', 'loaded');
         try { browserFrame.contentWindow && browserFrame.contentWindow.dispatchEvent(new Event('resize')); } catch {}
       } catch {
@@ -8976,7 +8982,10 @@
       clearTimeout(frameLoadTimer);
       clearTimeout(frameWatchdogTimer);
       clearTimeout(frameRetryTimer);
-      stopConnectingScreen();
+      startConnectingScreen();
+      frameLoadTimer = setTimeout(() => {
+        stopConnectingScreen();
+      }, 12000);
       browserFrame.classList.add('active-frame', 'loaded');
 
       await proxyHealthPromise;
@@ -10111,81 +10120,36 @@
       renderMusicTracks();
     }
 
+    const musicAudioPlayer = (typeof Audio === 'function') ? (() => {
+      const a = new Audio();
+      a.preload = 'auto';
+      a.crossOrigin = 'anonymous';
+      return a;
+    })() : null;
+
     function getMusicVideoEl() {
-      try {
-        const d = musicPlayerFrame && musicPlayerFrame.contentDocument;
-        return d ? d.querySelector('video') : null;
-      } catch {
-        return null;
-      }
+      return musicAudioPlayer;
     }
 
     let musicUserPaused = false;
-    let musicLastProgressTime = 0;
-    let musicStallTicks = 0;
-    const watchedMusicVideos = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
-
-    function attachMusicVideoKeepalive(v) {
-      if (!v || (watchedMusicVideos && watchedMusicVideos.has(v))) return;
-      if (watchedMusicVideos) watchedMusicVideos.add(v);
-      v.addEventListener('pause', () => {
-        if (!musicUserPaused && !v.ended && musicCurrentTrack) {
-          setTimeout(() => {
-            if (!musicUserPaused && v.paused && !v.ended) v.play().catch(() => {});
-          }, 120);
-        }
+    if (musicAudioPlayer) {
+      musicAudioPlayer.addEventListener('ended', () => playNextMusicTrack(1));
+      musicAudioPlayer.addEventListener('play', () => {
+        if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = SVG_PAUSE;
+        if (typeof updateHomeMusicDance === 'function') updateHomeMusicDance(true, musicCurrentTrack);
       });
-      v.addEventListener('stalled', () => {
-        if (!musicUserPaused && !v.ended && musicCurrentTrack) {
-          try { v.currentTime = (v.currentTime || 0) + 0.08; } catch {}
-          v.play().catch(() => {});
-        }
+      musicAudioPlayer.addEventListener('pause', () => {
+        if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = SVG_PLAY;
+        if (typeof updateHomeMusicDance === 'function') updateHomeMusicDance(false, musicCurrentTrack);
       });
     }
 
     function startMusicPlayerSyncLoop() {
       clearInterval(musicSyncTimer);
-      musicLastProgressTime = 0;
-      musicStallTicks = 0;
       musicSyncTimer = setInterval(() => {
-        const v = getMusicVideoEl();
+        const v = musicAudioPlayer;
         if (!v) return;
-        attachMusicVideoKeepalive(v);
         try {
-          if (adblockCfg.enabled && musicPlayerFrame && musicPlayerFrame.contentDocument) {
-            const d = musicPlayerFrame.contentDocument;
-            const sk = d.querySelector('.ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern');
-            if (sk) sk.click();
-            const pl = d.querySelector('.html5-video-player');
-            const adOverlay = d.querySelector('.ytp-ad-player-overlay, .ytp-ad-text, .ytp-ad-preview-container');
-            if (pl && pl.classList.contains('ad-showing') && adOverlay && isFinite(v.duration) && v.duration > 0 && v.duration < 95) {
-              v.muted = true;
-              v.currentTime = v.duration;
-            } else if (pl && !pl.classList.contains('ad-showing') && v.muted) {
-              v.muted = false;
-            }
-          }
-          if (v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
-            v.play().catch(() => {});
-          }
-          if (!v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
-            if (Math.abs((v.currentTime || 0) - musicLastProgressTime) < 0.05) {
-              musicStallTicks++;
-              if (musicStallTicks === 2) {
-                try { v.currentTime = (v.currentTime || 0) + 0.1; } catch {}
-                v.play().catch(() => {});
-              } else if (musicStallTicks >= 4 && musicCurrentTrack && musicPlayerFrame) {
-                musicStallTicks = 0;
-                const resumeSec = Math.max(0, Math.floor(v.currentTime || 0));
-                const resumeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(musicCurrentTrack.id)}&autoplay=1&t=${resumeSec}s`;
-                const scramPath = `/scramjet/${encodeURIComponent(resumeUrl)}`;
-                musicPlayerFrame.src = proxyOrigin ? `${proxyOrigin}${scramPath}` : scramPath;
-              }
-            } else {
-              musicLastProgressTime = v.currentTime || 0;
-              musicStallTicks = 0;
-            }
-          }
           if (musicVolumeRange) v.volume = Number(musicVolumeRange.value || 85) / 100;
           if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
           if (musicCurTime) musicCurTime.textContent = formatMusicTime(v.currentTime);
@@ -10196,9 +10160,8 @@
           if (typeof updateHomeMusicDance === 'function') {
             updateHomeMusicDance(!v.paused && !!musicCurrentTrack, musicCurrentTrack);
           }
-          if (v.ended) playNextMusicTrack(1);
         } catch {}
-      }, 600);
+      }, 250);
     }
 
     async function playMusicTrack(song, queueList) {
@@ -10214,21 +10177,23 @@
         updateHomeMusicDance(true, song);
       }
       renderMusicTracks();
-      await proxyHealthPromise;
-      if (proxyAvailable) await ensureProxyRuntimeReady();
-      const targetUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(song.id)}&autoplay=1`;
-      const videoDock = document.getElementById('musicVideoDock');
-      if (videoDock) {
-        videoDock.classList.add('active');
-        videoDock.classList.remove('minimized');
-      }
-      if (musicPlayerFrame) {
-        musicPlayerFrame.style.display = 'block';
-        const scramPath = `/scramjet/${encodeURIComponent(targetUrl)}`;
-        musicPlayerFrame.src = proxyOrigin ? `${proxyOrigin}${scramPath}` : scramPath;
-      }
       if (typeof loadSpicyLyricsForSong === 'function') {
         loadSpicyLyricsForSong(song);
+      }
+      if (typeof scheduleSaveUserProfileState === 'function') {
+        scheduleSaveUserProfileState();
+      }
+      await proxyHealthPromise;
+      if (musicAudioPlayer) {
+        musicAudioPlayer.src = `${proxyOrigin || ''}/api/music/audio/${encodeURIComponent(song.id)}`;
+        if (musicVolumeRange) musicAudioPlayer.volume = Number(musicVolumeRange.value || 85) / 100;
+        musicAudioPlayer.play().catch(() => {});
+      }
+      const q = musicQueue.length ? musicQueue : (musicHomeSections.newReleases || []);
+      const curIdx = q.findIndex((s) => s.id === song.id);
+      const nextSong = (curIdx >= 0 && q.length > 1) ? q[(curIdx + 1) % q.length] : null;
+      if (nextSong && nextSong.id) {
+        fetch(`${proxyOrigin || ''}/api/music/audio/${encodeURIComponent(nextSong.id)}?prepare=1`, { credentials: 'same-origin' }).catch(() => {});
       }
       startMusicPlayerSyncLoop();
     }
@@ -10894,13 +10859,18 @@
         }
         if (connectedAudioEls && !connectedAudioEls.has(videoEl)) {
           connectedAudioEls.add(videoEl);
-          // Non-destructive captureStream tap so YouTube playback/audio is never hijacked or muted
-          const cap = videoEl.captureStream || videoEl.mozCaptureStream;
-          if (typeof cap === 'function') {
-            const stream = cap.call(videoEl);
-            if (stream && stream.getAudioTracks().length > 0) {
-              const src = astraAudioCtx.createMediaStreamSource(stream);
-              src.connect(astraAnalyser);
+          try {
+            const src = astraAudioCtx.createMediaElementSource(videoEl);
+            src.connect(astraAnalyser);
+            astraAnalyser.connect(astraAudioCtx.destination);
+          } catch {
+            const cap = videoEl.captureStream || videoEl.mozCaptureStream;
+            if (typeof cap === 'function') {
+              const stream = cap.call(videoEl);
+              if (stream && stream.getAudioTracks().length > 0) {
+                const src = astraAudioCtx.createMediaStreamSource(stream);
+                src.connect(astraAnalyser);
+              }
             }
           }
         }
@@ -11641,8 +11611,21 @@
 
     function toggleMusicVideoSize() {
       if (!musicVideoDock) return;
-      musicVideoDock.classList.add('active');
-      musicVideoDock.classList.remove('minimized');
+      const isShowing = musicVideoDock.classList.contains('active') && !musicVideoDock.classList.contains('minimized');
+      if (!isShowing) {
+        musicVideoDock.classList.add('active');
+        musicVideoDock.classList.remove('minimized', 'expanded');
+        if (musicCurrentTrack && musicPlayerFrame) {
+          const curSec = musicAudioPlayer ? Math.floor(musicAudioPlayer.currentTime || 0) : 0;
+          const targetUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(musicCurrentTrack.id)}&autoplay=1&mute=1&t=${curSec}s`;
+          const scramPath = `/scramjet/${encodeURIComponent(targetUrl)}`;
+          musicPlayerFrame.style.display = 'block';
+          musicPlayerFrame.src = proxyOrigin ? `${proxyOrigin}${scramPath}` : scramPath;
+        }
+        if (musicVideoResizeBtn) musicVideoResizeBtn.textContent = '⤢';
+        if (musicVideoToggleBtn) musicVideoToggleBtn.textContent = 'bigger video';
+        return;
+      }
       const big = musicVideoDock.classList.toggle('expanded');
       if (musicVideoResizeBtn) musicVideoResizeBtn.textContent = big ? '⤡' : '⤢';
       if (musicVideoToggleBtn) musicVideoToggleBtn.textContent = big ? 'smaller video' : 'bigger video';

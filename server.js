@@ -22,6 +22,48 @@ const AUTH_FILE = path.join(ROOT_DIR, 'auth-store.json');
 const CONFIG_FILE = path.join(ROOT_DIR, 'astra-server-config.json');
 const CHAT_FILE = path.join(ROOT_DIR, 'chat-messages.json');
 
+const musicStreamCache = new Map();
+let ytdlInstancePromise = null;
+async function getYtdlInstance() {
+  if (!ytdlInstancePromise) {
+    ytdlInstancePromise = import('@distube/ytdl-core').then(({ Ytdl }) => new Ytdl()).catch((err) => {
+      ytdlInstancePromise = null;
+      throw err;
+    });
+  }
+  return ytdlInstancePromise;
+}
+
+async function resolveMusicAudioStreamUrl(videoId, forceRefresh = false) {
+  const cleanId = String(videoId || '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!cleanId) throw new Error('Invalid track id');
+  const cached = !forceRefresh && musicStreamCache.get(cleanId);
+  if (cached && cached.expiresAt > Date.now() && cached.url) {
+    return cached;
+  }
+  const ytdl = await getYtdlInstance();
+  const info = await ytdl.getInfo(`https://www.youtube.com/watch?v=${cleanId}`);
+  const audioFmts = (info.formats || []).filter((f) => f && f.hasAudio && !f.hasVideo && f.url);
+  const mp4Fmts = audioFmts.filter((f) => /audio\/mp4/i.test(f.mimeType || '')).sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0));
+  const chosen = mp4Fmts[0] || audioFmts.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0))[0] || (info.formats || []).find((f) => f && f.hasAudio && f.url);
+  if (!chosen || !chosen.url) {
+    throw new Error('No playable audio format found');
+  }
+  const mime = String(chosen.mimeType || 'audio/mp4').split(';')[0].trim();
+  const entry = {
+    url: chosen.url,
+    mime,
+    contentLength: chosen.contentLength ? Number(chosen.contentLength) : 0,
+    expiresAt: Date.now() + 25 * 60 * 1000
+  };
+  if (musicStreamCache.size > 120) {
+    const firstKey = musicStreamCache.keys().next().value;
+    if (firstKey) musicStreamCache.delete(firstKey);
+  }
+  musicStreamCache.set(cleanId, entry);
+  return entry;
+}
+
 const chatWss = new WebSocketServer({ noServer: true });
 const chatClients = new Set();
 const voicePeers = new Map();
@@ -2683,6 +2725,69 @@ const server = http.createServer(async (req, res) => {
     let all = {};
     try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
     return sendJson(res, 200, { ok: true, playlists: Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [] });
+  }
+
+  if (pathname === '/api/music/audio' || pathname.startsWith('/api/music/audio/')) {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const trackId = pathname.startsWith('/api/music/audio/')
+      ? pathname.slice('/api/music/audio/'.length)
+      : (reqUrl.searchParams.get('id') || '');
+    const isPrepare = reqUrl.searchParams.get('prepare') === '1';
+
+    try {
+      const resolved = await resolveMusicAudioStreamUrl(trackId, false);
+      if (isPrepare) {
+        res.writeHead(204, { 'Cache-Control': 'no-store' });
+        return res.end();
+      }
+
+      const streamFromUpstream = (targetUrl, retried = false) => {
+        const parsedUp = new URL(targetUrl);
+        const upHeaders = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          Accept: '*/*',
+          'Accept-Encoding': 'identity'
+        };
+        if (req.headers.range) {
+          upHeaders.Range = req.headers.range;
+        }
+        const upReq = (parsedUp.protocol === 'https:' ? https : http).get(targetUrl, { headers: upHeaders }, async (upRes) => {
+          if ((upRes.statusCode === 403 || upRes.statusCode === 410) && !retried) {
+            upRes.resume();
+            try {
+              const fresh = await resolveMusicAudioStreamUrl(trackId, true);
+              return streamFromUpstream(fresh.url, true);
+            } catch (err) {
+              if (!res.headersSent) return sendJson(res, 502, { ok: false, error: err.message });
+              return res.end();
+            }
+          }
+          const outHeaders = {
+            'Content-Type': upRes.headers['content-type'] || resolved.mime || 'audio/mp4',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'private, max-age=600',
+            'Access-Control-Allow-Origin': '*'
+          };
+          if (upRes.headers['content-length']) outHeaders['Content-Length'] = upRes.headers['content-length'];
+          if (upRes.headers['content-range']) outHeaders['Content-Range'] = upRes.headers['content-range'];
+          res.writeHead(upRes.statusCode || 200, outHeaders);
+          upRes.pipe(res);
+        });
+        upReq.on('error', (err) => {
+          if (!res.headersSent) sendJson(res, 502, { ok: false, error: err.message || 'Audio stream error' });
+          else res.destroy();
+        });
+        req.on('close', () => {
+          try { upReq.destroy(); } catch {}
+        });
+      };
+
+      return streamFromUpstream(resolved.url, false);
+    } catch (e) {
+      return sendJson(res, 502, { ok: false, error: e.message || 'Failed to resolve audio stream' });
+    }
   }
 
   if (pathname === '/api/music/import-spotify' && req.method === 'POST') {
