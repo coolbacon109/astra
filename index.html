@@ -5821,6 +5821,334 @@
         width: 96px;
       }
     }
+
+    /* Discord-Style Chat Channels, Messages, Reactions, Replies & Interactive PFP Cropper */
+    .chat-cat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 8px 4px;
+    }
+    .chat-cat-row .chat-cat-label {
+      padding: 0;
+    }
+    .chat-cat-add-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 16px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+    .chat-cat-add-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .chat-ch-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chat-ch-btn {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+    }
+    .chat-ch-name-text {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chat-ch-unread-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgb(var(--accent-soft));
+      box-shadow: 0 0 8px rgba(var(--accent), 0.9);
+      flex-shrink: 0;
+    }
+    .chat-ch-del-btn {
+      opacity: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 14px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
+    }
+    .chat-ch-row:hover .chat-ch-del-btn {
+      opacity: 1;
+    }
+    .chat-ch-del-btn:hover {
+      background: rgba(239, 68, 68, 0.22);
+      color: #fecaca;
+    }
+    .chat-welcome-banner {
+      padding: 16px 6px 14px;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chat-welcome-hash {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: rgba(var(--accent), 0.18);
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 22px rgba(var(--accent), 0.25);
+    }
+    .chat-msg-row {
+      position: relative;
+      padding: 6px 10px;
+      border-radius: 10px;
+      transition: background 0.14s ease;
+    }
+    .chat-msg-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .chat-msg-row.compact {
+      padding-top: 2px;
+      padding-bottom: 2px;
+      gap: 11px;
+    }
+    .chat-msg-compact-time {
+      width: 34px;
+      flex-shrink: 0;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.34);
+      text-align: right;
+      opacity: 0;
+      padding-top: 2px;
+    }
+    .chat-msg-row.compact:hover .chat-msg-compact-time {
+      opacity: 1;
+    }
+    .chat-msg-actions {
+      position: absolute;
+      right: 10px;
+      top: -12px;
+      z-index: 5;
+      display: none;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 5px;
+      border-radius: 999px;
+      background: rgba(13, 14, 22, 0.94);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 14px rgba(var(--accent), 0.2);
+    }
+    .chat-msg-row:hover .chat-msg-actions {
+      display: flex;
+    }
+    .chat-msg-act-btn {
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12.5px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.14s ease, transform 0.12s ease;
+    }
+    .chat-msg-act-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: scale(1.1);
+      color: #fff;
+    }
+    .chat-reply-quote {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.56);
+      margin-bottom: 4px;
+      padding-left: 8px;
+      border-left: 2px solid rgba(var(--accent), 0.65);
+    }
+    .chat-msg-reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    .chat-react-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .chat-react-pill.mine {
+      background: rgba(var(--accent), 0.24);
+      box-shadow: 0 0 12px rgba(var(--accent), 0.28);
+      color: #fff;
+    }
+    .chat-reply-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 12px;
+      margin: 0 16px;
+      border-radius: 10px 10px 0 0;
+      background: rgba(var(--accent), 0.14);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.86);
+    }
+    .chat-reply-banner.visible {
+      display: flex;
+    }
+    .chat-typing-bar {
+      min-height: 18px;
+      padding: 0 18px 4px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.56);
+    }
+    .chat-emoji-tray {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 12px;
+      margin: 0 16px 6px;
+      border-radius: 12px;
+      background: rgba(15, 16, 25, 0.92);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+    }
+    .chat-emoji-tray.open {
+      display: flex;
+    }
+    .chat-emoji-pick {
+      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .chat-emoji-pick:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(1.12);
+    }
+    .chat-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background: rgba(4, 5, 10, 0.78);
+      backdrop-filter: blur(18px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .chat-modal-backdrop.open {
+      display: flex;
+    }
+    .chat-modal-card {
+      position: relative;
+      width: min(460px, 100%);
+      border-radius: 22px;
+      padding: 22px 24px;
+      background: linear-gradient(155deg, rgba(16, 18, 28, 0.95), rgba(8, 9, 15, 0.98));
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.8), 0 0 36px rgba(var(--accent), 0.22);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .chat-modal-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1.5px;
+      border-radius: inherit;
+      background: conic-gradient(from var(--astra-outline-angle), rgba(var(--accent), 0.2), rgba(var(--accent), 0.9), rgba(var(--accent-soft), 0.95), rgba(var(--accent), 0.2));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      animation: astraOutlineSpin 4.5s linear infinite;
+    }
+    .chat-ch-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .chat-ch-type-opt {
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.78);
+      text-align: left;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: background 0.16s ease, box-shadow 0.16s ease;
+    }
+    .chat-ch-type-opt.active {
+      background: rgba(var(--accent), 0.22);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(var(--accent), 0.28);
+    }
+    .pfp-crop-stage {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      margin: 0 auto;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #06070c;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65);
+    }
+    .pfp-crop-stage:active {
+      cursor: grabbing;
+    }
+    .pfp-crop-stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .pfp-crop-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pfp-crop-controls input[type="range"] {
+      flex: 1;
+      accent-color: rgb(var(--accent-soft));
+    }
   </style>
   <script src="/baremux/index.js"></script>
   <script src="/scram/scramjet.all.js"></script>
@@ -6498,33 +6826,15 @@
 
         <!-- Built-in Discord-Style Astra Chat (/chat) -->
         <div class="chat-hub-container" id="chatHubView">
-          <div class="chat-layout">
+          <div class="chat-layout" id="chatLayoutGrid">
             <aside class="chat-sidebar">
               <div class="chat-server-header">
-                <span>astra</span>
-                <span style="font-size:11px;color:rgba(255,255,255,0.45);" id="chatOnlineBadge">live</span>
-              </div>
-              <div class="chat-channel-scroll">
-                <div class="chat-cat-label">Text Channels</div>
-                <button type="button" class="chat-ch-btn" data-chat-channel="announcements">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h1l2 4h3l-1-4h5a3 3 0 0 0 3-3V8z"/><line x1="22" y1="8" x2="22" y2="12"/></svg>
-                  <span>announcements</span>
-                </button>
-                <button type="button" class="chat-ch-btn active" data-chat-channel="general">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-                  <span>general</span>
-                </button>
-                <button type="button" class="chat-ch-btn" data-chat-channel="off-topic">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-                  <span>off-topic</span>
-                </button>
-                <div class="chat-cat-label" style="margin-top:8px;">Voice Channels</div>
-                <div class="chat-ch-btn" style="cursor:default;color:rgba(255,255,255,0.82);">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                  <span>Voice Lounge</span>
+                <span>astra server</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button type="button" class="ext-btn" id="chatOpenCreateChannelTopBtn" style="padding:3px 9px;font-size:11px;" title="Create a new channel">+ channel</button>
                 </div>
-                <div class="chat-voice-peers" id="chatVoicePeersList"></div>
               </div>
+              <div class="chat-channel-scroll" id="chatChannelScroll"></div>
               <div class="chat-voice-panel">
                 <div style="font-size:11px;color:rgba(255,255,255,0.58);" id="chatVoiceStatusText">voice disconnected</div>
                 <div class="chat-voice-actions">
@@ -6533,14 +6843,14 @@
                 </div>
               </div>
               <div class="chat-user-bar" id="chatUserBar">
-                <div class="chat-user-pill" id="chatChangeAvatarBtn" title="click to change profile picture">
+                <div class="chat-user-pill" id="chatChangeAvatarBtn" title="click to upload & crop profile picture">
                   <div class="chat-avatar-wrap" id="chatSelfAvatarWrap" style="width:30px;height:30px;font-size:11px;">
                     <span id="chatSelfAvatarInitial">A</span>
                     <span class="chat-status-dot"></span>
                   </div>
                   <div style="min-width:0;">
                     <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="chatSelfName">user</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,0.48);">change pfp</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.48);">change / crop pfp</div>
                   </div>
                 </div>
                 <input type="file" id="chatAvatarInput" accept="image/*" style="display:none;" />
@@ -6550,15 +6860,38 @@
 
             <section class="chat-main">
               <div class="chat-main-header">
-                <div class="chat-main-title">
-                  <span>#</span>
-                  <span id="chatChannelTitle">general</span>
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                  <div class="chat-main-title">
+                    <span style="color:rgba(var(--accent-soft),0.9);">#</span>
+                    <span id="chatChannelTitle">general</span>
+                  </div>
+                  <div class="chat-main-topic" id="chatChannelTopic">main server chat</div>
                 </div>
-                <div class="chat-main-topic" id="chatChannelTopic">main server chat</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                  <button type="button" class="ext-btn" id="chatToggleMembersBtn" style="padding:4px 10px;font-size:11px;">members</button>
+                </div>
               </div>
               <div class="chat-messages-feed" id="chatMessagesFeed"></div>
+              <div class="chat-reply-banner" id="chatReplyBanner">
+                <span id="chatReplyBannerText">Replying to user</span>
+                <button type="button" class="chat-msg-act-btn" id="chatCancelReplyBtn">✕</button>
+              </div>
+              <div class="chat-emoji-tray" id="chatEmojiTray">
+                <button type="button" class="chat-emoji-pick">😀</button>
+                <button type="button" class="chat-emoji-pick">😂</button>
+                <button type="button" class="chat-emoji-pick">🔥</button>
+                <button type="button" class="chat-emoji-pick">❤️</button>
+                <button type="button" class="chat-emoji-pick">👍</button>
+                <button type="button" class="chat-emoji-pick">🎮</button>
+                <button type="button" class="chat-emoji-pick">💀</button>
+                <button type="button" class="chat-emoji-pick">✨</button>
+                <button type="button" class="chat-emoji-pick">🚀</button>
+                <button type="button" class="chat-emoji-pick">💜</button>
+              </div>
+              <div class="chat-typing-bar" id="chatTypingBar"></div>
               <div class="chat-composer-wrap">
                 <form class="chat-composer-form" id="chatComposerForm">
+                  <button type="button" class="chat-msg-act-btn" id="chatEmojiToggleBtn" title="Insert emoji">☺</button>
                   <input type="text" id="chatMessageInput" placeholder="Message #general" autocomplete="off" />
                   <button type="submit" class="ext-btn" id="chatSendBtn">send</button>
                 </form>
@@ -6569,6 +6902,65 @@
               <div class="chat-members-head" id="chatMembersHead">MEMBERS — 0</div>
               <div class="chat-members-scroll" id="chatMembersList"></div>
             </aside>
+          </div>
+        </div>
+
+        <!-- Discord Create Channel Modal -->
+        <div class="chat-modal-backdrop" id="chatCreateChannelModal">
+          <form class="chat-modal-card" id="chatCreateChannelForm">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:16px;font-weight:700;color:#fff;">Create Channel</div>
+              <button type="button" class="chat-msg-act-btn" id="chatCloseCreateChannelBtn">✕</button>
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);">Choose a Discord text channel or voice lounge for everyone in Astra.</div>
+            <div class="chat-ch-type-grid">
+              <button type="button" class="chat-ch-type-opt active" data-create-ch-type="text">
+                <strong style="font-size:13px;"># Text Channel</strong>
+                <span style="font-size:11px;opacity:0.7;">Messages, replies &amp; reactions</span>
+              </button>
+              <button type="button" class="chat-ch-type-opt" data-create-ch-type="voice">
+                <strong style="font-size:13px;">🔊 Voice Channel</strong>
+                <span style="font-size:11px;opacity:0.7;">Hang out with mic audio</span>
+              </button>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Channel Name</div>
+              <input type="text" id="chatNewChannelName" class="settings-input" placeholder="e.g. roblox-clips" maxlength="28" required autocomplete="off" />
+              <div style="font-size:11px;color:rgba(255,255,255,0.48);margin-top:4px;" id="chatNewChannelPreview">preview: #new-channel</div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Topic (optional)</div>
+              <input type="text" id="chatNewChannelTopic" class="settings-input" placeholder="What is this channel about?" maxlength="100" autocomplete="off" />
+            </div>
+            <div class="roblox-error-box" id="chatCreateChannelError"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:4px;">
+              <button type="button" class="roblox-secondary-btn" id="chatCancelCreateChannelBtn">Cancel</button>
+              <button type="submit" class="roblox-primary-btn" id="chatSubmitCreateChannelBtn">Create Channel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Interactive PFP Avatar Cropper Modal -->
+        <div class="chat-modal-backdrop" id="chatAvatarCropModal">
+          <div class="chat-modal-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:16px;font-weight:700;color:#fff;">Crop Profile Picture</div>
+              <button type="button" class="chat-msg-act-btn" id="chatCloseCropModalBtn">✕</button>
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.62);">Drag to reposition, scroll or slide to zoom, then save your circular PFP.</div>
+            <div class="pfp-crop-stage" id="pfpCropStage">
+              <canvas id="pfpCropCanvas" width="260" height="260"></canvas>
+            </div>
+            <div class="pfp-crop-controls">
+              <span style="font-size:11.5px;color:rgba(255,255,255,0.65);">zoom</span>
+              <input type="range" id="pfpCropZoom" min="1" max="3.5" step="0.02" value="1" />
+              <button type="button" class="ext-btn" id="pfpCropRotateBtn" title="Rotate 90°">↻ 90°</button>
+              <button type="button" class="ext-btn" id="pfpCropResetBtn">reset</button>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="roblox-secondary-btn" id="pfpCropCancelBtn">Cancel</button>
+              <button type="button" class="roblox-primary-btn" id="pfpCropSaveBtn">Apply PFP</button>
+            </div>
           </div>
         </div>
 
@@ -11904,73 +12296,358 @@
 
     // Discord-Style Astra Chat & WebRTC Voice Lounge (/chat)
     const chatHubView = document.getElementById('chatHubView');
+    const chatChannelScroll = document.getElementById('chatChannelScroll');
     const chatMessagesFeed = document.getElementById('chatMessagesFeed');
     const chatComposerForm = document.getElementById('chatComposerForm');
     const chatMessageInput = document.getElementById('chatMessageInput');
     const chatSendBtn = document.getElementById('chatSendBtn');
     const chatChannelTitle = document.getElementById('chatChannelTitle');
     const chatChannelTopic = document.getElementById('chatChannelTopic');
-    const chatVoicePeersList = document.getElementById('chatVoicePeersList');
     const chatVoiceStatusText = document.getElementById('chatVoiceStatusText');
     const chatJoinVoiceBtn = document.getElementById('chatJoinVoiceBtn');
     const chatMuteMicBtn = document.getElementById('chatMuteMicBtn');
     const chatVoiceAudioMount = document.getElementById('chatVoiceAudioMount');
+    const chatTypingBar = document.getElementById('chatTypingBar');
+    const chatReplyBanner = document.getElementById('chatReplyBanner');
+    const chatReplyBannerText = document.getElementById('chatReplyBannerText');
+    const chatCancelReplyBtn = document.getElementById('chatCancelReplyBtn');
+    const chatEmojiToggleBtn = document.getElementById('chatEmojiToggleBtn');
+    const chatEmojiTray = document.getElementById('chatEmojiTray');
+    const chatToggleMembersBtn = document.getElementById('chatToggleMembersBtn');
+    const chatMembersSidebar = document.getElementById('chatMembersSidebar');
+    const chatLayoutGrid = document.getElementById('chatLayoutGrid');
+    const chatCreateChannelModal = document.getElementById('chatCreateChannelModal');
+    const chatCreateChannelForm = document.getElementById('chatCreateChannelForm');
+    const chatOpenCreateChannelTopBtn = document.getElementById('chatOpenCreateChannelTopBtn');
+    const chatCloseCreateChannelBtn = document.getElementById('chatCloseCreateChannelBtn');
+    const chatCancelCreateChannelBtn = document.getElementById('chatCancelCreateChannelBtn');
+    const chatNewChannelName = document.getElementById('chatNewChannelName');
+    const chatNewChannelTopic = document.getElementById('chatNewChannelTopic');
+    const chatNewChannelPreview = document.getElementById('chatNewChannelPreview');
+    const chatCreateChannelError = document.getElementById('chatCreateChannelError');
 
-    const CHAT_TOPICS = {
-      announcements: 'admin updates only',
-      general: 'main server chat',
-      'off-topic': 'anything goes'
-    };
+    let chatChannelsList = [
+      { id: 'announcements', name: 'announcements', topic: 'admin updates & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+      { id: 'general', name: 'general', topic: 'main server chat', type: 'text', category: 'Text Channels', locked: true },
+      { id: 'off-topic', name: 'off-topic', topic: 'memes, gaming & anything goes', type: 'text', category: 'Text Channels' },
+      { id: 'roblox-squads', name: 'roblox-squads', topic: 'share place IDs & party up for roblox', type: 'text', category: 'Text Channels' },
+      { id: 'voice-lounge', name: 'Voice Lounge', topic: 'chill voice hangout', type: 'voice', category: 'Voice Channels', locked: true }
+    ];
     let chatActiveChannel = 'general';
-    let chatMessagesByChannel = { announcements: [], general: [], 'off-topic': [] };
+    let chatActiveVoiceChannel = 'voice-lounge';
+    let chatCreateChannelType = 'text';
+    let chatMessagesByChannel = {};
+    let chatUnreadChannels = new Set();
+    let chatReplyTarget = null;
+    let chatTypingUsers = new Map();
+    let chatLastTypingSent = 0;
     let chatWs = null;
     let chatMyPeerId = '';
     let chatVoiceConnected = false;
     let chatVoiceMuted = false;
     let chatLocalStream = null;
+    let chatLatestVoicePeers = [];
     const chatRtcPeers = new Map();
 
-    function renderChatMessages() {
-      const canPost = chatActiveChannel !== 'announcements' || !!(currentUser && currentUser.role === 'admin');
-      if (chatChannelTitle) chatChannelTitle.textContent = chatActiveChannel;
-      if (chatChannelTopic) chatChannelTopic.textContent = CHAT_TOPICS[chatActiveChannel] || '';
-      document.querySelectorAll('[data-chat-channel]').forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.chatChannel === chatActiveChannel);
+    function formatChatBodyText(raw) {
+      let esc = escapeMusicHtml(raw || '');
+      esc = esc.replace(/(https?:\/\/[^\s<]+)/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer" style="color:rgb(var(--accent-soft));text-decoration:underline;">${u}</a>`);
+      esc = esc.replace(/(^|\s)(#[a-z0-9-_]+)/gi, '$1<span style="background:rgba(var(--accent),0.2);color:#dbeafe;padding:1px 5px;border-radius:5px;font-weight:600;">$2</span>');
+      esc = esc.replace(/(^|\s)(@[a-z0-9_.-]+)/gi, '$1<span style="background:rgba(167,139,250,0.22);color:#ede9fe;padding:1px 5px;border-radius:5px;font-weight:600;">$2</span>');
+      return esc;
+    }
+
+    function openCreateChannelModal(defaultType = 'text') {
+      chatCreateChannelType = defaultType === 'voice' ? 'voice' : 'text';
+      document.querySelectorAll('[data-create-ch-type]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.createChType === chatCreateChannelType);
       });
+      if (chatNewChannelName) chatNewChannelName.value = '';
+      if (chatNewChannelTopic) chatNewChannelTopic.value = '';
+      if (chatNewChannelPreview) chatNewChannelPreview.textContent = chatCreateChannelType === 'voice' ? 'preview: 🔊 new-voice' : 'preview: #new-channel';
+      if (chatCreateChannelError) {
+        chatCreateChannelError.textContent = '';
+        chatCreateChannelError.classList.remove('visible');
+      }
+      if (chatCreateChannelModal) chatCreateChannelModal.classList.add('open');
+      setTimeout(() => { if (chatNewChannelName) chatNewChannelName.focus(); }, 40);
+    }
+
+    function closeCreateChannelModal() {
+      if (chatCreateChannelModal) chatCreateChannelModal.classList.remove('open');
+    }
+
+    function renderChatChannels() {
+      if (!chatChannelScroll) return;
+      const textChs = chatChannelsList.filter((c) => c.type !== 'voice');
+      const voiceChs = chatChannelsList.filter((c) => c.type === 'voice');
+      const meAdmin = !!(currentUser && currentUser.role === 'admin');
+      const meUser = currentUser ? currentUser.username : '';
+
+      const renderRow = (c) => {
+        const isVoice = c.type === 'voice';
+        const isActive = isVoice ? (chatVoiceConnected && chatActiveVoiceChannel === c.id) : (c.id === chatActiveChannel);
+        const canDel = !c.locked && (meAdmin || (c.createdBy && c.createdBy === meUser));
+        const iconSvg = isVoice
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>'
+          : (c.adminOnly
+              ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h1l2 4h3l-1-4h5a3 3 0 0 0 3-3V8z"/><line x1="22" y1="8" x2="22" y2="12"/></svg>'
+              : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>');
+        const unreadDot = !isVoice && chatUnreadChannels.has(c.id) ? '<span class="chat-ch-unread-dot"></span>' : '';
+        const delBtn = canDel ? `<button type="button" class="chat-ch-del-btn" data-del-channel="${escapeMusicHtml(c.id)}" title="Delete channel">✕</button>` : '';
+        const peersInRoom = isVoice ? (chatLatestVoicePeers || []).filter((p) => (p.voiceChannel || 'voice-lounge') === c.id) : [];
+        const peersHtml = isVoice && peersInRoom.length
+          ? `<div class="chat-voice-peers">${peersInRoom.map((p) => `<div class="chat-voice-peer"><span class="chat-voice-dot" style="background:${p.muted ? '#f87171' : '#4ade80'}"></span><span>${escapeMusicHtml(p.displayName || p.username)}${p.muted ? ' (muted)' : ''}</span></div>`).join('')}</div>`
+          : '';
+        return `
+          <div class="chat-ch-row">
+            <button type="button" class="chat-ch-btn ${isActive ? 'active' : ''}" data-chat-channel="${escapeMusicHtml(c.id)}" data-chat-type="${isVoice ? 'voice' : 'text'}">
+              ${iconSvg}
+              <span class="chat-ch-name-text">${escapeMusicHtml(c.name)}</span>
+              ${unreadDot}
+            </button>
+            ${delBtn}
+          </div>
+          ${peersHtml}
+        `;
+      };
+
+      chatChannelScroll.innerHTML = `
+        <div class="chat-cat-row">
+          <div class="chat-cat-label">Text Channels</div>
+          <button type="button" class="chat-cat-add-btn" id="chatAddTextChannelBtn" title="Create Text Channel">+</button>
+        </div>
+        ${textChs.map(renderRow).join('')}
+        <div class="chat-cat-row" style="margin-top:8px;">
+          <div class="chat-cat-label">Voice Channels</div>
+          <button type="button" class="chat-cat-add-btn" id="chatAddVoiceChannelBtn" title="Create Voice Channel">+</button>
+        </div>
+        ${voiceChs.map(renderRow).join('')}
+      `;
+
+      const addTxtBtn = document.getElementById('chatAddTextChannelBtn');
+      const addVoiBtn = document.getElementById('chatAddVoiceChannelBtn');
+      if (addTxtBtn) addTxtBtn.addEventListener('click', () => openCreateChannelModal('text'));
+      if (addVoiBtn) addVoiBtn.addEventListener('click', () => openCreateChannelModal('voice'));
+
+      chatChannelScroll.querySelectorAll('[data-chat-channel]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.chatChannel;
+          const kind = btn.dataset.chatType;
+          if (kind === 'voice') {
+            chatActiveVoiceChannel = id;
+            if (!chatVoiceConnected && chatJoinVoiceBtn) chatJoinVoiceBtn.click();
+            else if (chatVoiceConnected && chatWs && chatWs.readyState === 1) {
+              chatWs.send(JSON.stringify({ type: 'voice-join', channel: id, muted: chatVoiceMuted }));
+              if (chatVoiceStatusText) chatVoiceStatusText.textContent = `voice connected (${id})`;
+              renderChatChannels();
+            }
+          } else {
+            chatUnreadChannels.delete(id);
+            loadChatChannel(id);
+          }
+        });
+      });
+
+      chatChannelScroll.querySelectorAll('[data-del-channel]').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const delId = btn.dataset.delChannel;
+          try {
+            await proxyHealthPromise;
+            const r = await fetch(`${proxyOrigin}/api/chat/channels?id=${encodeURIComponent(delId)}`, {
+              method: 'DELETE',
+              credentials: 'same-origin'
+            });
+            const j = await r.json();
+            if (r.ok && j && j.ok && Array.isArray(j.channels)) {
+              chatChannelsList = j.channels;
+              if (chatActiveChannel === delId) loadChatChannel('general');
+              else renderChatChannels();
+            } else if (typeof showToast === 'function') {
+              showToast((j && j.error) || 'Could not delete channel');
+            }
+          } catch {}
+        });
+      });
+    }
+
+    function setChatReplyTarget(msgObj) {
+      chatReplyTarget = msgObj || null;
+      if (chatReplyBanner && chatReplyBannerText) {
+        if (chatReplyTarget) {
+          chatReplyBannerText.textContent = `Replying to ${chatReplyTarget.displayName || chatReplyTarget.username}: "${String(chatReplyTarget.text || '').slice(0, 48)}"`;
+          chatReplyBanner.classList.add('visible');
+          if (chatMessageInput) chatMessageInput.focus();
+        } else {
+          chatReplyBanner.classList.remove('visible');
+        }
+      }
+    }
+
+    function renderChatTypingIndicator() {
+      if (!chatTypingBar) return;
+      const now = Date.now();
+      const activeNames = [];
+      for (const [uname, info] of chatTypingUsers.entries()) {
+        if (info.channel === chatActiveChannel && now - info.ts < 3500) {
+          activeNames.push(info.displayName || uname);
+        } else if (now - info.ts >= 3500) {
+          chatTypingUsers.delete(uname);
+        }
+      }
+      if (!activeNames.length) chatTypingBar.textContent = '';
+      else if (activeNames.length === 1) chatTypingBar.textContent = `${activeNames[0]} is typing...`;
+      else chatTypingBar.textContent = `${activeNames.slice(0, 3).join(', ')} are typing...`;
+    }
+
+    async function toggleChatMessageReaction(messageId, emoji) {
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/chat/react`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: chatActiveChannel, messageId, emoji })
+        });
+        const j = await r.json();
+        if (r.ok && j && j.ok && j.message) {
+          const arr = chatMessagesByChannel[chatActiveChannel] || [];
+          const idx = arr.findIndex((x) => x.id === j.message.id);
+          if (idx >= 0) arr[idx] = j.message;
+          renderChatMessages();
+        }
+      } catch {}
+    }
+
+    async function deleteChatMessage(messageId) {
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: chatActiveChannel, messageId })
+        });
+        const j = await r.json();
+        if (r.ok && j && j.ok) {
+          chatMessagesByChannel[chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
+          renderChatMessages();
+        } else if (typeof showToast === 'function') {
+          showToast((j && j.error) || 'Could not delete message');
+        }
+      } catch {}
+    }
+
+    function renderChatMessages() {
+      const chObj = chatChannelsList.find((c) => c.id === chatActiveChannel) || { id: chatActiveChannel, name: chatActiveChannel, topic: '' };
+      const canPost = !chObj.adminOnly || !!(currentUser && currentUser.role === 'admin');
+      if (chatChannelTitle) chatChannelTitle.textContent = chObj.name || chatActiveChannel;
+      if (chatChannelTopic) chatChannelTopic.textContent = chObj.topic || '';
+      renderChatChannels();
       if (chatMessageInput && chatSendBtn) {
         chatMessageInput.disabled = !canPost;
         chatSendBtn.disabled = !canPost;
         chatMessageInput.placeholder = canPost
-          ? `Message #${chatActiveChannel}`
-          : 'Only coolbacon (admin) can post in #announcements';
+          ? `Message #${chObj.name || chatActiveChannel}`
+          : `Only coolbacon (admin) can post in #${chObj.name || chatActiveChannel}`;
       }
       if (!chatMessagesFeed) return;
       const list = chatMessagesByChannel[chatActiveChannel] || [];
-      if (!list.length) {
-        chatMessagesFeed.innerHTML = `<div style="padding:24px;color:rgba(255,255,255,0.45);font-size:13px;">No messages in #${escapeMusicHtml(chatActiveChannel)} yet.</div>`;
-        return;
-      }
-      chatMessagesFeed.innerHTML = list.map((m) => {
+      const meUser = currentUser ? currentUser.username : '';
+      const meAdmin = !!(currentUser && currentUser.role === 'admin');
+
+      const welcomeHtml = `
+        <div class="chat-welcome-banner">
+          <div class="chat-welcome-hash">#</div>
+          <div style="font-size:20px;font-weight:700;color:#fff;">Welcome to #${escapeMusicHtml(chObj.name || chatActiveChannel)}!</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.58);">${escapeMusicHtml(chObj.topic || 'This is the start of this channel.')}</div>
+        </div>
+      `;
+
+      const rowsHtml = list.map((m, idx) => {
+        const prev = idx > 0 ? list[idx - 1] : null;
+        const grouped = !m.replyTo && prev && prev.username === m.username && m.ts && prev.ts && (m.ts - prev.ts < 300000);
         const dt = m.ts ? new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         const initial = String(m.displayName || m.username || '?').slice(0, 1);
         const adminBadge = m.role === 'admin' ? '<span class="chat-admin-tag">admin</span>' : '';
         const avatarHtml = m.avatar
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : escapeMusicHtml(initial);
+        const canDelMsg = meAdmin || (meUser && m.username === meUser);
+
+        const replyHtml = m.replyTo
+          ? `<div class="chat-reply-quote">↳ <strong>@${escapeMusicHtml(m.replyTo.displayName || m.replyTo.username)}</strong> ${escapeMusicHtml(m.replyTo.text || '')}</div>`
+          : '';
+
+        const reacts = m.reactions && typeof m.reactions === 'object' ? Object.entries(m.reactions) : [];
+        const reactHtml = reacts.length
+          ? `<div class="chat-msg-reactions">${reacts.map(([em, users]) => {
+              const arr = Array.isArray(users) ? users : [];
+              const mine = meUser && arr.includes(meUser);
+              return `<button type="button" class="chat-react-pill ${mine ? 'mine' : ''}" data-react-msg="${escapeMusicHtml(m.id)}" data-react-emoji="${escapeMusicHtml(em)}">${escapeMusicHtml(em)} <span>${arr.length}</span></button>`;
+            }).join('')}</div>`
+          : '';
+
+        const hoverActions = `
+          <div class="chat-msg-actions">
+            <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="👍" title="React 👍">👍</button>
+            <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="❤️" title="React ❤️">❤️</button>
+            <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="😂" title="React 😂">😂</button>
+            <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="🔥" title="React 🔥">🔥</button>
+            <button type="button" class="chat-msg-act-btn" data-reply-msg="${escapeMusicHtml(m.id)}" title="Reply">↩</button>
+            ${canDelMsg ? `<button type="button" class="chat-msg-act-btn" data-del-msg="${escapeMusicHtml(m.id)}" title="Delete" style="color:#fca5a5;">🗑</button>` : ''}
+          </div>
+        `;
+
+        if (grouped) {
+          return `
+            <div class="chat-msg-row compact">
+              ${hoverActions}
+              <div class="chat-msg-compact-time">${escapeMusicHtml(dt)}</div>
+              <div class="chat-msg-body">
+                <div class="chat-msg-text">${formatChatBodyText(m.text)}</div>
+                ${reactHtml}
+              </div>
+            </div>
+          `;
+        }
+
         return `
           <div class="chat-msg-row">
+            ${hoverActions}
             <div class="chat-msg-avatar" style="overflow:hidden;">${avatarHtml}</div>
             <div class="chat-msg-body">
+              ${replyHtml}
               <div class="chat-msg-meta">
                 <span class="chat-msg-author">${escapeMusicHtml(m.displayName || m.username)}</span>
                 ${adminBadge}
                 <span class="chat-msg-time">${escapeMusicHtml(dt)}</span>
               </div>
-              <div class="chat-msg-text">${escapeMusicHtml(m.text)}</div>
+              <div class="chat-msg-text">${formatChatBodyText(m.text)}</div>
+              ${reactHtml}
             </div>
           </div>
         `;
       }).join('');
+
+      chatMessagesFeed.innerHTML = welcomeHtml + rowsHtml;
+      chatMessagesFeed.querySelectorAll('[data-react-msg], [data-quick-react]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mid = btn.dataset.reactMsg || btn.dataset.quickReact;
+          const em = btn.dataset.reactEmoji || btn.dataset.emoji;
+          if (mid && em) toggleChatMessageReaction(mid, em);
+        });
+      });
+      chatMessagesFeed.querySelectorAll('[data-reply-msg]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const found = list.find((x) => x.id === btn.dataset.replyMsg);
+          if (found) setChatReplyTarget(found);
+        });
+      });
+      chatMessagesFeed.querySelectorAll('[data-del-msg]').forEach((btn) => {
+        btn.addEventListener('click', () => deleteChatMessage(btn.dataset.delMsg));
+      });
       chatMessagesFeed.scrollTop = chatMessagesFeed.scrollHeight;
     }
 
@@ -12016,18 +12693,8 @@
     }
 
     function renderVoicePeers(peers) {
-      if (!chatVoicePeersList) return;
-      const list = Array.isArray(peers) ? peers : [];
-      if (!list.length) {
-        chatVoicePeersList.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.38);">empty</div>';
-        return;
-      }
-      chatVoicePeersList.innerHTML = list.map((p) => `
-        <div class="chat-voice-peer">
-          <span class="chat-voice-dot" style="background:${p.muted ? '#f87171' : '#4ade80'}"></span>
-          <span>${escapeMusicHtml(p.displayName || p.username)}${p.muted ? ' (muted)' : ''}</span>
-        </div>
-      `).join('');
+      chatLatestVoicePeers = Array.isArray(peers) ? peers : [];
+      renderChatChannels();
     }
 
     function createVoicePeerConnection(remotePeerId, initiator) {
@@ -12079,11 +12746,40 @@
               if (data.members) renderChatMembers(data.members);
             } else if (data.type === 'members-update') {
               renderChatMembers(data.members);
+            } else if (data.type === 'channels-update' && Array.isArray(data.channels)) {
+              chatChannelsList = data.channels;
+              if (data.deletedChannelId && chatActiveChannel === data.deletedChannelId) {
+                loadChatChannel('general');
+              } else {
+                renderChatChannels();
+              }
+            } else if (data.type === 'typing' && data.username) {
+              chatTypingUsers.set(data.username, { channel: data.channel, displayName: data.displayName, ts: Date.now() });
+              renderChatTypingIndicator();
+              setTimeout(renderChatTypingIndicator, 3600);
             } else if (data.type === 'chat-message' && data.message) {
               const ch = data.channel || data.message.channel;
               if (!chatMessagesByChannel[ch]) chatMessagesByChannel[ch] = [];
               if (!chatMessagesByChannel[ch].some((x) => x.id === data.message.id)) {
                 chatMessagesByChannel[ch].push(data.message);
+                chatTypingUsers.delete(data.message.username);
+                renderChatTypingIndicator();
+                if (ch === chatActiveChannel) renderChatMessages();
+                else {
+                  chatUnreadChannels.add(ch);
+                  renderChatChannels();
+                }
+              }
+            } else if (data.type === 'message-update' && data.message) {
+              const ch = data.channel;
+              const arr = chatMessagesByChannel[ch] || [];
+              const idx = arr.findIndex((x) => x.id === data.message.id);
+              if (idx >= 0) arr[idx] = data.message;
+              if (ch === chatActiveChannel) renderChatMessages();
+            } else if (data.type === 'message-delete' && data.messageId) {
+              const ch = data.channel;
+              if (Array.isArray(chatMessagesByChannel[ch])) {
+                chatMessagesByChannel[ch] = chatMessagesByChannel[ch].filter((x) => x.id !== data.messageId);
                 if (ch === chatActiveChannel) renderChatMessages();
               }
             } else if (data.type === 'voice-peers') {
@@ -12119,6 +12815,8 @@
 
     async function loadChatChannel(ch) {
       chatActiveChannel = ch || 'general';
+      chatUnreadChannels.delete(chatActiveChannel);
+      setChatReplyTarget(null);
       renderChatMessages();
       try {
         await proxyHealthPromise;
@@ -12126,7 +12824,9 @@
         if (r.ok) {
           const j = await r.json();
           if (j && j.ok) {
-            chatMessagesByChannel[chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
+            if (Array.isArray(j.channels)) chatChannelsList = j.channels;
+            chatMessagesByChannel[j.channel || chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
+            chatActiveChannel = j.channel || chatActiveChannel;
             renderChatMessages();
             renderVoicePeers(j.voicePeers);
             if (j.members) renderChatMembers(j.members);
@@ -12140,9 +12840,102 @@
       await loadChatChannel(chatActiveChannel);
     }
 
-    document.querySelectorAll('[data-chat-channel]').forEach((btn) => {
-      btn.addEventListener('click', () => loadChatChannel(btn.dataset.chatChannel));
+    if (chatOpenCreateChannelTopBtn) chatOpenCreateChannelTopBtn.addEventListener('click', () => openCreateChannelModal('text'));
+    if (chatCloseCreateChannelBtn) chatCloseCreateChannelBtn.addEventListener('click', closeCreateChannelModal);
+    if (chatCancelCreateChannelBtn) chatCancelCreateChannelBtn.addEventListener('click', closeCreateChannelModal);
+    if (chatCreateChannelModal) {
+      chatCreateChannelModal.addEventListener('click', (e) => {
+        if (e.target === chatCreateChannelModal) closeCreateChannelModal();
+      });
+    }
+    document.querySelectorAll('[data-create-ch-type]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        chatCreateChannelType = btn.dataset.createChType === 'voice' ? 'voice' : 'text';
+        document.querySelectorAll('[data-create-ch-type]').forEach((b) => b.classList.toggle('active', b === btn));
+        if (chatNewChannelName && chatNewChannelPreview) {
+          const raw = chatNewChannelName.value.trim();
+          const slug = raw.toLowerCase().replace(/[^a-z0-9-_ ]+/g, '').replace(/\s+/g, '-') || 'new-channel';
+          chatNewChannelPreview.textContent = chatCreateChannelType === 'voice' ? `preview: 🔊 ${raw || 'Voice Room'}` : `preview: #${slug}`;
+        }
+      });
     });
+    if (chatNewChannelName && chatNewChannelPreview) {
+      chatNewChannelName.addEventListener('input', () => {
+        const raw = chatNewChannelName.value.trim();
+        const slug = raw.toLowerCase().replace(/[^a-z0-9-_ ]+/g, '').replace(/\s+/g, '-') || 'new-channel';
+        chatNewChannelPreview.textContent = chatCreateChannelType === 'voice' ? `preview: 🔊 ${raw || 'Voice Room'}` : `preview: #${slug}`;
+      });
+    }
+    if (chatCreateChannelForm) {
+      chatCreateChannelForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (chatCreateChannelError) {
+          chatCreateChannelError.textContent = '';
+          chatCreateChannelError.classList.remove('visible');
+        }
+        const name = chatNewChannelName ? chatNewChannelName.value.trim() : '';
+        const topic = chatNewChannelTopic ? chatNewChannelTopic.value.trim() : '';
+        try {
+          await proxyHealthPromise;
+          const r = await fetch(`${proxyOrigin}/api/chat/channels`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, topic, type: chatCreateChannelType })
+          });
+          const j = await r.json();
+          if (r.ok && j && j.ok && j.channel) {
+            chatChannelsList = Array.isArray(j.channels) ? j.channels : chatChannelsList;
+            closeCreateChannelModal();
+            if (j.channel.type === 'text') {
+              await loadChatChannel(j.channel.id);
+            } else {
+              chatActiveVoiceChannel = j.channel.id;
+              renderChatChannels();
+            }
+            if (typeof showToast === 'function') showToast(`created ${j.channel.type === 'voice' ? '🔊 ' : '#'}${j.channel.name}`);
+          } else if (chatCreateChannelError) {
+            chatCreateChannelError.textContent = (j && j.error) || 'Could not create channel';
+            chatCreateChannelError.classList.add('visible');
+          }
+        } catch (err) {
+          if (chatCreateChannelError) {
+            chatCreateChannelError.textContent = (err && err.message) || 'Network error creating channel';
+            chatCreateChannelError.classList.add('visible');
+          }
+        }
+      });
+    }
+
+    if (chatCancelReplyBtn) chatCancelReplyBtn.addEventListener('click', () => setChatReplyTarget(null));
+    if (chatEmojiToggleBtn && chatEmojiTray) {
+      chatEmojiToggleBtn.addEventListener('click', () => chatEmojiTray.classList.toggle('open'));
+      chatEmojiTray.querySelectorAll('.chat-emoji-pick').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (chatMessageInput && !chatMessageInput.disabled) {
+            chatMessageInput.value += btn.textContent;
+            chatMessageInput.focus();
+          }
+          chatEmojiTray.classList.remove('open');
+        });
+      });
+    }
+    if (chatToggleMembersBtn && chatMembersSidebar && chatLayoutGrid) {
+      chatToggleMembersBtn.addEventListener('click', () => {
+        const hidden = chatMembersSidebar.style.display === 'none';
+        chatMembersSidebar.style.display = hidden ? '' : 'none';
+        chatLayoutGrid.style.gridTemplateColumns = hidden ? '' : '220px 1fr';
+      });
+    }
+    if (chatMessageInput) {
+      chatMessageInput.addEventListener('input', () => {
+        const now = Date.now();
+        if (chatWs && chatWs.readyState === 1 && now - chatLastTypingSent > 1800) {
+          chatLastTypingSent = now;
+          chatWs.send(JSON.stringify({ type: 'typing', channel: chatActiveChannel }));
+        }
+      });
+    }
 
     if (chatComposerForm) {
       chatComposerForm.addEventListener('submit', async (e) => {
@@ -12151,15 +12944,18 @@
         if (!text) return;
         try {
           await proxyHealthPromise;
+          const payload = { channel: chatActiveChannel, text };
+          if (chatReplyTarget && chatReplyTarget.id) payload.replyToId = chatReplyTarget.id;
           const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel: chatActiveChannel, text })
+            body: JSON.stringify(payload)
           });
           const j = await r.json();
           if (r.ok && j && j.ok) {
             if (chatMessageInput) chatMessageInput.value = '';
+            setChatReplyTarget(null);
             chatMessagesByChannel[chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
             renderChatMessages();
           } else if (typeof showToast === 'function') {
@@ -12181,12 +12977,14 @@
           chatVoiceMuted = false;
           connectChatWebSocket();
           if (chatWs && chatWs.readyState === 1) {
-            chatWs.send(JSON.stringify({ type: 'voice-join', muted: false }));
+            chatWs.send(JSON.stringify({ type: 'voice-join', channel: chatActiveVoiceChannel, muted: false }));
           }
           chatJoinVoiceBtn.textContent = 'leave';
           chatJoinVoiceBtn.classList.add('danger');
           if (chatMuteMicBtn) { chatMuteMicBtn.disabled = false; chatMuteMicBtn.textContent = 'mute'; }
-          if (chatVoiceStatusText) chatVoiceStatusText.textContent = 'voice connected (Voice Lounge)';
+          const vCh = chatChannelsList.find((c) => c.id === chatActiveVoiceChannel);
+          if (chatVoiceStatusText) chatVoiceStatusText.textContent = `voice connected (${(vCh && vCh.name) || chatActiveVoiceChannel})`;
+          renderChatChannels();
         } else {
           chatVoiceConnected = false;
           if (chatLocalStream) {
@@ -12201,6 +12999,7 @@
           chatJoinVoiceBtn.classList.remove('danger');
           if (chatMuteMicBtn) { chatMuteMicBtn.disabled = true; chatMuteMicBtn.textContent = 'mute'; }
           if (chatVoiceStatusText) chatVoiceStatusText.textContent = 'voice disconnected';
+          renderChatChannels();
         }
       });
     }
@@ -12309,9 +13108,183 @@
       if (layoutModal) origAuthMutationObserver.observe(layoutModal, { attributes: true, attributeFilter: ['class'] });
     }
 
-    // Chat Profile Picture Upload
+    // Chat Profile Picture Interactive Cropper + Upload
     const chatChangeAvatarBtn = document.getElementById('chatChangeAvatarBtn');
     const chatAvatarInput = document.getElementById('chatAvatarInput');
+    const chatAvatarCropModal = document.getElementById('chatAvatarCropModal');
+    const pfpCropStage = document.getElementById('pfpCropStage');
+    const pfpCropCanvas = document.getElementById('pfpCropCanvas');
+    const pfpCropZoom = document.getElementById('pfpCropZoom');
+    const pfpCropRotateBtn = document.getElementById('pfpCropRotateBtn');
+    const pfpCropResetBtn = document.getElementById('pfpCropResetBtn');
+    const pfpCropSaveBtn = document.getElementById('pfpCropSaveBtn');
+    const pfpCropCancelBtn = document.getElementById('pfpCropCancelBtn');
+    const chatCloseCropModalBtn = document.getElementById('chatCloseCropModalBtn');
+
+    let pfpCropImg = null;
+    let pfpCropState = { zoom: 1, offX: 0, offY: 0, rot: 0, drag: false, startX: 0, startY: 0, origX: 0, origY: 0 };
+
+    function renderPfpCropPreview() {
+      if (!pfpCropCanvas || !pfpCropImg) return;
+      const ctx = pfpCropCanvas.getContext('2d');
+      const W = pfpCropCanvas.width;
+      const H = pfpCropCanvas.height;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#07080d';
+      ctx.fillRect(0, 0, W, H);
+
+      const rotRad = (pfpCropState.rot * Math.PI) / 180;
+      const swapped = pfpCropState.rot % 180 !== 0;
+      const iw = swapped ? pfpCropImg.height : pfpCropImg.width;
+      const ih = swapped ? pfpCropImg.width : pfpCropImg.height;
+      const circleD = 220;
+      const baseScale = circleD / Math.min(iw, ih);
+      const scale = baseScale * pfpCropState.zoom;
+
+      const maxX = Math.max(0, (iw * scale - circleD) / 2);
+      const maxY = Math.max(0, (ih * scale - circleD) / 2);
+      pfpCropState.offX = Math.max(-maxX, Math.min(maxX, pfpCropState.offX));
+      pfpCropState.offY = Math.max(-maxY, Math.min(maxY, pfpCropState.offY));
+
+      ctx.save();
+      ctx.translate(W / 2 + pfpCropState.offX, H / 2 + pfpCropState.offY);
+      ctx.rotate(rotRad);
+      ctx.scale(scale, scale);
+      ctx.drawImage(pfpCropImg, -pfpCropImg.width / 2, -pfpCropImg.height / 2);
+      ctx.restore();
+
+      // Circular Discord PFP cutout mask & ring
+      ctx.save();
+      ctx.fillStyle = 'rgba(4, 5, 10, 0.7)';
+      ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      ctx.arc(W / 2, H / 2, circleD / 2, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(W / 2, H / 2, circleD / 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function openPfpCropModal(img) {
+      pfpCropImg = img;
+      pfpCropState = { zoom: 1, offX: 0, offY: 0, rot: 0, drag: false, startX: 0, startY: 0, origX: 0, origY: 0 };
+      if (pfpCropZoom) pfpCropZoom.value = '1';
+      renderPfpCropPreview();
+      if (chatAvatarCropModal) chatAvatarCropModal.classList.add('open');
+    }
+
+    function closePfpCropModal() {
+      if (chatAvatarCropModal) chatAvatarCropModal.classList.remove('open');
+      pfpCropImg = null;
+    }
+
+    if (pfpCropStage) {
+      pfpCropStage.addEventListener('pointerdown', (e) => {
+        if (!pfpCropImg) return;
+        pfpCropState.drag = true;
+        pfpCropState.startX = e.clientX;
+        pfpCropState.startY = e.clientY;
+        pfpCropState.origX = pfpCropState.offX;
+        pfpCropState.origY = pfpCropState.offY;
+        if (pfpCropStage.setPointerCapture) try { pfpCropStage.setPointerCapture(e.pointerId); } catch {}
+      });
+      pfpCropStage.addEventListener('pointermove', (e) => {
+        if (!pfpCropState.drag || !pfpCropImg) return;
+        pfpCropState.offX = pfpCropState.origX + (e.clientX - pfpCropState.startX);
+        pfpCropState.offY = pfpCropState.origY + (e.clientY - pfpCropState.startY);
+        renderPfpCropPreview();
+      });
+      const stopDrag = () => { pfpCropState.drag = false; };
+      pfpCropStage.addEventListener('pointerup', stopDrag);
+      pfpCropStage.addEventListener('pointercancel', stopDrag);
+      pfpCropStage.addEventListener('wheel', (e) => {
+        if (!pfpCropImg) return;
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.12 : -0.12;
+        pfpCropState.zoom = Math.max(1, Math.min(3.5, Number((pfpCropState.zoom + delta).toFixed(2))));
+        if (pfpCropZoom) pfpCropZoom.value = String(pfpCropState.zoom);
+        renderPfpCropPreview();
+      }, { passive: false });
+    }
+    if (pfpCropZoom) {
+      pfpCropZoom.addEventListener('input', () => {
+        pfpCropState.zoom = Number(pfpCropZoom.value || 1);
+        renderPfpCropPreview();
+      });
+    }
+    if (pfpCropRotateBtn) {
+      pfpCropRotateBtn.addEventListener('click', () => {
+        pfpCropState.rot = (pfpCropState.rot + 90) % 360;
+        renderPfpCropPreview();
+      });
+    }
+    if (pfpCropResetBtn) {
+      pfpCropResetBtn.addEventListener('click', () => {
+        pfpCropState.zoom = 1;
+        pfpCropState.offX = 0;
+        pfpCropState.offY = 0;
+        pfpCropState.rot = 0;
+        if (pfpCropZoom) pfpCropZoom.value = '1';
+        renderPfpCropPreview();
+      });
+    }
+    if (pfpCropCancelBtn) pfpCropCancelBtn.addEventListener('click', closePfpCropModal);
+    if (chatCloseCropModalBtn) chatCloseCropModalBtn.addEventListener('click', closePfpCropModal);
+    if (pfpCropSaveBtn) {
+      pfpCropSaveBtn.addEventListener('click', async () => {
+        if (!pfpCropImg) return;
+        pfpCropSaveBtn.disabled = true;
+        pfpCropSaveBtn.textContent = 'Saving...';
+        try {
+          const out = document.createElement('canvas');
+          const OUT_SIZE = 256;
+          out.width = OUT_SIZE;
+          out.height = OUT_SIZE;
+          const octx = out.getContext('2d');
+          const rotRad = (pfpCropState.rot * Math.PI) / 180;
+          const swapped = pfpCropState.rot % 180 !== 0;
+          const iw = swapped ? pfpCropImg.height : pfpCropImg.width;
+          const ih = swapped ? pfpCropImg.width : pfpCropImg.height;
+          const circleD = 220;
+          const ratio = OUT_SIZE / circleD;
+          const scale = (circleD / Math.min(iw, ih)) * pfpCropState.zoom * ratio;
+
+          octx.fillStyle = '#07080d';
+          octx.fillRect(0, 0, OUT_SIZE, OUT_SIZE);
+          octx.save();
+          octx.translate(OUT_SIZE / 2 + pfpCropState.offX * ratio, OUT_SIZE / 2 + pfpCropState.offY * ratio);
+          octx.rotate(rotRad);
+          octx.scale(scale, scale);
+          octx.drawImage(pfpCropImg, -pfpCropImg.width / 2, -pfpCropImg.height / 2);
+          octx.restore();
+
+          const avatarData = out.toDataURL('image/jpeg', 0.88);
+          await proxyHealthPromise;
+          const r = await fetch(`${proxyOrigin}/api/chat/avatar`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatar: avatarData })
+          });
+          const j = await r.json();
+          if (r.ok && j && j.ok) {
+            if (currentUser) currentUser.avatar = avatarData;
+            if (j.members) renderChatMembers(j.members);
+            loadChatChannel(chatActiveChannel);
+            closePfpCropModal();
+            if (typeof showToast === 'function') showToast('cropped profile picture saved!');
+          } else if (typeof showToast === 'function') {
+            showToast((j && j.error) || 'Failed to save cropped PFP');
+          }
+        } catch {}
+        pfpCropSaveBtn.disabled = false;
+        pfpCropSaveBtn.textContent = 'Apply PFP';
+      });
+    }
+
     if (chatChangeAvatarBtn && chatAvatarInput) {
       chatChangeAvatarBtn.addEventListener('click', () => chatAvatarInput.click());
       chatAvatarInput.addEventListener('change', () => {
@@ -12320,32 +13293,7 @@
         const reader = new FileReader();
         reader.onload = () => {
           const img = new Image();
-          img.onload = async () => {
-            const c = document.createElement('canvas');
-            c.width = 128;
-            c.height = 128;
-            const ctx = c.getContext('2d');
-            const minSide = Math.min(img.width, img.height);
-            const sx = (img.width - minSide) / 2;
-            const sy = (img.height - minSide) / 2;
-            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, 128, 128);
-            const avatarData = c.toDataURL('image/jpeg', 0.82);
-            try {
-              const r = await fetch(`${proxyOrigin}/api/chat/avatar`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ avatar: avatarData })
-              });
-              const j = await r.json();
-              if (r.ok && j && j.ok) {
-                if (currentUser) currentUser.avatar = avatarData;
-                if (j.members) renderChatMembers(j.members);
-                loadChatChannel(chatActiveChannel);
-                if (typeof showToast === 'function') showToast('profile picture updated!');
-              }
-            } catch {}
-          };
+          img.onload = () => openPfpCropModal(img);
           img.src = String(reader.result || '');
         };
         reader.readAsDataURL(file);

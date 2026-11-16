@@ -84,6 +84,7 @@ function getVoicePeerList() {
     username: p.username,
     displayName: p.displayName,
     role: p.role,
+    voiceChannel: p.voiceChannel || 'voice-lounge',
     muted: !!p.muted,
     deafened: !!p.deafened
   }));
@@ -134,10 +135,18 @@ chatWss.on('connection', (ws, req, sessionUser) => {
           username: ws.astraSession.username,
           displayName: ws.astraSession.displayName,
           role: ws.astraSession.role,
+          voiceChannel: String(msg.channel || 'voice-lounge').slice(0, 40),
           muted: !!msg.muted,
           deafened: !!msg.deafened
         });
         broadcastChatWs({ type: 'voice-peers', voicePeers: getVoicePeerList(), joinedPeerId: peerId });
+      } else if (msg.type === 'typing') {
+        broadcastChatWs({
+          type: 'typing',
+          channel: String(msg.channel || 'general').slice(0, 40),
+          username: ws.astraSession.username,
+          displayName: ws.astraSession.displayName
+        }, ws);
       } else if (msg.type === 'voice-leave') {
         if (voicePeers.delete(peerId)) {
           broadcastChatWs({ type: 'voice-peers', voicePeers: getVoicePeerList(), leftPeerId: peerId });
@@ -3525,17 +3534,22 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (pathname === '/api/chat/messages') {
-    if (!sessionUser) {
-      return sendJson(res, 401, { ok: false, error: 'login required' });
-    }
-    const ALLOWED_CHANNELS = new Set(['announcements', 'general', 'off-topic']);
-    const readChat = () => {
-      try {
-        const parsed = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
-        if (parsed && typeof parsed === 'object') return parsed;
-      } catch {}
-      return {
+  const DEFAULT_CHAT_CHANNELS = [
+    { id: 'announcements', name: 'announcements', topic: 'admin updates & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
+    { id: 'general', name: 'general', topic: 'main server chat', type: 'text', category: 'Text Channels', locked: true },
+    { id: 'off-topic', name: 'off-topic', topic: 'memes, gaming & anything goes', type: 'text', category: 'Text Channels' },
+    { id: 'roblox-squads', name: 'roblox-squads', topic: 'share place IDs & party up for roblox', type: 'text', category: 'Text Channels' },
+    { id: 'voice-lounge', name: 'Voice Lounge', topic: 'chill voice hangout', type: 'voice', category: 'Voice Channels', locked: true }
+  ];
+
+  const readChatStore = () => {
+    let data = null;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
+      if (parsed && typeof parsed === 'object') data = parsed;
+    } catch {}
+    if (!data) {
+      data = {
         announcements: [
           {
             id: 'seed-ann-1',
@@ -3543,43 +3557,195 @@ const server = http.createServer(async (req, res) => {
             username: 'coolbacon',
             displayName: 'Luis (coolbacon)',
             role: 'admin',
-            text: 'Welcome to Astra Chat! Only coolbacon can post in #announcements. Hop in #general, #off-topic, or Voice Lounge anytime.',
+            text: 'Welcome to Astra Chat! Create new text or voice channels anytime, react or reply to messages, and crop your custom PFP!',
             ts: Date.now()
           }
         ],
         general: [],
-        'off-topic': []
+        'off-topic': [],
+        'roblox-squads': []
       };
-    };
-    const writeChat = (data) => {
-      fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8');
-    };
+    }
+    if (!Array.isArray(data._channels) || !data._channels.length) {
+      data._channels = DEFAULT_CHAT_CHANNELS.map((c) => ({ ...c }));
+    } else {
+      for (const def of DEFAULT_CHAT_CHANNELS) {
+        if (!data._channels.some((c) => c && c.id === def.id)) {
+          data._channels.push({ ...def });
+        }
+      }
+    }
+    for (const ch of data._channels) {
+      if (ch.type !== 'voice' && !Array.isArray(data[ch.id])) {
+        data[ch.id] = [];
+      }
+    }
+    return data;
+  };
+  const writeChatStore = (data) => {
+    fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8');
+  };
+
+  if (pathname === '/api/chat/channels') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
     if (req.method === 'GET') {
+      const data = readChatStore();
+      return sendJson(res, 200, { ok: true, channels: data._channels, voicePeers: getVoicePeerList(), members: getChatMembersList() });
+    }
+    if (req.method === 'POST') {
+      try {
+        const body = await readJsonBody(req);
+        const type = body && body.type === 'voice' ? 'voice' : 'text';
+        const rawName = String((body && body.name) || '').trim();
+        const cleanName = type === 'text'
+          ? rawName.toLowerCase().replace(/[^a-z0-9-_ ]+/g, '').replace(/\s+/g, '-').replace(/^-+|-+$/g, '').slice(0, 28)
+          : rawName.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 28);
+        if (!cleanName) {
+          return sendJson(res, 400, { ok: false, error: 'Channel name must contain letters or numbers' });
+        }
+        const slug = rawName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || cleanName.toLowerCase();
+        const topic = String((body && body.topic) || '').trim().slice(0, 100);
+        const category = type === 'voice' ? 'Voice Channels' : (String((body && body.category) || 'Text Channels').trim().slice(0, 28) || 'Text Channels');
+        const data = readChatStore();
+        let finalId = slug;
+        if (data._channels.some((c) => c.id === finalId || (c.name.toLowerCase() === cleanName.toLowerCase() && c.type === type))) {
+          return sendJson(res, 409, { ok: false, error: `A ${type} channel named "${cleanName}" already exists` });
+        }
+        const newCh = {
+          id: finalId,
+          name: cleanName,
+          topic: topic || (type === 'voice' ? 'voice channel' : `chat in #${cleanName}`),
+          type,
+          category,
+          createdBy: sessionUser.username,
+          createdAt: Date.now()
+        };
+        data._channels.push(newCh);
+        if (type === 'text' && !Array.isArray(data[finalId])) data[finalId] = [];
+        writeChatStore(data);
+        broadcastChatWs({ type: 'channels-update', channels: data._channels });
+        return sendJson(res, 200, { ok: true, channel: newCh, channels: data._channels });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
+    }
+    if (req.method === 'DELETE') {
+      try {
+        let targetId = String(reqUrl.searchParams.get('id') || '').trim().toLowerCase();
+        if (!targetId) {
+          const body = await readJsonBody(req).catch(() => ({}));
+          targetId = String((body && body.id) || '').trim().toLowerCase();
+        }
+        const data = readChatStore();
+        const ch = data._channels.find((c) => c.id === targetId);
+        if (!ch) return sendJson(res, 404, { ok: false, error: 'Channel not found' });
+        if (ch.locked) return sendJson(res, 403, { ok: false, error: 'Core server channels cannot be deleted' });
+        if (sessionUser.role !== 'admin' && ch.createdBy && ch.createdBy !== sessionUser.username) {
+          return sendJson(res, 403, { ok: false, error: 'Only the channel creator or admin can delete this channel' });
+        }
+        data._channels = data._channels.filter((c) => c.id !== targetId);
+        delete data[targetId];
+        writeChatStore(data);
+        broadcastChatWs({ type: 'channels-update', channels: data._channels, deletedChannelId: targetId });
+        return sendJson(res, 200, { ok: true, channels: data._channels });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
+    }
+  }
+
+  if (pathname === '/api/chat/react' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    try {
+      const body = await readJsonBody(req);
+      const chId = String((body && body.channel) || 'general').toLowerCase();
+      const messageId = String((body && body.messageId) || '').trim();
+      const emoji = String((body && body.emoji) || '').trim().slice(0, 12);
+      if (!messageId || !emoji) {
+        return sendJson(res, 400, { ok: false, error: 'channel, messageId, and emoji required' });
+      }
+      const data = readChatStore();
+      const list = Array.isArray(data[chId]) ? data[chId] : [];
+      const msg = list.find((m) => m && m.id === messageId);
+      if (!msg) return sendJson(res, 404, { ok: false, error: 'Message not found' });
+      if (!msg.reactions || typeof msg.reactions !== 'object') msg.reactions = {};
+      const arr = Array.isArray(msg.reactions[emoji]) ? msg.reactions[emoji] : [];
+      const idx = arr.indexOf(sessionUser.username);
+      if (idx >= 0) arr.splice(idx, 1);
+      else arr.push(sessionUser.username);
+      if (arr.length) msg.reactions[emoji] = arr;
+      else delete msg.reactions[emoji];
+      writeChatStore(data);
+      const hydrated = {
+        ...msg,
+        avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || ''
+      };
+      broadcastChatWs({ type: 'message-update', channel: chId, message: hydrated });
+      return sendJson(res, 200, { ok: true, message: hydrated });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+    }
+  }
+
+  if (pathname === '/api/chat/messages') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    if (req.method === 'GET') {
+      const data = readChatStore();
       const ch = String(reqUrl.searchParams.get('channel') || 'general').toLowerCase();
-      const channel = ALLOWED_CHANNELS.has(ch) ? ch : 'general';
-      const data = readChat();
+      const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice') || data._channels.find((c) => c.type !== 'voice');
+      const channel = channelObj ? channelObj.id : 'general';
       const rawMessages = Array.isArray(data[channel]) ? data[channel] : [];
       const messages = rawMessages.map((m) => ({
         ...m,
         avatar: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].avatar) || m.avatar || ''
       }));
-      const canPost = channel !== 'announcements' || sessionUser.role === 'admin';
-      return sendJson(res, 200, { ok: true, channel, messages, canPost, voicePeers: getVoicePeerList(), members: getChatMembersList() });
+      const canPost = !(channelObj && channelObj.adminOnly) || sessionUser.role === 'admin';
+      return sendJson(res, 200, {
+        ok: true,
+        channel,
+        channels: data._channels,
+        messages,
+        canPost,
+        voicePeers: getVoicePeerList(),
+        members: getChatMembersList()
+      });
     }
     if (req.method === 'POST') {
       try {
         const body = await readJsonBody(req);
+        const data = readChatStore();
         const ch = String((body && body.channel) || 'general').toLowerCase();
-        const channel = ALLOWED_CHANNELS.has(ch) ? ch : 'general';
-        if (channel === 'announcements' && sessionUser.role !== 'admin') {
-          return sendJson(res, 403, { ok: false, error: 'Only admin (coolbacon) can post in #announcements' });
+        const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice');
+        if (!channelObj) {
+          return sendJson(res, 404, { ok: false, error: 'Text channel not found' });
+        }
+        const channel = channelObj.id;
+        if (channelObj.adminOnly && sessionUser.role !== 'admin') {
+          return sendJson(res, 403, { ok: false, error: 'Only admin (coolbacon) can post in #' + channelObj.name });
         }
         const text = String((body && body.text) || '').trim().slice(0, 1200);
         if (!text) {
           return sendJson(res, 400, { ok: false, error: 'Message text required' });
         }
-        const data = readChat();
         if (!Array.isArray(data[channel])) data[channel] = [];
+        let replyTo = null;
+        if (body && body.replyToId) {
+          const ref = data[channel].find((m) => m && m.id === String(body.replyToId));
+          if (ref) {
+            replyTo = {
+              id: ref.id,
+              username: ref.username,
+              displayName: ref.displayName || ref.username,
+              text: String(ref.text || '').slice(0, 90)
+            };
+          }
+        }
         const userAvatar = (authStore && authStore.users && authStore.users[sessionUser.username] && authStore.users[sessionUser.username].avatar) || '';
         const entry = {
           id: crypto.randomBytes(8).toString('hex'),
@@ -3589,13 +3755,37 @@ const server = http.createServer(async (req, res) => {
           role: sessionUser.role || 'user',
           avatar: userAvatar,
           text,
+          replyTo,
+          reactions: {},
           ts: Date.now()
         };
         data[channel].push(entry);
         if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
-        writeChat(data);
+        writeChatStore(data);
         broadcastChatWs({ type: 'chat-message', channel, message: entry });
         return sendJson(res, 200, { ok: true, message: entry, messages: data[channel] });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
+    }
+    if (req.method === 'DELETE') {
+      try {
+        const body = await readJsonBody(req).catch(() => ({}));
+        const ch = String((body && body.channel) || reqUrl.searchParams.get('channel') || 'general').toLowerCase();
+        const messageId = String((body && body.messageId) || reqUrl.searchParams.get('messageId') || '').trim();
+        const data = readChatStore();
+        const list = Array.isArray(data[ch]) ? data[ch] : [];
+        const idx = list.findIndex((m) => m && m.id === messageId);
+        if (idx === -1) return sendJson(res, 404, { ok: false, error: 'Message not found' });
+        const targetMsg = list[idx];
+        if (sessionUser.role !== 'admin' && targetMsg.username !== sessionUser.username) {
+          return sendJson(res, 403, { ok: false, error: 'You can only delete your own messages' });
+        }
+        list.splice(idx, 1);
+        data[ch] = list;
+        writeChatStore(data);
+        broadcastChatWs({ type: 'message-delete', channel: ch, messageId });
+        return sendJson(res, 200, { ok: true, messages: list });
       } catch (e) {
         return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
       }
