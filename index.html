@@ -10123,6 +10123,25 @@
     let musicUserPaused = false;
     let musicLastProgressTime = 0;
     let musicStallTicks = 0;
+    const watchedMusicVideos = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+
+    function attachMusicVideoKeepalive(v) {
+      if (!v || (watchedMusicVideos && watchedMusicVideos.has(v))) return;
+      if (watchedMusicVideos) watchedMusicVideos.add(v);
+      v.addEventListener('pause', () => {
+        if (!musicUserPaused && !v.ended && musicCurrentTrack) {
+          setTimeout(() => {
+            if (!musicUserPaused && v.paused && !v.ended) v.play().catch(() => {});
+          }, 120);
+        }
+      });
+      v.addEventListener('stalled', () => {
+        if (!musicUserPaused && !v.ended && musicCurrentTrack) {
+          try { v.currentTime = (v.currentTime || 0) + 0.08; } catch {}
+          v.play().catch(() => {});
+        }
+      });
+    }
 
     function startMusicPlayerSyncLoop() {
       clearInterval(musicSyncTimer);
@@ -10131,6 +10150,7 @@
       musicSyncTimer = setInterval(() => {
         const v = getMusicVideoEl();
         if (!v) return;
+        attachMusicVideoKeepalive(v);
         try {
           if (adblockCfg.enabled && musicPlayerFrame && musicPlayerFrame.contentDocument) {
             const d = musicPlayerFrame.contentDocument;
@@ -10151,10 +10171,10 @@
           if (!v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
             if (Math.abs((v.currentTime || 0) - musicLastProgressTime) < 0.05) {
               musicStallTicks++;
-              if (musicStallTicks === 5) {
+              if (musicStallTicks === 2) {
                 try { v.currentTime = (v.currentTime || 0) + 0.1; } catch {}
                 v.play().catch(() => {});
-              } else if (musicStallTicks >= 12 && musicCurrentTrack && musicPlayerFrame) {
+              } else if (musicStallTicks >= 4 && musicCurrentTrack && musicPlayerFrame) {
                 musicStallTicks = 0;
                 const resumeSec = Math.max(0, Math.floor(v.currentTime || 0));
                 const resumeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(musicCurrentTrack.id)}&autoplay=1&t=${resumeSec}s`;

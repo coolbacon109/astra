@@ -1480,9 +1480,12 @@ function fetchAndProxy(targetUrl, adblock, req, res, redirectsLeft = 5, engine =
     'User-Agent': uaRaw.replace(/HeadlessChrome/gi, 'Chrome'),
     Accept: req.headers.accept || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Encoding': /googlevideo\.com|videoplayback/i.test(targetUrl) ? 'identity' : 'gzip, deflate, br',
     Referer: parsed.origin + '/'
   };
+  if (req.headers.range) {
+    headers.Range = req.headers.range;
+  }
   const proxySessionUser = typeof getSessionUser === 'function' ? getSessionUser(req) : null;
   if (proxySessionUser && proxySessionUser.username) {
     const savedCookieHdr = getUserCookieHeader(proxySessionUser.username, parsed.hostname);
@@ -1705,7 +1708,7 @@ const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
     '<script data-astra-frame-fix="1">(function(){try{Object.defineProperty(window,"outerWidth",{get:function(){return window.innerWidth||1280;},configurable:true});Object.defineProperty(window,"outerHeight",{get:function(){return window.innerHeight||800;},configurable:true});}catch(e){}})();</script>'
   )};
 const ASTRA_YT_ADBLOCK_SNIPPET = ${JSON.stringify(
-    '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern");if(sk)sk.click();if(p&&p.classList.contains("ad-showing")&&v&&isFinite(v.duration)&&v.duration>0){v.muted=true;v.currentTime=v.duration;}}catch(e){}},350);})();</script>'
+    '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern");if(sk)sk.click();var ao=document.querySelector(".ytp-ad-player-overlay,.ytp-ad-text,.ytp-ad-preview-container");if(p&&p.classList.contains("ad-showing")&&ao&&v&&isFinite(v.duration)&&v.duration>0&&v.duration<95){v.muted=true;v.currentTime=v.duration;}else if(p&&!p.classList.contains("ad-showing")&&v&&v.muted){v.muted=false;}}catch(e){}},350);})();</script>'
   )};
 
 function astraXorDecode(str) {
@@ -3444,8 +3447,9 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 if (require.main === module) {
-  server.listen(PORT, '127.0.0.1', () => {
-    console.log(`Astra server running at http://127.0.0.1:${PORT}`);
+  const HOST = process.env.HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1');
+  server.listen(PORT, HOST, () => {
+    console.log(`Astra server running at http://${HOST}:${PORT}`);
   });
 }
 
