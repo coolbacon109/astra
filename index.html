@@ -4632,20 +4632,101 @@
       color: rgba(255, 255, 255, 0.48);
     }
 
-    /* Spicy Lyrics + Liquify Album-Color Moving Background */
-    .spicy-lyrics-overlay {
+    /* Floating Super-Small Bottom-Right YouTube Video Dock (with Big/Small toggle) */
+    .music-video-dock {
+      position: fixed;
+      right: 16px;
+      bottom: 84px;
+      width: 164px;
+      height: 92px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.68);
+      background: #000;
+      z-index: 45;
+      display: none;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .music-video-dock.active {
+      display: block;
+    }
+    .music-video-dock.expanded {
+      width: 384px;
+      height: 216px;
+    }
+    .music-video-dock.minimized {
+      width: 1px;
+      height: 1px;
+      opacity: 0.001;
+      pointer-events: none;
+    }
+    .music-video-dock iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    .music-video-dock-controls {
       position: absolute;
-      inset: 0 0 76px 0;
-      z-index: 20;
+      top: 6px;
+      right: 6px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      z-index: 5;
+    }
+    .music-video-dock:hover .music-video-dock-controls {
+      opacity: 1;
+    }
+    .music-dock-ctrl-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(10, 11, 16, 0.82);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .music-dock-ctrl-btn:hover {
+      background: rgba(30, 34, 48, 0.95);
+    }
+
+    /* Spicy Lyrics + Liquify Album-Color Right-Side Panel (with Fullscreen option) */
+    .music-hub-container.lyrics-open .music-hub-body {
+      grid-template-columns: 236px 1fr 310px;
+    }
+    @media (max-width: 1020px) {
+      .music-hub-container.lyrics-open .music-hub-body {
+        grid-template-columns: 210px 1fr 250px;
+      }
+    }
+    .spicy-lyrics-overlay {
+      position: relative;
       display: none;
       flex-direction: column;
+      min-height: 0;
       overflow: hidden;
-      background: rgba(6, 7, 11, 0.88);
-      --liq-c1: rgba(96, 165, 250, 0.48);
-      --liq-c2: rgba(52, 211, 153, 0.42);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 11, 16, 0.72);
+      --liq-c1: rgba(220, 38, 38, 0.55);
+      --liq-c2: rgba(96, 165, 250, 0.45);
     }
     .spicy-lyrics-overlay.open {
       display: flex;
+    }
+    .spicy-lyrics-overlay.fullscreen {
+      position: absolute;
+      inset: 0 0 76px 0;
+      z-index: 20;
+      border-radius: 0;
+      border: none;
     }
     .spicy-liquify-bg {
       position: absolute;
@@ -4739,14 +4820,18 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 36px clamp(20px, 10vw, 140px) 110px;
+      padding: 20px 22px 90px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       scroll-behavior: smooth;
     }
+    .spicy-lyrics-overlay.fullscreen .spicy-lyrics-scroll {
+      padding: 36px clamp(20px, 10vw, 140px) 110px;
+      gap: 20px;
+    }
     .spicy-line {
-      font-size: clamp(22px, 3vw, 34px);
+      font-size: 20px;
       font-weight: 700;
       line-height: 1.32;
       letter-spacing: -0.02em;
@@ -4759,6 +4844,9 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.26em;
+    }
+    .spicy-lyrics-overlay.fullscreen .spicy-line {
+      font-size: clamp(24px, 3.2vw, 36px);
     }
     .spicy-line:hover {
       opacity: 0.75;
@@ -4798,8 +4886,14 @@
     <iframe id="cleverCloakFrame" src="clever-cloak/Clever.html" title="Clever | Portal"></iframe>
   </div>
 
-  <!-- Persistent Floating YouTube Video Player (visible 16:9 mini-player so Chrome/YouTube never throttles playback) -->
-  <iframe class="music-yt-embed" id="musicPlayerFrame" allow="autoplay; encrypted-media" style="position:fixed;right:16px;bottom:84px;width:224px;height:126px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);box-shadow:0 12px 32px rgba(0,0,0,0.65);background:#000;z-index:30;display:none;"></iframe>
+  <!-- Persistent Super-Small Bottom-Right YouTube Video Dock (expandable) -->
+  <div class="music-video-dock" id="musicVideoDock">
+    <div class="music-video-dock-controls">
+      <button type="button" class="music-dock-ctrl-btn" id="musicVideoResizeBtn" title="Make video bigger / smaller">⤢</button>
+      <button type="button" class="music-dock-ctrl-btn" id="musicVideoMinBtn" title="Hide video">–</button>
+    </div>
+    <iframe class="music-yt-embed" id="musicPlayerFrame" allow="autoplay; encrypted-media"></iframe>
+  </div>
 
   <!-- Command Palette (Ctrl+Y / Ctrl+K) -->
   <div class="cmd-palette-backdrop" id="cmdPaletteOverlay">
@@ -5262,6 +5356,24 @@
                 <div id="musicContentMount"></div>
               </div>
             </section>
+
+            <!-- Docked Right-Side Spicy Lyrics + Liquify Panel -->
+            <div class="spicy-lyrics-overlay liquify" id="spicyLyricsOverlay">
+              <div class="spicy-liquify-bg" id="spicyLiquifyBg">
+                <img class="spicy-liquify-album" id="spicyLiquifyAlbumImg" alt="" />
+                <div class="spicy-liq-blob b1"></div>
+                <div class="spicy-liq-blob b2"></div>
+              </div>
+              <div class="spicy-top-pill-wrap">
+                <div class="spicy-top-pill">
+                  <span id="spicyProviderBadge">lyrics</span>
+                  <button type="button" class="spicy-pill-btn active" id="spicyLiquifyToggleBtn">liquify</button>
+                  <button type="button" class="spicy-pill-btn" id="spicyLyricsExpandBtn" title="Fullscreen lyrics">⤢</button>
+                  <button type="button" class="spicy-pill-btn" id="spicyLyricsCloseBtn" title="Close lyrics">✕</button>
+                </div>
+              </div>
+              <div class="spicy-lyrics-scroll" id="spicyLyricsScroll"></div>
+            </div>
           </div>
 
           <footer class="music-player-bar">
@@ -5306,27 +5418,10 @@
                   <path d="M5 4l.5 1 1 .5-1 .5-.5 1-.5-1-1-.5 1-.5L5 4z" fill="currentColor" stroke="none"/>
                 </svg>
               </button>
-              <button type="button" class="ext-btn" id="musicVideoToggleBtn">video</button>
+              <button type="button" class="ext-btn" id="musicVideoToggleBtn">bigger video</button>
               <input type="range" id="musicVolumeRange" min="0" max="100" value="85" title="Volume" />
             </div>
           </footer>
-
-          <!-- Spicy Lyrics + Liquify Album-Color Overlay -->
-          <div class="spicy-lyrics-overlay liquify" id="spicyLyricsOverlay">
-            <div class="spicy-liquify-bg" id="spicyLiquifyBg">
-              <img class="spicy-liquify-album" id="spicyLiquifyAlbumImg" alt="" />
-              <div class="spicy-liq-blob b1"></div>
-              <div class="spicy-liq-blob b2"></div>
-            </div>
-            <div class="spicy-top-pill-wrap">
-              <div class="spicy-top-pill">
-                <span id="spicyProviderBadge">lyrics</span>
-                <button type="button" class="spicy-pill-btn active" id="spicyLiquifyToggleBtn">liquify</button>
-                <button type="button" class="spicy-pill-btn" id="spicyLyricsCloseBtn" title="Close lyrics">✕</button>
-              </div>
-            </div>
-            <div class="spicy-lyrics-scroll" id="spicyLyricsScroll"></div>
-          </div>
         </div>
 
         <!-- Built-in Discord-Style Astra Chat (/chat) -->
@@ -9998,7 +10093,12 @@
       renderMusicTracks();
       await proxyHealthPromise;
       if (proxyAvailable) await ensureProxyRuntimeReady();
-      const targetUrl = `https://www.youtube.com/embed/${encodeURIComponent(song.id)}?autoplay=1&playsinline=1&rel=0`;
+      const targetUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(song.id)}&autoplay=1`;
+      const videoDock = document.getElementById('musicVideoDock');
+      if (videoDock) {
+        videoDock.classList.add('active');
+        videoDock.classList.remove('minimized');
+      }
       if (musicPlayerFrame) {
         musicPlayerFrame.style.display = 'block';
         const scramPath = `/scramjet/${encodeURIComponent(targetUrl)}`;
@@ -10145,11 +10245,6 @@
       musicVolumeRange.addEventListener('input', () => {
         const v = getMusicVideoEl();
         if (v) v.volume = Number(musicVolumeRange.value || 85) / 100;
-      });
-    }
-    if (musicVideoToggleBtn && musicPlayerFrame) {
-      musicVideoToggleBtn.addEventListener('click', () => {
-        musicPlayerFrame.classList.toggle('video-open');
       });
     }
 
@@ -11403,10 +11498,32 @@
       spicyRaf = requestAnimationFrame(syncSpicyLyricsFrame);
     }
 
+    const musicVideoDock = document.getElementById('musicVideoDock');
+    const musicVideoResizeBtn = document.getElementById('musicVideoResizeBtn');
+    const musicVideoMinBtn = document.getElementById('musicVideoMinBtn');
+    const spicyLyricsExpandBtn = document.getElementById('spicyLyricsExpandBtn');
+
+    function toggleMusicVideoSize() {
+      if (!musicVideoDock) return;
+      musicVideoDock.classList.add('active');
+      musicVideoDock.classList.remove('minimized');
+      const big = musicVideoDock.classList.toggle('expanded');
+      if (musicVideoResizeBtn) musicVideoResizeBtn.textContent = big ? '⤡' : '⤢';
+      if (musicVideoToggleBtn) musicVideoToggleBtn.textContent = big ? 'smaller video' : 'bigger video';
+    }
+    if (musicVideoResizeBtn) musicVideoResizeBtn.addEventListener('click', toggleMusicVideoSize);
+    if (musicVideoToggleBtn) musicVideoToggleBtn.addEventListener('click', toggleMusicVideoSize);
+    if (musicVideoMinBtn && musicVideoDock) {
+      musicVideoMinBtn.addEventListener('click', () => {
+        musicVideoDock.classList.toggle('minimized');
+      });
+    }
+
     if (musicLyricsBtn && spicyLyricsOverlay) {
       musicLyricsBtn.addEventListener('click', () => {
         const opening = !spicyLyricsOverlay.classList.contains('open');
         spicyLyricsOverlay.classList.toggle('open', opening);
+        if (musicHubView) musicHubView.classList.toggle('lyrics-open', opening);
         musicLyricsBtn.style.color = opening ? '#a7f3d0' : '';
         if (opening) {
           if (musicCurrentTrack) loadSpicyLyricsForSong(musicCurrentTrack);
@@ -11415,9 +11532,16 @@
         }
       });
     }
+    if (spicyLyricsExpandBtn && spicyLyricsOverlay) {
+      spicyLyricsExpandBtn.addEventListener('click', () => {
+        const fs = spicyLyricsOverlay.classList.toggle('fullscreen');
+        spicyLyricsExpandBtn.textContent = fs ? '⤡' : '⤢';
+      });
+    }
     if (spicyLyricsCloseBtn && spicyLyricsOverlay) {
       spicyLyricsCloseBtn.addEventListener('click', () => {
-        spicyLyricsOverlay.classList.remove('open');
+        spicyLyricsOverlay.classList.remove('open', 'fullscreen');
+        if (musicHubView) musicHubView.classList.remove('lyrics-open');
         if (musicLyricsBtn) musicLyricsBtn.style.color = '';
       });
     }
