@@ -1542,7 +1542,13 @@ function setUserRoblosecurityCookie(username, val) {
 
 function normalizeRoblosecurityInput(raw) {
   if (!raw || typeof raw !== 'string') return '';
-  let v = raw.trim().replace(/^\.ROBLOSECURITY\s*=\s*/i, '').replace(/^["']+|["';]+$/g, '').trim();
+  let v = raw
+    .trim()
+    .replace(/^https?:\/\/[^/]+\/robloxcookie[:=/\s]*/i, '')
+    .replace(/^\/?robloxcookie[:=/\s]*/i, '')
+    .replace(/^\.ROBLOSECURITY\s*=\s*/i, '')
+    .replace(/^["']+|["';]+$/g, '')
+    .trim();
   return v.startsWith('_|WARNING:-DO-NOT-SHARE-THIS.') ? v : '';
 }
 
@@ -1614,6 +1620,164 @@ const WEBBLOX_S3_BASES = [
 ];
 const webbloxMemCache = new Map();
 
+function extractRoblosecurityFromClientHeader(rawHeader) {
+  if (!rawHeader || typeof rawHeader !== 'string') return '';
+  const trimmed = rawHeader.trim();
+  if (trimmed.startsWith('[')) {
+    try {
+      const arr = JSON.parse(trimmed);
+      if (Array.isArray(arr)) {
+        const hit = arr.find((c) => c && (c.n === '.ROBLOSECURITY' || c.name === '.ROBLOSECURITY') && (c.v || c.value));
+        if (hit) return normalizeRoblosecurityInput(hit.v || hit.value || '');
+      }
+    } catch {}
+  }
+  return normalizeRoblosecurityInput(trimmed);
+}
+
+function proxyWebbloxApiRequest(targetUrl, req, res, redirectsLeft = 5) {
+  let parsed;
+  try {
+    parsed = new URL(targetUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('bad protocol');
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({ errors: [{ message: 'Invalid proxy target URL' }] }));
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] || '*'
+    });
+    return res.end();
+  }
+
+  const sessionUser = typeof getSessionUser === 'function' ? getSessionUser(req) : null;
+  const headerCookie = extractRoblosecurityFromClientHeader(String(req.headers['x-astra-roblox-cookie'] || ''));
+  if (!sessionUser && !headerCookie) {
+    res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ errors: [{ message: 'Astra login required' }] }));
+  }
+
+  const isRobloxHost = /(^|\.)(roblox\.com|rbxcdn\.com|robloxlabs\.com)$/i.test(parsed.hostname);
+  const method = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'].includes(String(req.method || 'GET').toUpperCase())
+    ? String(req.method).toUpperCase()
+    : 'GET';
+
+  const uaRaw =
+    req.headers['user-agent'] ||
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+  const headers = {
+    'User-Agent': uaRaw.replace(/HeadlessChrome/gi, 'Chrome'),
+    Accept: req.headers.accept || 'application/json, text/plain, */*',
+    'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    Referer: isRobloxHost ? 'https://www.roblox.com/' : (parsed.origin + '/'),
+    Origin: isRobloxHost ? 'https://www.roblox.com' : parsed.origin
+  };
+
+  for (const hName of [
+    'content-type',
+    'authorization',
+    'x-requested-with',
+    'x-csrf-token',
+    'rblx-challenge-id',
+    'rblx-challenge-metadata',
+    'rblx-challenge-type',
+    'rbx-authentication-ticket'
+  ]) {
+    if (req.headers[hName]) headers[hName] = req.headers[hName];
+  }
+  if (req.headers['rbx-user-agent']) {
+    headers['rbx-user-agent'] = String(req.headers['rbx-user-agent'])
+      .replace(/Roblox\/Web\s+\w+\s+Desktop/, 'Roblox/WinInet')
+      .replace(/\s*Browser\/\S+/, '');
+  }
+
+  let cookiePairs = [];
+  if (sessionUser && sessionUser.username) {
+    const jarHdr = getUserCookieHeader(sessionUser.username, parsed.hostname);
+    if (jarHdr) cookiePairs = jarHdr.split(';').map((s) => s.trim()).filter(Boolean);
+  }
+  const hasJarRoblo = cookiePairs.some((p) => p.startsWith('.ROBLOSECURITY='));
+  const fallbackRoblo = headerCookie || (sessionUser && sessionUser.username ? getUserRoblosecurityCookie(sessionUser.username) : '');
+  if (isRobloxHost && !hasJarRoblo && fallbackRoblo) {
+    cookiePairs = cookiePairs.filter((p) => !p.startsWith('.ROBLOSECURITY='));
+    cookiePairs.push(`.ROBLOSECURITY=${fallbackRoblo}`);
+  }
+  if (cookiePairs.length) headers.Cookie = cookiePairs.join('; ');
+
+  const client = parsed.protocol === 'https:' ? https : http;
+  const proxyReq = client.request(
+    parsed,
+    {
+      method,
+      headers,
+      maxHeaderSize: 131072,
+      timeout: 20000
+    },
+    (proxyRes) => {
+      if ([301, 302, 303, 307, 308].includes(proxyRes.statusCode) && proxyRes.headers.location && redirectsLeft > 0 && (method === 'GET' || method === 'HEAD' || proxyRes.statusCode === 303)) {
+        const nextUrl = new URL(proxyRes.headers.location, targetUrl).toString();
+        proxyRes.resume();
+        return proxyWebbloxApiRequest(nextUrl, req, res, redirectsLeft - 1);
+      }
+
+      if (sessionUser && sessionUser.username && Array.isArray(proxyRes.headers['set-cookie'])) {
+        saveUserCookiesFromSetCookie(sessionUser.username, parsed.hostname, proxyRes.headers['set-cookie']);
+      }
+
+      const outHeaders = {
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Expose-Headers': 'x-csrf-token, rblx-challenge-id, rblx-challenge-metadata, rblx-challenge-type, content-type'
+      };
+      for (const [k, v] of Object.entries(proxyRes.headers)) {
+        const lower = k.toLowerCase();
+        if (
+          lower === 'set-cookie' ||
+          lower === 'content-security-policy' ||
+          lower === 'content-security-policy-report-only' ||
+          lower === 'x-frame-options' ||
+          lower === 'cross-origin-opener-policy' ||
+          lower === 'cross-origin-embedder-policy' ||
+          lower === 'cross-origin-resource-policy' ||
+          lower === 'transfer-encoding' ||
+          lower === 'connection' ||
+          lower === 'keep-alive' ||
+          lower === 'access-control-allow-origin' ||
+          lower === 'access-control-allow-credentials' ||
+          lower === 'access-control-expose-headers'
+        ) {
+          continue;
+        }
+        outHeaders[k] = v;
+      }
+
+      res.writeHead(proxyRes.statusCode || 200, outHeaders);
+      proxyRes.pipe(res);
+    }
+  );
+
+  proxyReq.on('timeout', () => {
+    proxyReq.destroy(new Error('Upstream Roblox API request timed out'));
+  });
+  proxyReq.on('error', (err) => {
+    if (!res.headersSent) {
+      res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ errors: [{ message: err.message || 'Upstream proxy error' }] }));
+    }
+  });
+
+  if (method !== 'GET' && method !== 'HEAD') {
+    req.pipe(proxyReq);
+  } else {
+    proxyReq.end();
+  }
+}
+
 async function serveWebbloxAsset(subPathRaw, reqUrl, req, res) {
   let cleanSub = String(subPathRaw || '').replace(/^\/+/, '');
   if (!cleanSub) {
@@ -1628,10 +1792,14 @@ async function serveWebbloxAsset(subPathRaw, reqUrl, req, res) {
     cleanSub = 'launcher/index.html';
   }
 
-  if (cleanSub.startsWith('__proxy__/')) {
-    const innerTarget = decodeURIComponent(reqUrl.href.split('/__proxy__/')[1] || '');
+  if (cleanSub.startsWith('__proxy__/') || cleanSub.startsWith('__nodeproxy__/')) {
+    const splitToken = cleanSub.startsWith('__nodeproxy__/') ? '/__nodeproxy__/' : '/__proxy__/';
+    let innerTarget = reqUrl.href.split(splitToken)[1] || '';
+    if (/^https?%3A/i.test(innerTarget)) {
+      try { innerTarget = decodeURIComponent(innerTarget); } catch {}
+    }
     if (/^https?:\/\//i.test(innerTarget)) {
-      return fetchAndProxy(innerTarget, true, req, res, 5, 'scramjet');
+      return proxyWebbloxApiRequest(innerTarget, req, res, 5);
     }
   }
 
@@ -1726,16 +1894,16 @@ async function serveWebbloxAsset(subPathRaw, reqUrl, req, res) {
         } else if (isCoreJs) {
           txt = txt.replace(
             /export function leaveFor\(url\)\s*\{[\s\S]*?location\.href\s*=\s*url;\s*\}/,
-            'export function leaveFor(url) {\n  if (window.self !== window.top && /[?&]placeId=/.test(String(url))) {\n    try { window.parent.postMessage({ type: "astra-roblox-launch-url", url: new URL(url, location.href).href }, location.origin); return; } catch {}\n  }\n  document.body.append(el("div", "leaving"));\n  location.href = url;\n}'
+            'export function leaveFor(url) {\n  let finalUrl = String(url);\n  try {\n    const parsedLaunch = new URL(finalUrl, location.href);\n    if (parsedLaunch.searchParams.has("placeId")) {\n      parsedLaunch.searchParams.set("mode", "wisp");\n      if (!parsedLaunch.searchParams.get("wisp")) {\n        parsedLaunch.searchParams.set("wisp", (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/wisp/");\n      }\n      finalUrl = parsedLaunch.href;\n    }\n  } catch {}\n  if (window.self !== window.top && /[?&]placeId=/.test(finalUrl)) {\n    try { window.parent.postMessage({ type: "astra-roblox-launch-url", url: finalUrl }, location.origin); return; } catch {}\n  }\n  document.body.append(el("div", "leaving"));\n  location.href = finalUrl;\n}'
           );
         } else if (isSwJs) {
-          txt = txt.replace(
+          txt = 'self.addEventListener("fetch",function(e){try{if(e.request&&e.request.url&&e.request.url.indexOf("/__nodeproxy__/")!==-1)return;}catch{}});\n' + txt.replace(
             '|^\\/launcher\\/(?!index\\.html)',
             ''
           );
         } else if (isLauncherHtml) {
-          const bridge = `<script>(function(){try{var o=location.origin;var w=localStorage.getItem('webblox.transport');if(!w||/\\/fairs\\//i.test(w))localStorage.setItem('webblox.transport',(location.protocol==='https:'?'wss://':'ws://')+location.host+'/wisp/');window.addEventListener('message',function(ev){if(ev.origin!==o||!ev.data||ev.data.type!=='astra-roblox-sync')return;try{if(Array.isArray(ev.data.cookies))localStorage.setItem('cobalt-cookies',JSON.stringify(ev.data.cookies));if(ev.data.wispUrl)localStorage.setItem('webblox.transport',ev.data.wispUrl);if(ev.data.reload)location.reload();}catch{}});}catch{}})();</script>`;
-          txt = txt.replace(/<\/head>/i, bridge + '</head>');
+          const bridge = `<script>(function(){try{var o=location.origin;var sp=new URLSearchParams(location.search);if(sp.get('mode')!=='wisp'){window.WEBLOX_SERVER=true;}var wsUrl=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/wisp/';var w=localStorage.getItem('webblox.transport');if(!w||/\\/fairs\\//i.test(w))localStorage.setItem('webblox.transport',wsUrl);function readRobloCookie(){try{var raw=localStorage.getItem('cobalt-cookies');if(!raw)return '';var arr=JSON.parse(raw);if(!Array.isArray(arr))return '';var hit=arr.find(function(c){return c&&c.n==='.ROBLOSECURITY'&&c.v;});return hit?String(hit.v):'';}catch{return '';}}function saveRobloCookie(val){var v=String(val||'').trim().replace(/^robloxcookie[:=\\/\\s]*/i,'').replace(/^\\.ROBLOSECURITY=/i,'');if(!v)return false;var domains=['roblox.com','rbxcdn.com','robloxlabs.com'];var arr=[];try{arr=JSON.parse(localStorage.getItem('cobalt-cookies')||'[]');if(!Array.isArray(arr))arr=[];}catch{arr=[];}arr=arr.filter(function(c){return c&&c.n!=='.ROBLOSECURITY';});domains.forEach(function(d){arr.push({n:'.ROBLOSECURITY',v:v,d:d,h:false,p:'/',s:true,o:true,e:0,ss:'none'});});localStorage.setItem('cobalt-cookies',JSON.stringify(arr));return true;}var promptShown=false;function showInlineCookiePrompt(){if(promptShown)return;if(location.hash&&location.hash.indexOf('#/charts')===0)return;promptShown=true;function mount(){if(document.getElementById('astra-rbx-inline-auth'))return;var wrap=document.createElement('div');wrap.id='astra-rbx-inline-auth';wrap.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(7,8,12,0.86);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,system-ui,sans-serif;';wrap.innerHTML='<div style="max-width:440px;width:100%;background:rgba(16,17,24,0.96);border:1px solid rgba(255,255,255,0.14);border-radius:18px;padding:24px;color:#fff;box-shadow:0 24px 60px rgba(0,0,0,0.65);">'+'<h2 style="margin:0 0 8px;font-size:18px;font-weight:700;">Connect Roblox Session</h2>'+'<p style="margin:0 0 14px;font-size:13px;line-height:1.5;color:rgba(255,255,255,0.68);">Paste your cookie after <code>robloxcookie=</code> below, open Setup Guide, or browse Charts.</p>'+'<form id="astra-rbx-inline-form" style="display:flex;flex-direction:column;gap:10px;">'+'<input id="astra-rbx-inline-in" type="text" value="robloxcookie=" autocomplete="off" spellcheck="false" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);color:#fff;font-size:12.5px;" />'+'<div id="astra-rbx-inline-err" style="font-size:12px;color:#fca5a5;display:none;"></div>'+'<div style="display:flex;gap:8px;flex-wrap:wrap;">'+'<button type="submit" style="flex:1;padding:10px 14px;border-radius:10px;border:none;background:#fff;color:#08090d;font-weight:700;font-size:13px;cursor:pointer;">Save &amp; Load</button>'+'<button type="button" id="astra-rbx-inline-charts" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;cursor:pointer;">Browse Charts</button>'+(window.self!==window.top?'<button type="button" id="astra-rbx-inline-setup" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;cursor:pointer;">Setup Guide</button>':'')+'</div></form></div>';document.body.appendChild(wrap);var f=document.getElementById('astra-rbx-inline-form');var inp=document.getElementById('astra-rbx-inline-in');var cb=document.getElementById('astra-rbx-inline-charts');var sb=document.getElementById('astra-rbx-inline-setup');if(cb){cb.onclick=function(){wrap.remove();location.hash='#/charts';};}if(sb){sb.onclick=function(){try{window.parent.postMessage({type:'lucideblox:sign-in'},o);}catch{}};}f.onsubmit=async function(e){e.preventDefault();var raw=inp.value.trim();var clean=raw.replace(/^robloxcookie[:=\\/\\s]*/i,'').replace(/^\\.ROBLOSECURITY=/i,'').trim();if(!clean.startsWith('_|WARNING:-DO-NOT-SHARE-THIS.')){var er=document.getElementById('astra-rbx-inline-err');er.textContent='Paste a valid .ROBLOSECURITY token after robloxcookie=';er.style.display='block';return;}saveRobloCookie(clean);try{await fetch(o+'/api/roblox/verify',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie:clean})});}catch{}location.reload();};}if(document.body)mount();else addEventListener('DOMContentLoaded',mount);}var origFetch=window.fetch.bind(window);window.fetch=function(input,init){try{var urlStr=typeof input==='string'?input:(input&&input.url)||'';if(urlStr&&sp.get('mode')!=='wisp'){var parsed=new URL(urlStr,location.href);if(parsed.origin===o&&(parsed.pathname.indexOf('/3to1s93ve/__proxy__/')===0||parsed.pathname.indexOf('/__proxy__/')===0)){var idx=parsed.href.indexOf('__proxy__/');var rest=idx!==-1?parsed.href.slice(idx+'__proxy__/'.length):'';var nextUrl=o+'/3to1s93ve/__nodeproxy__/'+rest;var opts=init?Object.assign({},init):{};opts.credentials='same-origin';var hdrs=new Headers(opts.headers||(input&&typeof input!=='string'?input.headers:undefined)||undefined);var rc=readRobloCookie();if(rc&&!hdrs.has('x-astra-roblox-cookie'))hdrs.set('x-astra-roblox-cookie',rc);opts.headers=hdrs;var p=origFetch(typeof input==='string'?nextUrl:new Request(nextUrl,opts),typeof input==='string'?opts:undefined);if(rest.indexOf('users.roblox.com/v1/users/authenticated')!==-1){p=p.then(function(r){if(r&&r.status===401)showInlineCookiePrompt();return r;});}return p;}}}catch{}return origFetch(input,init);};window.addEventListener('message',function(ev){if(ev.origin!==o||!ev.data||ev.data.type!=='astra-roblox-sync')return;try{if(Array.isArray(ev.data.cookies))localStorage.setItem('cobalt-cookies',JSON.stringify(ev.data.cookies));if(ev.data.wispUrl)localStorage.setItem('webblox.transport',ev.data.wispUrl);if(ev.data.reload)location.reload();}catch{}});}catch{}})();</script>`;
+          txt = /<head[^>]*>/i.test(txt) ? txt.replace(/<head[^>]*>/i, (m) => m + bridge) : txt.replace(/<\/head>/i, bridge + '</head>');
         }
         outBuf = Buffer.from(txt, 'utf8');
         outEnc = undefined;
@@ -2753,6 +2921,110 @@ const server = http.createServer(async (req, res) => {
       'Cache-Control': 'no-store'
     });
     return res.end(buildUnifiedServiceWorkerScript());
+  }
+
+  if (pathname.toLowerCase().startsWith('/robloxcookie')) {
+    let tail = pathname.slice('/robloxcookie'.length);
+    try { tail = decodeURIComponent(tail); } catch {}
+    tail = tail.replace(/^[:=\/\s]+/, '').trim();
+    const queryRaw = reqUrl.searchParams.get('cookie') || reqUrl.searchParams.get('c') || reqUrl.searchParams.get('v') || '';
+    const candidate = normalizeRoblosecurityInput(tail || queryRaw);
+
+    let verifiedUser = null;
+    let verifyErr = '';
+    if (sessionUser && candidate) {
+      const check = await verifyRoblosecurityWithRoblox(candidate);
+      if (check.valid) {
+        setUserRoblosecurityCookie(sessionUser.username, candidate);
+        verifiedUser = check.user || null;
+      } else {
+        verifyErr = check.error || 'Roblox rejected that cookie.';
+      }
+    }
+
+    const escHtml = (s) => String(s || '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    if (!candidate || verifiedUser || !sessionUser) {
+      const payloadJson = JSON.stringify({
+        candidate,
+        verified: !!verifiedUser,
+        needAuth: !sessionUser
+      }).replace(/</g, '\\u003c');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Astra — Connecting Roblox</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#07070b;color:#f5f5f7;font-family:Inter,system-ui,sans-serif;}.card{padding:26px 30px;border-radius:18px;border:1px solid rgba(255,255,255,0.12);background:rgba(16,17,24,0.92);text-align:center;max-width:400px;width:90%;}.spin{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,0.14);border-top-color:#fff;animation:s .8s linear infinite;margin:0 auto 14px;}@keyframes s{to{transform:rotate(360deg)}}</style>
+</head>
+<body>
+<div class="card">
+  <div class="spin"></div>
+  <div style="font-size:15px;font-weight:700;margin-bottom:6px;">${verifiedUser ? 'Connected @' + escHtml(verifiedUser.name) : (!candidate ? 'Opening Roblox Quick Link...' : 'Preparing Roblox Session...')}</div>
+  <div style="font-size:12.5px;color:rgba(255,255,255,0.62);">Launching LucideBlox inside Astra...</div>
+</div>
+<script>
+(function(){
+  var data = ${payloadJson};
+  try {
+    var wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/wisp/';
+    localStorage.setItem('webblox.transport', wsUrl);
+    if (data.candidate) {
+      if (data.verified) {
+        var arr = [];
+        try { arr = JSON.parse(localStorage.getItem('cobalt-cookies') || '[]'); if (!Array.isArray(arr)) arr = []; } catch { arr = []; }
+        arr = arr.filter(function(c){ return c && c.n !== '.ROBLOSECURITY'; });
+        ['roblox.com', 'rbxcdn.com', 'robloxlabs.com'].forEach(function(d){
+          arr.push({ n: '.ROBLOSECURITY', v: data.candidate, d: d, h: false, p: '/', s: true, o: true, e: 0, ss: 'none' });
+        });
+        localStorage.setItem('cobalt-cookies', JSON.stringify(arr));
+        localStorage.setItem('astra.roblox.setupDone.v1', '1');
+        sessionStorage.setItem('astra.openRobloxDirect', '1');
+      } else if (data.needAuth) {
+        sessionStorage.setItem('astra.pendingRobloxCookie', data.candidate);
+        sessionStorage.setItem('astra.openRobloxDirect', '1');
+      }
+    } else {
+      sessionStorage.setItem('astra.openRobloxSetupStep3', '1');
+    }
+  } catch {}
+  location.replace('/?nocloak=1&roblox=1');
+})();
+</script>
+</body>
+</html>`);
+    }
+
+    res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Astra — Roblox Cookie Rejected</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#07070b;color:#f5f5f7;font-family:Inter,system-ui,sans-serif;padding:18px;}.card{padding:26px;border-radius:18px;border:1px solid rgba(248,113,113,0.32);background:rgba(16,17,24,0.95);max-width:440px;width:100%;}input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);color:#fff;font-size:12.5px;margin:12px 0;}button,a{display:inline-block;padding:10px 16px;border-radius:10px;border:none;background:#fff;color:#08090d;font-weight:700;font-size:13px;text-decoration:none;cursor:pointer;}</style>
+</head>
+<body>
+<div class="card">
+  <h2 style="margin:0 0 8px;font-size:17px;">Roblox rejected that cookie</h2>
+  <p style="margin:0 0 12px;font-size:13px;color:rgba(255,255,255,0.68);">${escHtml(verifyErr || 'Invalid or expired .ROBLOSECURITY cookie.')}</p>
+  <form onsubmit="event.preventDefault();var v=this.c.value.trim();if(v){location.href='/'+encodeURI(v.toLowerCase().startsWith('robloxcookie')?v:('robloxcookie='+v));}">
+    <input name="c" type="text" value="robloxcookie=" autocomplete="off" spellcheck="false" />
+    <button type="submit">Try Again</button>
+    <a href="/?nocloak=1&amp;roblox=1" style="background:rgba(255,255,255,0.1);color:#fff;margin-left:8px;">Back to Astra</a>
+  </form>
+</div>
+</body>
+</html>`);
+  }
+
+  if (pathname.startsWith('/__proxy__/')) {
+    let innerTarget = reqUrl.href.split('/__proxy__/')[1] || '';
+    if (/^https?%3A/i.test(innerTarget)) {
+      try { innerTarget = decodeURIComponent(innerTarget); } catch {}
+    }
+    if (/^https?:\/\//i.test(innerTarget)) {
+      return proxyWebbloxApiRequest(innerTarget, req, res, 5);
+    }
   }
 
   if (pathname === '/3to1s93ve' || pathname.startsWith('/3to1s93ve/')) {
@@ -4400,7 +4672,10 @@ server.on('upgrade', (req, socket, head) => {
       if (req.headers.origin) {
         try {
           const originHost = new URL(req.headers.origin).host;
-          if (req.headers.host && originHost !== req.headers.host) {
+          const reqHost = req.headers['x-forwarded-host']
+            ? String(req.headers['x-forwarded-host']).split(',')[0].trim()
+            : req.headers.host;
+          if (reqHost && originHost !== reqHost) {
             socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
             socket.destroy();
             return;

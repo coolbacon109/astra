@@ -7608,6 +7608,7 @@
                 <button type="submit" class="ext-btn">play id</button>
               </form>
 
+              <button type="button" class="ext-btn" id="robloxCopyCookieUrlBtn" style="display:none;" title="Copy a premade URL starting with robloxcookie=">copy robloxcookie url</button>
               <button type="button" class="ext-btn" id="robloxOpenSiteTopBtn">roblox.com</button>
               <button type="button" class="ext-btn" id="robloxSetupGuideBtn">setup guide</button>
               <button type="button" class="ext-btn" id="robloxReloadLauncherBtn" style="display:none;">reload</button>
@@ -7680,13 +7681,14 @@
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
                   <button type="button" class="roblox-primary-btn" id="rbxVerifyConfirmBtn">Confirm I’m Signed In</button>
-                  <button type="button" class="roblox-secondary-btn" id="rbxToggleManualCookieBtn">Paste .ROBLOSECURITY manually</button>
+                  <button type="button" class="roblox-secondary-btn" id="rbxToggleManualCookieBtn">Use premade robloxcookie= URL</button>
+                  <button type="button" class="roblox-secondary-btn" id="rbxCopyStepCookieUrlBtn" style="display:none;">Copy robloxcookie URL</button>
                 </div>
-                <div id="rbxManualCookieWrap" style="display:none;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(255,255,255,0.04);">
-                  <div style="font-size:11.5px;color:rgba(255,255,255,0.65);">Fallback if proxy login skipped cookie sync: paste your <code>.ROBLOSECURITY</code> value (<code>_|WARNING:-DO-NOT-SHARE-THIS...</code>). Verified live against Roblox and saved to your Astra session.</div>
+                <div id="rbxManualCookieWrap" style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(255,255,255,0.04);">
+                  <div style="font-size:11.5px;color:rgba(255,255,255,0.65);">Premade URL input — already starts with <code>robloxcookie=</code>. Paste your <code>.ROBLOSECURITY</code> right after <code>robloxcookie=</code> (or type <code>robloxcookie=...</code> into the Astra search bar anytime):</div>
                   <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <input type="password" id="rbxManualCookieInput" class="settings-input" style="flex:1;min-width:200px;" placeholder="_|WARNING:-DO-NOT-SHARE-THIS...." autocomplete="off" />
-                    <button type="button" class="ext-btn" id="rbxManualCookieSaveBtn">Verify &amp; Save</button>
+                    <input type="text" id="rbxManualCookieInput" class="settings-input" style="flex:1;min-width:200px;font-family:monospace;font-size:12px;" value="robloxcookie=" placeholder="robloxcookie=_|WARNING:-DO-NOT-SHARE-THIS...." autocomplete="off" spellcheck="false" />
+                    <button type="button" class="ext-btn" id="rbxManualCookieSaveBtn">Verify &amp; Launch</button>
                   </div>
                 </div>
               </div>
@@ -10808,6 +10810,14 @@
         return;
       }
 
+      const rbxCookiePrefixMatch = q.match(/^(?:https?:\/\/[^/]+\/)?\/?robloxcookie(?:[:=/\s]+(.*))?$/i);
+      if (rbxCookiePrefixMatch) {
+        if (typeof handleRobloxCookieUrlInput === 'function') {
+          handleRobloxCookieUrlInput(rbxCookiePrefixMatch[1] || '');
+        }
+        return;
+      }
+
       const current = tabs.find(t => t.id === activeTabId);
       if (!current) return;
 
@@ -11295,6 +11305,9 @@
         loadUserProfileState();
         if (typeof ensureProxyRuntimeReady === 'function') {
           ensureProxyRuntimeReady().catch(() => {});
+        }
+        if (typeof handlePendingRobloxDeepLink === 'function') {
+          setTimeout(() => { handlePendingRobloxDeepLink(); }, 60);
         }
       }
 
@@ -15003,7 +15016,12 @@
         user: (status && status.user) || null,
         cookie: (status && status.cookie) || ''
       };
-      if (robloxVerifiedState.signedIn && robloxVerifiedState.user) {
+      const isLinked = !!(robloxVerifiedState.signedIn && robloxVerifiedState.user);
+      const copyTopBtn = document.getElementById('robloxCopyCookieUrlBtn');
+      const copyStepBtn = document.getElementById('rbxCopyStepCookieUrlBtn');
+      if (copyTopBtn) copyTopBtn.style.display = isLinked ? 'inline-flex' : 'none';
+      if (copyStepBtn) copyStepBtn.style.display = isLinked ? 'inline-flex' : 'none';
+      if (isLinked) {
         const u = robloxVerifiedState.user;
         if (robloxSessionPill) robloxSessionPill.classList.add('connected');
         if (robloxSessionAvatar && u.avatarUrl) robloxSessionAvatar.src = u.avatarUrl;
@@ -15011,7 +15029,7 @@
         if (rbxVerifiedCard) rbxVerifiedCard.classList.add('visible');
         if (rbxVerifiedAvatar && u.avatarUrl) rbxVerifiedAvatar.src = u.avatarUrl;
         if (rbxVerifiedName) rbxVerifiedName.textContent = u.displayName || u.name;
-        if (rbxVerifiedSub) rbxVerifiedSub.textContent = `@${u.name} • verified & synced for Wisp WASM`;
+        if (rbxVerifiedSub) rbxVerifiedSub.textContent = `@${u.name} • verified & synced for LucideBlox`;
         if (rbxSkipIfLinkedBtn) rbxSkipIfLinkedBtn.style.display = 'inline-flex';
       } else {
         if (robloxSessionPill) robloxSessionPill.classList.remove('connected');
@@ -15107,6 +15125,7 @@
     }
 
     async function openRobloxLauncherExperience(forceReload = false) {
+      robloxHubInitialized = true;
       try { localStorage.setItem(ROBLOX_SETUP_DONE_KEY, '1'); } catch {}
       const cVal = robloxVerifiedState.cookie || (await extractProxiedRoblosecurityAsync(false));
       writeCobaltSessionStorage(cVal);
@@ -15273,29 +15292,131 @@
       rbxToggleManualCookieBtn.addEventListener('click', () => {
         const open = rbxManualCookieWrap.style.display !== 'flex';
         rbxManualCookieWrap.style.display = open ? 'flex' : 'none';
+        if (open && rbxManualCookieInput) {
+          if (!rbxManualCookieInput.value.toLowerCase().startsWith('robloxcookie')) {
+            rbxManualCookieInput.value = 'robloxcookie=';
+          }
+          rbxManualCookieInput.focus();
+        }
       });
     }
     if (rbxManualCookieSaveBtn && rbxManualCookieInput) {
       rbxManualCookieSaveBtn.addEventListener('click', async () => {
         setRobloxWizardError('');
         const raw = rbxManualCookieInput.value.trim();
-        if (!raw) {
-          setRobloxWizardError('Paste a .ROBLOSECURITY value starting with _|WARNING:-DO-NOT-SHARE-THIS.');
+        const stripped = raw.replace(/^https?:\/\/[^/]+\/robloxcookie[:=/\s]*/i, '').replace(/^\/?robloxcookie[:=/\s]*/i, '').trim();
+        if (!stripped) {
+          setRobloxWizardError('Paste your .ROBLOSECURITY value right after robloxcookie= (starts with _|WARNING:-DO-NOT-SHARE-THIS.).');
+          rbxManualCookieInput.focus();
           return;
         }
         rbxManualCookieSaveBtn.disabled = true;
         rbxManualCookieSaveBtn.textContent = 'Verifying...';
-        const res = await verifyAndSyncRobloxSession(raw);
+        const res = await verifyAndSyncRobloxSession(stripped);
         rbxManualCookieSaveBtn.disabled = false;
-        rbxManualCookieSaveBtn.textContent = 'Verify & Save';
+        rbxManualCookieSaveBtn.textContent = 'Verify & Launch';
         if (res.ok) {
-          rbxManualCookieInput.value = '';
-          rbxManualCookieWrap.style.display = 'none';
-          setTimeout(() => showRobloxWizardStep(4), 600);
+          rbxManualCookieInput.value = 'robloxcookie=';
+          if (typeof showToast === 'function') showToast(`verified @${res.user.name} — opening lucideblox!`);
+          setTimeout(() => openRobloxLauncherExperience(true), 450);
         } else {
           setRobloxWizardError(res.error || 'Roblox rejected that cookie.');
         }
       });
+    }
+    async function copyPremadeRobloxCookieUrl() {
+      const cVal = robloxVerifiedState.cookie || '';
+      if (!cVal) {
+        if (typeof showToast === 'function') showToast('link a roblox account first');
+        return;
+      }
+      const premadeUrl = `${window.location.origin}/robloxcookie=${cVal}`;
+      let copied = false;
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(premadeUrl);
+          copied = true;
+        }
+      } catch {}
+      if (!copied) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = premadeUrl;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          copied = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch {}
+      }
+      if (typeof showToast === 'function') {
+        showToast(copied ? 'copied premade robloxcookie= launch url' : premadeUrl.slice(0, 48) + '...');
+      }
+    }
+    const robloxCopyCookieUrlBtn = document.getElementById('robloxCopyCookieUrlBtn');
+    const rbxCopyStepCookieUrlBtn = document.getElementById('rbxCopyStepCookieUrlBtn');
+    if (robloxCopyCookieUrlBtn) robloxCopyCookieUrlBtn.addEventListener('click', copyPremadeRobloxCookieUrl);
+    if (rbxCopyStepCookieUrlBtn) rbxCopyStepCookieUrlBtn.addEventListener('click', copyPremadeRobloxCookieUrl);
+
+    async function handleRobloxCookieUrlInput(rawTail) {
+      const cleaned = String(rawTail || '').trim().replace(/^[:=/\s]+/, '');
+      navigateRoute('/roblox');
+      if (!cleaned) {
+        openRobloxWizardGuide(3);
+        if (rbxManualCookieWrap) rbxManualCookieWrap.style.display = 'flex';
+        if (rbxManualCookieInput) {
+          rbxManualCookieInput.value = 'robloxcookie=';
+          rbxManualCookieInput.focus();
+        }
+        return;
+      }
+      if (rbxManualCookieInput) rbxManualCookieInput.value = `robloxcookie=${cleaned}`;
+      if (typeof showToast === 'function') showToast('verifying robloxcookie link...');
+      const res = await verifyAndSyncRobloxSession(cleaned);
+      if (res.ok) {
+        if (rbxManualCookieInput) rbxManualCookieInput.value = 'robloxcookie=';
+        if (typeof showToast === 'function') showToast(`verified @${res.user.name} — opening lucideblox!`);
+        await openRobloxLauncherExperience(true);
+      } else {
+        openRobloxWizardGuide(3);
+        if (rbxManualCookieWrap) rbxManualCookieWrap.style.display = 'flex';
+        setRobloxWizardError(res.error || 'Roblox rejected that cookie.');
+      }
+    }
+
+    async function handlePendingRobloxDeepLink() {
+      let openDirect = false;
+      let openStep3 = false;
+      let pendingCookie = '';
+      try {
+        openDirect = sessionStorage.getItem('astra.openRobloxDirect') === '1' || /(?:^|[?&])roblox=1(?:&|$)/.test(window.location.search || '');
+        openStep3 = sessionStorage.getItem('astra.openRobloxSetupStep3') === '1';
+        pendingCookie = sessionStorage.getItem('astra.pendingRobloxCookie') || '';
+        sessionStorage.removeItem('astra.openRobloxDirect');
+        sessionStorage.removeItem('astra.openRobloxSetupStep3');
+        sessionStorage.removeItem('astra.pendingRobloxCookie');
+      } catch {}
+      if (!openDirect && !openStep3 && !pendingCookie) return;
+      if (pendingCookie) {
+        await handleRobloxCookieUrlInput(pendingCookie);
+      } else if (openStep3) {
+        await handleRobloxCookieUrlInput('');
+      } else if (openDirect) {
+        navigateRoute('/roblox');
+        const st = await verifyAndSyncRobloxSession('', false);
+        if (st.ok) {
+          await openRobloxLauncherExperience(true);
+        } else {
+          openRobloxWizardGuide(3);
+        }
+      }
+      try {
+        if (/(?:^|[?&])roblox=1(?:&|$)/.test(window.location.search || '')) {
+          window.history.replaceState(null, '', '/');
+        }
+      } catch {}
     }
     if (rbxLaunchContinueBtn) {
       rbxLaunchContinueBtn.addEventListener('click', async () => {
@@ -15318,7 +15439,7 @@
     if (robloxReloadLauncherBtn) robloxReloadLauncherBtn.addEventListener('click', () => openRobloxLauncherExperience(true));
     if (robloxPopoutLauncherBtn) {
       robloxPopoutLauncherBtn.addEventListener('click', () => {
-        openIsolatedRobloxGameWindow(`${window.location.origin}/3to1s93ve/launcher/index.html?wisp=${encodeURIComponent(getAstraWispUrl())}`);
+        openIsolatedRobloxGameWindow(`${window.location.origin}/3to1s93ve/launcher/index.html`);
       });
     }
     if (robloxQuickPlaceForm && robloxQuickPlaceInput) {
