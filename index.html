@@ -5262,6 +5262,565 @@
       padding: 10px 14px;
       background: linear-gradient(0deg, rgba(8, 9, 14, 0.84) 0%, transparent 100%);
     }
+
+    /* Animated Luminous Accent Outline across Screenshotted UI Elements & Roblox Hub (Zero White Lines) */
+    @property --astra-outline-angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+    @keyframes astraOutlineSpin {
+      to { --astra-outline-angle: 360deg; }
+    }
+    .search-wrapper,
+    .url-bar,
+    .tab-item,
+    .side-dock-item,
+    .quick-app-tile,
+    .regular-plus-btn,
+    .switch-layout-btn,
+    .search-proxy-toggle,
+    .music-search-form,
+    .music-quick-card,
+    .music-side-card,
+    .music-main,
+    .game-card,
+    .settings-card,
+    .cmd-palette-modal,
+    .chrome-btn,
+    .ext-btn,
+    .roblox-topbar,
+    .roblox-wizard-card,
+    .roblox-launcher-frame-wrap,
+    .roblox-step-pill.active,
+    .roblox-primary-btn {
+      position: relative;
+    }
+    .search-wrapper::before,
+    .url-bar::before,
+    .tab-item::before,
+    .side-dock-item::before,
+    .quick-app-tile::before,
+    .regular-plus-btn::before,
+    .switch-layout-btn::before,
+    .search-proxy-toggle::before,
+    .music-search-form::before,
+    .music-quick-card::before,
+    .music-side-card::before,
+    .music-main::before,
+    .music-player-bar::after,
+    .game-card::before,
+    .settings-card::before,
+    .cmd-palette-modal::before,
+    .chrome-btn::before,
+    .ext-btn::before,
+    .roblox-topbar::before,
+    .roblox-wizard-card::before,
+    .roblox-launcher-frame-wrap::before,
+    .roblox-step-pill.active::before,
+    .roblox-primary-btn::before {
+      content: "";
+      display: block !important;
+      position: absolute;
+      inset: 0;
+      padding: 1.5px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from var(--astra-outline-angle),
+        rgba(var(--accent), 0.16) 0deg,
+        rgba(var(--accent), 0.85) 68deg,
+        rgba(var(--accent-soft), 0.95) 118deg,
+        rgba(var(--accent), 0.14) 190deg,
+        rgba(var(--accent-soft), 0.52) 275deg,
+        rgba(var(--accent), 0.16) 360deg
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0.72;
+      animation: astraOutlineSpin 5.5s linear infinite;
+      transition: opacity 0.22s ease;
+    }
+    .search-wrapper:hover::before,
+    .search-wrapper:focus-within::before,
+    .url-bar:hover::before,
+    .url-bar:focus-within::before,
+    .tab-item:hover::before,
+    .tab-item.active::before,
+    .side-dock-item:hover::before,
+    .side-dock-item.active::before,
+    .quick-app-tile:hover::before,
+    .music-quick-card:hover::before,
+    .music-search-form:focus-within::before,
+    .game-card:hover::before,
+    .ext-btn:hover::before,
+    .chrome-btn:hover::before,
+    .roblox-primary-btn:hover::before {
+      opacity: 1;
+      animation-duration: 2.8s;
+    }
+    .side-dock-item[data-bottom-action="roblox"] svg {
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), filter 0.24s ease;
+    }
+    .side-dock-item[data-bottom-action="roblox"]:hover svg,
+    .side-dock-item[data-bottom-action="roblox"].active svg {
+      transform: scale(1.12) rotate(-6deg);
+      filter: drop-shadow(0 0 8px rgba(var(--accent), 0.65));
+    }
+
+    /* Native Roblox Hub + Interactive 4-Step Setup Tutorial */
+    .roblox-hub-container {
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      width: 100%;
+      overflow-y: auto;
+      padding: 18px clamp(14px, 3vw, 34px) 24px;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .roblox-hub-container.visible {
+      display: flex;
+    }
+    .roblox-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(16, 18, 28, 0.88), rgba(9, 10, 16, 0.94));
+      backdrop-filter: blur(26px) saturate(160%);
+      -webkit-backdrop-filter: blur(26px) saturate(160%);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 0 22px rgba(var(--accent), 0.14);
+      flex-shrink: 0;
+    }
+    .roblox-brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .roblox-brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(var(--accent), 0.18);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(var(--accent), 0.3);
+      flex-shrink: 0;
+    }
+    .roblox-brand-mark svg {
+      width: 20px;
+      height: 20px;
+    }
+    .roblox-brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .roblox-brand-sub {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .roblox-top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .roblox-session-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.84);
+    }
+    .roblox-session-pill img {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: none;
+    }
+    .roblox-session-pill.connected img {
+      display: block;
+    }
+    .roblox-session-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+    .roblox-session-pill.connected .roblox-session-dot {
+      background: #4ade80;
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.75);
+    }
+    .roblox-place-form {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      padding: 3px 4px 3px 12px;
+    }
+    .roblox-place-form input {
+      width: 128px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .roblox-wizard-shell {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 12px 0;
+      margin: auto 0;
+    }
+    .roblox-wizard-card {
+      width: min(740px, 100%);
+      margin: auto 0;
+      border-radius: 24px;
+      padding: clamp(18px, 3.2vw, 34px);
+      background: linear-gradient(155deg, rgba(16, 18, 28, 0.92), rgba(8, 9, 15, 0.96));
+      backdrop-filter: blur(32px) saturate(175%);
+      -webkit-backdrop-filter: blur(32px) saturate(175%);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.72), 0 0 40px rgba(var(--accent), 0.16);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+    .roblox-steps-nav {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .roblox-step-pill {
+      min-width: 0;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: none;
+      color: rgba(255, 255, 255, 0.52);
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .roblox-step-pill > span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .roblox-step-pill.active {
+      background: rgba(var(--accent), 0.2);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(var(--accent), 0.24);
+    }
+    .roblox-step-pill.done {
+      background: rgba(74, 222, 128, 0.12);
+      color: #bbf7d0;
+    }
+    .roblox-step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .roblox-step-pill.done .roblox-step-num {
+      background: rgba(74, 222, 128, 0.25);
+    }
+    .roblox-progress-track {
+      height: 4px;
+      width: 100%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+    .roblox-progress-fill {
+      height: 100%;
+      width: 25%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(var(--accent), 0.95), rgba(var(--accent-soft), 0.98));
+      box-shadow: 0 0 12px rgba(var(--accent), 0.65);
+      transition: width 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .roblox-step-stage {
+      min-height: 235px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      animation: astraStepFade 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes astraStepFade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .roblox-hero-logo-wrap {
+      width: 70px;
+      height: 70px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 30% 30%, rgba(var(--accent), 0.38), rgba(14, 16, 26, 0.95));
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 28px rgba(var(--accent), 0.34);
+      animation: astraFloat 4.2s ease-in-out infinite;
+    }
+    .roblox-hero-logo-wrap svg {
+      width: 38px;
+      height: 38px;
+      color: #fff;
+    }
+    .roblox-stage-title {
+      font-size: clamp(20px, 2.8vw, 26px);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .roblox-stage-desc {
+      font-size: 13.5px;
+      line-height: 1.62;
+      color: rgba(255, 255, 255, 0.74);
+    }
+    .roblox-status-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .roblox-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.86);
+    }
+    .roblox-primary-btn {
+      padding: 11px 22px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, rgba(var(--accent), 0.88), rgba(var(--accent-soft), 0.78));
+      color: #fff;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 26px rgba(var(--accent), 0.32);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .roblox-primary-btn:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(var(--accent), 0.45);
+    }
+    .roblox-primary-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .roblox-secondary-btn {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.88);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+    .roblox-secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+    .roblox-wizard-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 6px;
+    }
+    .roblox-error-box {
+      padding: 11px 14px;
+      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.14);
+      color: #fecaca;
+      font-size: 12.5px;
+      line-height: 1.5;
+      display: none;
+    }
+    .roblox-error-box.visible {
+      display: block;
+    }
+    .roblox-verified-card {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(74, 222, 128, 0.12);
+    }
+    .roblox-verified-card.visible {
+      display: flex;
+    }
+    .roblox-verified-card img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .roblox-loader-spinner {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.12);
+      border-top-color: rgb(var(--accent-soft));
+      animation: spinLoader 0.85s linear infinite;
+    }
+    .roblox-launcher-panel {
+      flex: 1;
+      min-height: 420px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .roblox-launcher-panel.visible {
+      display: flex;
+    }
+    .roblox-launcher-frame-wrap {
+      flex: 1;
+      min-height: 420px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #08090e;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.68), 0 0 28px rgba(var(--accent), 0.18);
+    }
+    .roblox-launcher-frame {
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+      border: none;
+      display: block;
+    }
+    .roblox-return-banner {
+      position: fixed;
+      right: 22px;
+      bottom: 84px;
+      z-index: 95;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(13, 15, 24, 0.92);
+      backdrop-filter: blur(22px);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.65), 0 0 24px rgba(var(--accent), 0.34);
+      font-size: 12.5px;
+      color: #fff;
+    }
+    .roblox-return-banner.visible {
+      display: flex;
+    }
+    @media (max-width: 720px) {
+      .side-tabs-panel {
+        width: 72px !important;
+        min-width: 72px !important;
+        padding: 10px 6px !important;
+        align-items: center !important;
+      }
+      .side-tabs-panel .side-tabs-top {
+        width: 100% !important;
+        max-height: 28vh;
+      }
+      .side-tabs-panel .tabs-header {
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+      }
+      .side-tabs-panel .new-tab-btn {
+        font-size: 9px;
+        padding: 4px 6px;
+        width: 100%;
+      }
+      .side-tabs-panel .tab-inner {
+        padding: 6px 6px;
+        gap: 4px;
+        justify-content: center;
+      }
+      .side-tabs-panel .tab-title,
+      .side-tabs-panel .tab-close {
+        display: none;
+      }
+      .side-tabs-panel .side-dock-inner {
+        flex-direction: column;
+        padding: 6px 3px;
+        gap: 3px;
+        justify-content: center;
+      }
+      .side-tabs-panel .side-dock-inner svg {
+        display: block !important;
+      }
+      .side-tabs-panel .side-dock-inner .dock-label {
+        font-size: 9px;
+        max-width: 58px;
+      }
+      .side-tabs-panel .side-shield-btn,
+      .side-tabs-panel #switchToRegularBtn,
+      .side-tabs-panel #sideTextSizeBtn,
+      .side-tabs-panel #sideLogoutBtn {
+        width: 58px !important;
+        padding: 5px 4px !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+      }
+      .side-tabs-panel .rail-btn-label {
+        font-size: 8.5px !important;
+        max-width: 54px !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .roblox-steps-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .roblox-topbar {
+        padding: 10px 12px;
+      }
+      .roblox-place-form input {
+        width: 96px;
+      }
+    }
   </style>
   <script src="/baremux/index.js"></script>
   <script src="/scram/scramjet.all.js"></script>
@@ -5505,6 +6064,16 @@
                 <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>
               </svg>
               <span class="dock-label">games</span>
+            </button>
+          </div>
+
+          <!-- roblox (/roblox -> LucideBlox WASM + Wisp) -->
+          <div class="side-dock-item" data-bottom-action="roblox" title="roblox (/roblox)">
+            <button class="side-dock-inner">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/>
+              </svg>
+              <span class="dock-label">roblox</span>
             </button>
           </div>
 
@@ -6478,7 +7047,169 @@
           </div>
         </div>
 
+        <!-- Integrated Astra Roblox Hub (/roblox -> Interactive Tutorial + LucideBlox WASM Launcher) -->
+        <div class="roblox-hub-container" id="robloxHubView">
+          <div class="roblox-topbar">
+            <div class="roblox-brand-cluster">
+              <div class="roblox-brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="roblox-brand-title">Roblox</div>
+                <div class="roblox-brand-sub">integrated LucideBlox WASM + Astra Wisp proxy</div>
+              </div>
+            </div>
+
+            <div class="roblox-top-actions">
+              <div class="roblox-session-pill" id="robloxSessionPill">
+                <span class="roblox-session-dot"></span>
+                <img id="robloxSessionAvatar" alt="" />
+                <span id="robloxSessionText">not linked</span>
+              </div>
+
+              <form class="roblox-place-form" id="robloxQuickPlaceForm">
+                <input type="text" id="robloxQuickPlaceInput" placeholder="place id (e.g. 286090429)" autocomplete="off" />
+                <button type="submit" class="ext-btn">play id</button>
+              </form>
+
+              <button type="button" class="ext-btn" id="robloxOpenSiteTopBtn">roblox.com</button>
+              <button type="button" class="ext-btn" id="robloxSetupGuideBtn">setup guide</button>
+              <button type="button" class="ext-btn" id="robloxReloadLauncherBtn" style="display:none;">reload</button>
+              <button type="button" class="ext-btn" id="robloxPopoutLauncherBtn" style="display:none;">pop out</button>
+            </div>
+          </div>
+
+          <div class="roblox-wizard-shell" id="robloxWizardPanel">
+            <div class="roblox-wizard-card">
+              <div class="roblox-steps-nav" id="robloxStepsNav">
+                <button type="button" class="roblox-step-pill active" data-rbx-step="1"><span class="roblox-step-num">1</span><span>Welcome</span></button>
+                <button type="button" class="roblox-step-pill" data-rbx-step="2"><span class="roblox-step-num">2</span><span>Roblox Site</span></button>
+                <button type="button" class="roblox-step-pill" data-rbx-step="3"><span class="roblox-step-num">3</span><span>Return</span></button>
+                <button type="button" class="roblox-step-pill" data-rbx-step="4"><span class="roblox-step-num">4</span><span>Launcher</span></button>
+              </div>
+
+              <div class="roblox-progress-track">
+                <div class="roblox-progress-fill" id="robloxProgressFill"></div>
+              </div>
+
+              <div class="roblox-error-box" id="robloxWizardError"></div>
+
+              <!-- Step 1: Welcome -->
+              <div class="roblox-step-stage" id="robloxStepStage1">
+                <div class="roblox-hero-logo-wrap">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/>
+                  </svg>
+                </div>
+                <div class="roblox-stage-title">Welcome to Roblox on Astra</div>
+                <div class="roblox-stage-desc">
+                  Play real Roblox experiences directly through Astra’s built-in proxy and Wisp relay — powered by the WebAssembly LucideBlox engine with WebGPU/WebGL2 rendering. Let’s link your Roblox session in 4 quick steps.
+                </div>
+                <div class="roblox-status-chips">
+                  <span class="roblox-status-chip" id="rbxChipProxy">checking astra proxy...</span>
+                  <span class="roblox-status-chip" id="rbxChipWisp">wisp relay: /wisp/</span>
+                  <span class="roblox-status-chip" id="rbxChipWebgl">checking graphics...</span>
+                </div>
+                <div style="padding-top:4px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                  <button type="button" class="roblox-primary-btn" id="rbxGetStartedBtn">Get Started →</button>
+                  <button type="button" class="roblox-secondary-btn" id="rbxSkipIfLinkedBtn" style="display:none;">Open Launcher Now</button>
+                </div>
+              </div>
+
+              <!-- Step 2: Roblox Website -->
+              <div class="roblox-step-stage" id="robloxStepStage2" style="display:none;">
+                <div class="roblox-stage-title">Sign in on Roblox Website</div>
+                <div class="roblox-stage-desc">
+                  Open <strong>https://www.roblox.com/</strong> inside Astra’s proxy and sign into your account.<br><br>
+                  <strong>Important tip:</strong> Choose the <strong>Email one-time code</strong> login option on Roblox — passkeys, external QR approvals, or hardware keys won’t complete inside a web proxy. Once you see your Roblox home feed, come back to this tab to continue.
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                  <button type="button" class="roblox-primary-btn" id="rbxOpenSiteStepBtn">Open https://www.roblox.com/ ↗</button>
+                  <button type="button" class="roblox-secondary-btn" id="rbxAlreadySignedBtn">I signed in — continue</button>
+                </div>
+              </div>
+
+              <!-- Step 3: Return & Verify -->
+              <div class="roblox-step-stage" id="robloxStepStage3" style="display:none;">
+                <div class="roblox-stage-title">Confirm &amp; Sync Session</div>
+                <div class="roblox-stage-desc">
+                  Click the button below so Astra reads your proxied Roblox session cookie (<code>.ROBLOSECURITY</code>), syncs it with your encrypted Wisp transport, and verifies your account directly with Roblox.
+                </div>
+                <div class="roblox-verified-card" id="rbxVerifiedCard">
+                  <img id="rbxVerifiedAvatar" alt="" />
+                  <div>
+                    <div style="font-weight:700;color:#fff;font-size:14px;" id="rbxVerifiedName"></div>
+                    <div style="font-size:12px;color:#bbf7d0;" id="rbxVerifiedSub"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                  <button type="button" class="roblox-primary-btn" id="rbxVerifyConfirmBtn">Confirm I’m Signed In</button>
+                  <button type="button" class="roblox-secondary-btn" id="rbxToggleManualCookieBtn">Paste .ROBLOSECURITY manually</button>
+                </div>
+                <div id="rbxManualCookieWrap" style="display:none;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(255,255,255,0.04);">
+                  <div style="font-size:11.5px;color:rgba(255,255,255,0.65);">Fallback if proxy login skipped cookie sync: paste your <code>.ROBLOSECURITY</code> value (<code>_|WARNING:-DO-NOT-SHARE-THIS...</code>). Verified live against Roblox and saved to your Astra session.</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="password" id="rbxManualCookieInput" class="settings-input" style="flex:1;min-width:200px;" placeholder="_|WARNING:-DO-NOT-SHARE-THIS...." autocomplete="off" />
+                    <button type="button" class="ext-btn" id="rbxManualCookieSaveBtn">Verify &amp; Save</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 4: Launcher -->
+              <div class="roblox-step-stage" id="robloxStepStage4" style="display:none;">
+                <div class="roblox-stage-title">Ready to Launch WebBlox</div>
+                <div class="roblox-stage-desc">
+                  Your session and Astra Wisp relay are ready. Click <strong>Continue</strong> to start the integrated LucideBlox launcher — browse your home feed, charts, friends, and avatar right inside Astra. When you press <strong>Play</strong> on a game, the hardware-accelerated WASM client opens in an isolated game window with full <code>SharedArrayBuffer</code> and pointer-lock support.
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                  <button type="button" class="roblox-primary-btn" id="rbxLaunchContinueBtn">Continue &amp; Open Launcher →</button>
+                </div>
+              </div>
+
+              <!-- Step 5 (Animated Loading Screen) -->
+              <div class="roblox-step-stage" id="robloxStepStageLoading" style="display:none;align-items:center;text-align:center;">
+                <div class="roblox-loader-spinner"></div>
+                <div class="roblox-stage-title" id="rbxLoadingTitle">Starting Roblox Launcher...</div>
+                <div class="roblox-stage-desc" id="rbxLoadingSub">Syncing session cookies and connecting Astra Wisp transport (/wisp/)...</div>
+              </div>
+
+              <!-- Step 6 (Completion Screen) -->
+              <div class="roblox-step-stage" id="robloxStepStageDone" style="display:none;align-items:center;text-align:center;">
+                <div class="roblox-hero-logo-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div class="roblox-stage-title">Roblox Setup Complete!</div>
+                <div class="roblox-stage-desc">
+                  Your session is synced and LucideBlox is ready on Astra’s proxy. Click below if it didn’t open automatically.
+                </div>
+                <button type="button" class="roblox-primary-btn" id="rbxEnterLauncherBtn">Enter Roblox Launcher</button>
+              </div>
+
+              <div class="roblox-wizard-foot" id="robloxWizardFoot">
+                <button type="button" class="roblox-secondary-btn" id="rbxBackBtn" style="visibility:hidden;">← Back</button>
+                <button type="button" class="roblox-secondary-btn" id="rbxNextBtn">Next →</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="roblox-launcher-panel" id="robloxLauncherPanel">
+            <div class="roblox-launcher-frame-wrap">
+              <iframe class="roblox-launcher-frame" id="robloxLauncherFrame" allow="autoplay; fullscreen; gamepad; pointer-events; pointer-lock; clipboard-read; clipboard-write" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+
         <iframe class="browser-frame" id="browserFrame" allowfullscreen></iframe>
+      </div>
+
+      <!-- Quick return floating pill shown if user went to roblox.com during Step 2 -->
+      <div class="roblox-return-banner" id="robloxReturnBanner">
+        <span>signing into roblox? when finished:</span>
+        <button type="button" class="ext-btn" id="robloxReturnPillBtn" style="background:rgba(var(--accent),0.32);color:#fff;">return to roblox setup (step 3) →</button>
       </div>
 
       <!-- Hero Section (/h Home, /g Games, etc.) -->
@@ -6684,6 +7415,11 @@
         url: null,
         isGamesHub: true
       },
+      '/roblox': {
+        name: 'roblox',
+        url: null,
+        isRobloxHub: true
+      },
       '/m': {
         name: 'movies',
         url: 'https://www.streamex.hn'
@@ -6721,6 +7457,7 @@
     const actionRouteMap = {
       home: '/h',
       games: '/g',
+      roblox: '/roblox',
       movies: '/m',
       anime: '/a',
       music: '/music',
@@ -7541,7 +8278,7 @@
               const regs = await navigator.serviceWorker.getRegistrations();
               for (const r of regs) {
                 const su = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || (r.waiting && r.waiting.scriptURL) || '';
-                if (su && !su.endsWith('/sw.js')) {
+                if (su && !su.endsWith('/sw.js') && !su.includes('/3to1s93ve/sw.js')) {
                   try { await r.unregister(); } catch {}
                 }
               }
@@ -8444,6 +9181,7 @@
       });
 
       const showGamesHub = current.route === '/g' && !current.url && !current.query;
+      const showRobloxHub = current.route === '/roblox' && !current.url && !current.query;
       const showMusicHub = current.route === '/music' && !current.url && !current.query;
       const showChatHub = current.route === '/chat' && !current.url && !current.query;
       const showAiHub = current.route === '/ai' && !current.url && !current.query;
@@ -8451,7 +9189,7 @@
       const showAdminHub = current.route === '/admin' && !current.url && !current.query && !!(currentUser && currentUser.role === 'admin');
       const showSearch = !!current.query;
       const isImmersiveMedia =
-        (['/m', '/g', '/a', '/music', '/chat', '/ai', '/s', '/admin'].includes(current.route) && !current.query) ||
+        (['/m', '/g', '/roblox', '/a', '/music', '/chat', '/ai', '/s', '/admin'].includes(current.route) && !current.query) ||
         (!!current.url && !current.query && /nowgg\.fun|gn-math/i.test(current.url));
       document.body.classList.toggle('immersive-media-mode', isImmersiveMedia);
 
@@ -8460,18 +9198,21 @@
         current.title = 'home';
       }
 
+      if (typeof syncRobloxReturnBanner === 'function') syncRobloxReturnBanner(current);
+
       browserViewport.classList.toggle(
         'settings-transparent',
-        showGamesHub || showMusicHub || showChatHub || showAiHub || showSettingsHub || showAdminHub || showSearch
+        showGamesHub || showRobloxHub || showMusicHub || showChatHub || showAiHub || showSettingsHub || showAdminHub || showSearch
       );
 
-      if (!current.url && !current.query && !showGamesHub && !showMusicHub && !showChatHub && !showAiHub && !showSettingsHub && !showAdminHub) {
+      if (!current.url && !current.query && !showGamesHub && !showRobloxHub && !showMusicHub && !showChatHub && !showAiHub && !showSettingsHub && !showAdminHub) {
         stopConnectingScreen();
         updateProxyCornerIndicator(false);
         browserViewport.classList.remove('active');
         browserFrame.classList.remove('active-frame', 'loaded');
         stopFrameMediaAndUnload();
         if (gamesHubView) gamesHubView.classList.remove('visible');
+        if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
         if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
         if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
         if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
@@ -8497,6 +9238,7 @@
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
@@ -8511,6 +9253,7 @@
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
@@ -8525,6 +9268,7 @@
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (settingsHubView) settingsHubView.classList.remove('visible');
@@ -8538,6 +9282,7 @@
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
           if (settingsHubView) settingsHubView.classList.remove('visible');
@@ -8552,6 +9297,7 @@
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
           if (settingsHubView) settingsHubView.classList.remove('visible');
@@ -8559,12 +9305,28 @@
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.add('visible');
           topUrlInput.value = '/chat';
           if (typeof ensureChatHubLoaded === 'function') ensureChatHubLoaded();
+        } else if (showRobloxHub) {
+          stopConnectingScreen();
+          updateProxyCornerIndicator(false);
+          searchResultsContainer.classList.remove('visible');
+          browserFrame.classList.remove('active-frame', 'loaded');
+          stopFrameMediaAndUnload();
+          if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
+          if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
+          if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
+          if (settingsHubView) settingsHubView.classList.remove('visible');
+          if (adminHubView) adminHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.add('visible');
+          topUrlInput.value = '/roblox';
+          if (typeof ensureRobloxHubReady === 'function') ensureRobloxHubReady();
         } else if (showGamesHub) {
           stopConnectingScreen();
           updateProxyCornerIndicator(false);
           searchResultsContainer.classList.remove('visible');
           browserFrame.classList.remove('active-frame', 'loaded');
           stopFrameMediaAndUnload();
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
@@ -8575,6 +9337,7 @@
           ensureGamesCatalogLoaded();
         } else {
           if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
           if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
           if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
           if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
@@ -11965,6 +12728,7 @@
     }, { passive: true });
 
     const QUICK_APPS = [
+      { name: 'Roblox', route: '/roblox', sub: '/roblox', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/></svg>' },
       { name: 'YouTube', target: 'https://www.youtube.com', sub: 'youtube.com', icon: 'https://www.google.com/s2/favicons?sz=64&domain=youtube.com' },
       { name: 'Discord', target: 'https://discord.com/app', sub: 'discord.com/app', icon: 'https://www.google.com/s2/favicons?sz=64&domain=discord.com' },
       { name: 'TikTok', target: 'https://www.tiktok.com', sub: 'tiktok.com', icon: 'https://www.google.com/s2/favicons?sz=64&domain=tiktok.com' },
@@ -12791,6 +13555,426 @@
         if (musicShuffleBtn) musicShuffleBtn.click();
       } else if (e.key === 'l' || e.key === 'L') {
         if (musicLyricsBtn) musicLyricsBtn.click();
+      }
+    });
+
+    // Integrated Roblox Hub + 4-Step Interactive Setup Tutorial + LucideBlox WASM Bridge
+    const robloxHubView = document.getElementById('robloxHubView');
+    const robloxWizardPanel = document.getElementById('robloxWizardPanel');
+    const robloxLauncherPanel = document.getElementById('robloxLauncherPanel');
+    const robloxLauncherFrame = document.getElementById('robloxLauncherFrame');
+    const robloxReloadLauncherBtn = document.getElementById('robloxReloadLauncherBtn');
+    const robloxPopoutLauncherBtn = document.getElementById('robloxPopoutLauncherBtn');
+    const robloxSetupGuideBtn = document.getElementById('robloxSetupGuideBtn');
+    const robloxOpenSiteTopBtn = document.getElementById('robloxOpenSiteTopBtn');
+    const robloxSessionPill = document.getElementById('robloxSessionPill');
+    const robloxSessionAvatar = document.getElementById('robloxSessionAvatar');
+    const robloxSessionText = document.getElementById('robloxSessionText');
+    const robloxQuickPlaceForm = document.getElementById('robloxQuickPlaceForm');
+    const robloxQuickPlaceInput = document.getElementById('robloxQuickPlaceInput');
+    const robloxWizardError = document.getElementById('robloxWizardError');
+    const robloxProgressFill = document.getElementById('robloxProgressFill');
+    const robloxWizardFoot = document.getElementById('robloxWizardFoot');
+    const rbxBackBtn = document.getElementById('rbxBackBtn');
+    const rbxNextBtn = document.getElementById('rbxNextBtn');
+    const rbxGetStartedBtn = document.getElementById('rbxGetStartedBtn');
+    const rbxSkipIfLinkedBtn = document.getElementById('rbxSkipIfLinkedBtn');
+    const rbxOpenSiteStepBtn = document.getElementById('rbxOpenSiteStepBtn');
+    const rbxAlreadySignedBtn = document.getElementById('rbxAlreadySignedBtn');
+    const rbxVerifyConfirmBtn = document.getElementById('rbxVerifyConfirmBtn');
+    const rbxToggleManualCookieBtn = document.getElementById('rbxToggleManualCookieBtn');
+    const rbxManualCookieWrap = document.getElementById('rbxManualCookieWrap');
+    const rbxManualCookieInput = document.getElementById('rbxManualCookieInput');
+    const rbxManualCookieSaveBtn = document.getElementById('rbxManualCookieSaveBtn');
+    const rbxVerifiedCard = document.getElementById('rbxVerifiedCard');
+    const rbxVerifiedAvatar = document.getElementById('rbxVerifiedAvatar');
+    const rbxVerifiedName = document.getElementById('rbxVerifiedName');
+    const rbxVerifiedSub = document.getElementById('rbxVerifiedSub');
+    const rbxLaunchContinueBtn = document.getElementById('rbxLaunchContinueBtn');
+    const rbxLoadingTitle = document.getElementById('rbxLoadingTitle');
+    const rbxLoadingSub = document.getElementById('rbxLoadingSub');
+    const rbxEnterLauncherBtn = document.getElementById('rbxEnterLauncherBtn');
+    const robloxReturnBanner = document.getElementById('robloxReturnBanner');
+    const robloxReturnPillBtn = document.getElementById('robloxReturnPillBtn');
+
+    const ROBLOX_SETUP_DONE_KEY = 'astra.roblox.setupDone.v1';
+    let robloxCurrentStep = 1;
+    let robloxSetupVisitedSite = false;
+    let robloxVerifiedState = { signedIn: false, user: null, cookie: '' };
+    let robloxLauncherMounted = false;
+    let robloxHubInitialized = false;
+
+    function getAstraWispUrl() {
+      const baseOrigin = proxyOrigin || window.location.origin;
+      const wsProto = baseOrigin.startsWith('https://') ? 'wss://' : 'ws://';
+      return `${wsProto}${baseOrigin.replace(/^https?:\/\//i, '')}/wisp/`;
+    }
+
+    function extractScramjetRoblosecurity() {
+      try {
+        if (scramjetController && scramjetController.cookieJar && typeof scramjetController.cookieJar.dump === 'function') {
+          const dumped = JSON.parse(scramjetController.cookieJar.dump() || '{}');
+          if (dumped && typeof dumped === 'object') {
+            for (const c of Object.values(dumped)) {
+              if (!c || typeof c !== 'object') continue;
+              const dom = String(c.domain || '').replace(/^\./, '').toLowerCase();
+              if (c.name === '.ROBLOSECURITY' && typeof c.value === 'string' && c.value && (dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
+                return c.value;
+              }
+            }
+          }
+        }
+      } catch {}
+      try {
+        const raw = JSON.parse(localStorage.getItem('cobalt-cookies') || '[]');
+        const hit = Array.isArray(raw) ? raw.find(c => c && c.n === '.ROBLOSECURITY' && typeof c.v === 'string' && c.v) : null;
+        if (hit) return hit.v;
+      } catch {}
+      return '';
+    }
+
+    function writeCobaltSessionStorage(cookieVal) {
+      const wispUrl = getAstraWispUrl();
+      try { localStorage.setItem('webblox.transport', wispUrl); } catch {}
+      let nextCookies = [];
+      if (cookieVal) {
+        try {
+          const existing = JSON.parse(localStorage.getItem('cobalt-cookies') || '[]');
+          const kept = Array.isArray(existing) ? existing.filter(c => c && c.n !== '.ROBLOSECURITY') : [];
+          const domains = ['roblox.com', 'rbxcdn.com', 'robloxlabs.com'];
+          nextCookies = [
+            ...kept,
+            ...domains.map(d => ({ n: '.ROBLOSECURITY', v: cookieVal, d, h: false, p: '/', s: true, o: true, e: 0, ss: 'none' }))
+          ];
+          localStorage.setItem('cobalt-cookies', JSON.stringify(nextCookies));
+        } catch {}
+      }
+      if (robloxLauncherFrame && robloxLauncherFrame.contentWindow) {
+        try {
+          robloxLauncherFrame.contentWindow.postMessage({ type: 'astra-roblox-sync', cookies: nextCookies, wispUrl }, window.location.origin);
+        } catch {}
+      }
+      return { wispUrl, cookies: nextCookies };
+    }
+
+    function updateRobloxSessionUI(status) {
+      robloxVerifiedState = {
+        signedIn: !!(status && status.signedIn),
+        user: (status && status.user) || null,
+        cookie: (status && status.cookie) || ''
+      };
+      if (robloxVerifiedState.signedIn && robloxVerifiedState.user) {
+        const u = robloxVerifiedState.user;
+        if (robloxSessionPill) robloxSessionPill.classList.add('connected');
+        if (robloxSessionAvatar && u.avatarUrl) robloxSessionAvatar.src = u.avatarUrl;
+        if (robloxSessionText) robloxSessionText.textContent = `@${u.name}`;
+        if (rbxVerifiedCard) rbxVerifiedCard.classList.add('visible');
+        if (rbxVerifiedAvatar && u.avatarUrl) rbxVerifiedAvatar.src = u.avatarUrl;
+        if (rbxVerifiedName) rbxVerifiedName.textContent = u.displayName || u.name;
+        if (rbxVerifiedSub) rbxVerifiedSub.textContent = `@${u.name} • verified & synced for Wisp WASM`;
+        if (rbxSkipIfLinkedBtn) rbxSkipIfLinkedBtn.style.display = 'inline-flex';
+      } else {
+        if (robloxSessionPill) robloxSessionPill.classList.remove('connected');
+        if (robloxSessionAvatar) robloxSessionAvatar.removeAttribute('src');
+        if (robloxSessionText) robloxSessionText.textContent = 'not linked';
+        if (rbxVerifiedCard) rbxVerifiedCard.classList.remove('visible');
+        if (rbxSkipIfLinkedBtn) rbxSkipIfLinkedBtn.style.display = 'none';
+      }
+    }
+
+    async function verifyAndSyncRobloxSession(manualCookie = '') {
+      const candidate = manualCookie || extractScramjetRoblosecurity();
+      try {
+        const base = proxyOrigin || '';
+        const res = candidate
+          ? await fetch(`${base}/api/roblox/verify`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cookie: candidate })
+            })
+          : await fetch(`${base}/api/roblox/status`, { credentials: 'same-origin', cache: 'no-store' });
+        const data = await res.json();
+        if (data && data.signedIn && data.cookie) {
+          writeCobaltSessionStorage(data.cookie);
+          updateRobloxSessionUI(data);
+          return { ok: true, user: data.user, cookie: data.cookie };
+        }
+        updateRobloxSessionUI({ signedIn: false });
+        return { ok: false, error: (data && data.error) || 'No active Roblox login detected yet.' };
+      } catch (err) {
+        return { ok: false, error: (err && err.message) || 'Could not reach Astra verification endpoint.' };
+      }
+    }
+
+    function setRobloxWizardError(msg) {
+      if (!robloxWizardError) return;
+      if (!msg) {
+        robloxWizardError.textContent = '';
+        robloxWizardError.classList.remove('visible');
+      } else {
+        robloxWizardError.textContent = msg;
+        robloxWizardError.classList.add('visible');
+      }
+    }
+
+    function showRobloxWizardStep(stepKey) {
+      setRobloxWizardError('');
+      const stages = {
+        1: document.getElementById('robloxStepStage1'),
+        2: document.getElementById('robloxStepStage2'),
+        3: document.getElementById('robloxStepStage3'),
+        4: document.getElementById('robloxStepStage4'),
+        loading: document.getElementById('robloxStepStageLoading'),
+        done: document.getElementById('robloxStepStageDone')
+      };
+      Object.values(stages).forEach(el => { if (el) el.style.display = 'none'; });
+      if (stages[stepKey]) stages[stepKey].style.display = 'flex';
+
+      const numericStep = typeof stepKey === 'number' ? stepKey : 4;
+      robloxCurrentStep = numericStep;
+      if (robloxProgressFill) {
+        const pct = stepKey === 'loading' || stepKey === 'done' ? 100 : (numericStep * 25);
+        robloxProgressFill.style.width = `${pct}%`;
+      }
+      document.querySelectorAll('[data-rbx-step]').forEach(btn => {
+        const s = Number(btn.dataset.rbxStep);
+        btn.classList.toggle('active', stepKey === s);
+        btn.classList.toggle('done', s < numericStep || stepKey === 'done');
+      });
+
+      const isTransient = stepKey === 'loading' || stepKey === 'done';
+      if (robloxWizardFoot) robloxWizardFoot.style.display = isTransient ? 'none' : 'flex';
+      if (rbxBackBtn) rbxBackBtn.style.visibility = numericStep > 1 ? 'visible' : 'hidden';
+      if (rbxNextBtn) {
+        rbxNextBtn.style.display = numericStep < 4 ? 'inline-flex' : 'none';
+      }
+    }
+
+    function openRobloxLauncherExperience(forceReload = false) {
+      try { localStorage.setItem(ROBLOX_SETUP_DONE_KEY, '1'); } catch {}
+      writeCobaltSessionStorage(robloxVerifiedState.cookie || extractScramjetRoblosecurity());
+      if (robloxWizardPanel) robloxWizardPanel.style.display = 'none';
+      if (robloxLauncherPanel) robloxLauncherPanel.classList.add('visible');
+      if (robloxReloadLauncherBtn) robloxReloadLauncherBtn.style.display = 'inline-flex';
+      if (robloxPopoutLauncherBtn) robloxPopoutLauncherBtn.style.display = 'inline-flex';
+      const target = `${proxyOrigin || ''}/3to1s93ve/launcher/index.html`;
+      if (robloxLauncherFrame && (!robloxLauncherMounted || forceReload)) {
+        robloxLauncherFrame.src = target;
+        robloxLauncherMounted = true;
+      }
+    }
+
+    function openRobloxWizardGuide(startStep = 1) {
+      if (robloxLauncherPanel) robloxLauncherPanel.classList.remove('visible');
+      if (robloxReloadLauncherBtn) robloxReloadLauncherBtn.style.display = 'none';
+      if (robloxPopoutLauncherBtn) robloxPopoutLauncherBtn.style.display = 'none';
+      if (robloxWizardPanel) robloxWizardPanel.style.display = 'flex';
+      showRobloxWizardStep(startStep);
+    }
+
+    function openIsolatedRobloxGameWindow(fullUrl) {
+      writeCobaltSessionStorage(robloxVerifiedState.cookie || extractScramjetRoblosecurity());
+      const w = Math.round(window.screen.availWidth * 0.9);
+      const h = Math.round(window.screen.availHeight * 0.9);
+      const l = Math.round((window.screen.availWidth - w) / 2);
+      const t = Math.round((window.screen.availHeight - h) / 2);
+      const win = window.open(fullUrl, 'webblox-game', `popup=yes,width=${w},height=${h},left=${l},top=${t}`);
+      if (!win) {
+        if (typeof showToast === 'function') {
+          showToast('allow popups for astra to launch the 3D WASM game window!');
+        }
+        return false;
+      }
+      try { win.focus(); } catch {}
+      return true;
+    }
+
+    function launchRobloxPlaceById(placeId, serverId = '') {
+      const cleanId = String(placeId || '').replace(/[^0-9]/g, '');
+      if (!cleanId) {
+        if (typeof showToast === 'function') showToast('enter a valid numeric roblox place id');
+        return;
+      }
+      if (serverId) {
+        document.cookie = `launcher_join=${cleanId}:g:${serverId}; Path=/; Max-Age=120; SameSite=Strict`;
+      }
+      const wispUrl = getAstraWispUrl();
+      const target = `${window.location.origin}/3to1s93ve/index.html?placeId=${encodeURIComponent(cleanId)}&wisp=${encodeURIComponent(wispUrl)}`;
+      openIsolatedRobloxGameWindow(target);
+    }
+
+    function openRobloxWebsiteInProxyTab(fromSetupStep = false) {
+      if (fromSetupStep) robloxSetupVisitedSite = true;
+      const existing = tabs.find(t => t.url && /^https?:\/\/(?:www\.|web\.)?roblox\.com/i.test(t.url));
+      if (existing) {
+        switchTab(existing.id);
+      } else {
+        const nt = { id: nextTabId++, route: '/web', title: 'Roblox', query: null, url: 'https://www.roblox.com/' };
+        tabs.push(nt);
+        activeTabId = nt.id;
+        renderTabs();
+        syncActiveTabView();
+      }
+    }
+
+    function syncRobloxReturnBanner(curTab) {
+      if (!robloxReturnBanner) return;
+      const onRobloxSite = !!(curTab && curTab.url && /roblox\.com/i.test(curTab.url));
+      robloxReturnBanner.classList.toggle('visible', robloxSetupVisitedSite && onRobloxSite);
+    }
+
+    async function ensureRobloxHubReady() {
+      const rbxChipProxy = document.getElementById('rbxChipProxy');
+      const rbxChipWebgl = document.getElementById('rbxChipWebgl');
+      if (rbxChipProxy) {
+        await proxyHealthPromise;
+        rbxChipProxy.textContent = proxyAvailable ? 'astra proxy: ready' : 'astra proxy: unavailable';
+      }
+      if (rbxChipWebgl) {
+        let gpuText = 'graphics: webgl2';
+        try {
+          if (navigator.gpu) gpuText = 'graphics: webgpu + webgl2';
+          else if (!document.createElement('canvas').getContext('webgl2')) gpuText = 'graphics: webgl fallback';
+        } catch {}
+        rbxChipWebgl.textContent = gpuText;
+      }
+      writeCobaltSessionStorage(extractScramjetRoblosecurity());
+      const st = await verifyAndSyncRobloxSession();
+      if (!robloxHubInitialized) {
+        robloxHubInitialized = true;
+        let setupDone = false;
+        try { setupDone = localStorage.getItem(ROBLOX_SETUP_DONE_KEY) === '1'; } catch {}
+        if (setupDone && st.ok) {
+          openRobloxLauncherExperience(false);
+        } else {
+          openRobloxWizardGuide(1);
+        }
+      }
+    }
+
+    if (rbxGetStartedBtn) rbxGetStartedBtn.addEventListener('click', () => showRobloxWizardStep(2));
+    if (rbxSkipIfLinkedBtn) rbxSkipIfLinkedBtn.addEventListener('click', () => openRobloxLauncherExperience(false));
+    if (rbxOpenSiteStepBtn) rbxOpenSiteStepBtn.addEventListener('click', () => openRobloxWebsiteInProxyTab(true));
+    if (robloxOpenSiteTopBtn) robloxOpenSiteTopBtn.addEventListener('click', () => openRobloxWebsiteInProxyTab(false));
+    if (rbxAlreadySignedBtn) rbxAlreadySignedBtn.addEventListener('click', () => showRobloxWizardStep(3));
+    if (robloxReturnPillBtn) {
+      robloxReturnPillBtn.addEventListener('click', () => {
+        robloxSetupVisitedSite = false;
+        const rbxTab = tabs.find(t => t.route === '/roblox' && !t.url && !t.query);
+        if (rbxTab) switchTab(rbxTab.id);
+        else navigateRoute('/roblox');
+        openRobloxWizardGuide(3);
+      });
+    }
+    if (rbxBackBtn) {
+      rbxBackBtn.addEventListener('click', () => {
+        if (robloxCurrentStep > 1) showRobloxWizardStep(robloxCurrentStep - 1);
+      });
+    }
+    if (rbxNextBtn) {
+      rbxNextBtn.addEventListener('click', async () => {
+        if (robloxCurrentStep === 3) {
+          const check = await verifyAndSyncRobloxSession();
+          if (!check.ok) {
+            setRobloxWizardError(check.error || 'Verify your Roblox login first, or paste your .ROBLOSECURITY cookie.');
+            return;
+          }
+        }
+        if (robloxCurrentStep < 4) showRobloxWizardStep(robloxCurrentStep + 1);
+      });
+    }
+    document.querySelectorAll('[data-rbx-step]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = Number(btn.dataset.rbxStep);
+        if (s >= 1 && s <= 4) showRobloxWizardStep(s);
+      });
+    });
+    if (rbxVerifyConfirmBtn) {
+      rbxVerifyConfirmBtn.addEventListener('click', async () => {
+        setRobloxWizardError('');
+        rbxVerifyConfirmBtn.disabled = true;
+        rbxVerifyConfirmBtn.textContent = 'Checking session...';
+        const check = await verifyAndSyncRobloxSession();
+        rbxVerifyConfirmBtn.disabled = false;
+        rbxVerifyConfirmBtn.textContent = 'Confirm I’m Signed In';
+        if (check.ok) {
+          if (typeof showToast === 'function') showToast(`verified roblox account: @${check.user.name}`);
+          setTimeout(() => showRobloxWizardStep(4), 650);
+        } else {
+          setRobloxWizardError(check.error || 'No Roblox session found yet. Sign into roblox.com in Step 2 (email one-time code recommended) or paste your .ROBLOSECURITY cookie below.');
+        }
+      });
+    }
+    if (rbxToggleManualCookieBtn && rbxManualCookieWrap) {
+      rbxToggleManualCookieBtn.addEventListener('click', () => {
+        const open = rbxManualCookieWrap.style.display !== 'flex';
+        rbxManualCookieWrap.style.display = open ? 'flex' : 'none';
+      });
+    }
+    if (rbxManualCookieSaveBtn && rbxManualCookieInput) {
+      rbxManualCookieSaveBtn.addEventListener('click', async () => {
+        setRobloxWizardError('');
+        const raw = rbxManualCookieInput.value.trim();
+        if (!raw) {
+          setRobloxWizardError('Paste a .ROBLOSECURITY value starting with _|WARNING:-DO-NOT-SHARE-THIS.');
+          return;
+        }
+        rbxManualCookieSaveBtn.disabled = true;
+        rbxManualCookieSaveBtn.textContent = 'Verifying...';
+        const res = await verifyAndSyncRobloxSession(raw);
+        rbxManualCookieSaveBtn.disabled = false;
+        rbxManualCookieSaveBtn.textContent = 'Verify & Save';
+        if (res.ok) {
+          rbxManualCookieInput.value = '';
+          rbxManualCookieWrap.style.display = 'none';
+          setTimeout(() => showRobloxWizardStep(4), 600);
+        } else {
+          setRobloxWizardError(res.error || 'Roblox rejected that cookie.');
+        }
+      });
+    }
+    if (rbxLaunchContinueBtn) {
+      rbxLaunchContinueBtn.addEventListener('click', async () => {
+        showRobloxWizardStep('loading');
+        if (rbxLoadingTitle) rbxLoadingTitle.textContent = 'Syncing Roblox Session...';
+        if (rbxLoadingSub) rbxLoadingSub.textContent = 'Bridging cookies and binding Astra /wisp/ transport...';
+        await verifyAndSyncRobloxSession();
+        setTimeout(() => {
+          if (rbxLoadingTitle) rbxLoadingTitle.textContent = 'Booting LucideBlox Launcher...';
+          if (rbxLoadingSub) rbxLoadingSub.textContent = 'Preparing catalog, avatar & WebAssembly game runtime...';
+        }, 550);
+        setTimeout(() => {
+          showRobloxWizardStep('done');
+          setTimeout(() => openRobloxLauncherExperience(true), 850);
+        }, 1250);
+      });
+    }
+    if (rbxEnterLauncherBtn) rbxEnterLauncherBtn.addEventListener('click', () => openRobloxLauncherExperience(false));
+    if (robloxSetupGuideBtn) robloxSetupGuideBtn.addEventListener('click', () => openRobloxWizardGuide(1));
+    if (robloxReloadLauncherBtn) robloxReloadLauncherBtn.addEventListener('click', () => openRobloxLauncherExperience(true));
+    if (robloxPopoutLauncherBtn) {
+      robloxPopoutLauncherBtn.addEventListener('click', () => {
+        openIsolatedRobloxGameWindow(`${window.location.origin}/3to1s93ve/launcher/index.html?wisp=${encodeURIComponent(getAstraWispUrl())}`);
+      });
+    }
+    if (robloxQuickPlaceForm && robloxQuickPlaceInput) {
+      robloxQuickPlaceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        launchRobloxPlaceById(robloxQuickPlaceInput.value);
+      });
+    }
+    window.addEventListener('message', (ev) => {
+      if (ev.origin !== window.location.origin || !ev.data || typeof ev.data !== 'object') return;
+      if (ev.data.type === 'astra-roblox-launch-url' && ev.data.url) {
+        const u = new URL(ev.data.url, window.location.origin);
+        if (!u.searchParams.has('wisp')) u.searchParams.set('wisp', getAstraWispUrl());
+        openIsolatedRobloxGameWindow(u.toString());
+      } else if (ev.data.type === 'astra-roblox-launch' && ev.data.placeId) {
+        launchRobloxPlaceById(ev.data.placeId, ev.data.serverId || '');
+      } else if (ev.data.type === 'lucideblox:sign-in') {
+        navigateRoute('/roblox');
+        openRobloxWizardGuide(2);
       }
     });
 

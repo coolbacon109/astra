@@ -906,6 +906,25 @@ function buildInjectedShim(baseUrl, adblock, engine = 'scramjet', pageUrl = base
       return origGetContext.apply(this, arguments);
     };
   }
+  if (method === 'GET' || method === 'HEAD') {
+    document.addEventListener('click', function(e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (/^(?:roblox-player|roblox-client|roblox):/i.test(href) || /roblox\.com\/games\/start/i.test(href)) {
+        try {
+          var pm = href.match(/placeId(?:%3D|=|:)(\d+)/i);
+          var gm = href.match(/(?:gameInstanceId|gameId|jobId)(?:%3D|=|:)([A-Za-z0-9-]+)/i);
+          if (pm && __astraRealParent && __astraRealParent !== window) {
+            e.preventDefault();
+            e.stopPropagation();
+            __astraRealParent.postMessage({ type: 'astra-roblox-launch', placeId: pm[1], serverId: gm ? gm[1] : '' }, '*');
+            return;
+          }
+        } catch (err) {}
+      }
+    }, true);
+  }
   window.addEventListener('resize', function() {
     var c = document.querySelector('#gameContainer > canvas, #unityContainer > canvas, #unity-container > canvas');
     if (c) syncUnityCanvasSize(c);
@@ -1477,6 +1496,264 @@ function saveUserCookiesFromSetCookie(username, hostname, setCookieArr) {
     else jar[dom][name] = val;
   }
   scheduleSaveUserCookies();
+}
+
+function getUserRoblosecurityCookie(username) {
+  if (!username) return '';
+  const jar = userCookieJars[username];
+  if (!jar || typeof jar !== 'object') return '';
+  for (const [dom, cookies] of Object.entries(jar)) {
+    const cleanDom = String(dom).replace(/^\./, '').toLowerCase();
+    if (cleanDom === 'roblox.com' || cleanDom.endsWith('.roblox.com')) {
+      const val = cookies && cookies['.ROBLOSECURITY'];
+      if (typeof val === 'string' && val.trim()) return val.trim();
+    }
+  }
+  return '';
+}
+
+function setUserRoblosecurityCookie(username, val) {
+  if (!username) return;
+  if (!userCookieJars[username]) userCookieJars[username] = {};
+  const jar = userCookieJars[username];
+  const domains = ['roblox.com', 'rbxcdn.com', 'robloxlabs.com'];
+  const clean = typeof val === 'string' ? val.trim() : '';
+  for (const d of domains) {
+    if (!clean) {
+      if (jar[d]) delete jar[d]['.ROBLOSECURITY'];
+    } else {
+      if (!jar[d]) jar[d] = {};
+      jar[d]['.ROBLOSECURITY'] = clean;
+    }
+  }
+  scheduleSaveUserCookies();
+}
+
+function normalizeRoblosecurityInput(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  let v = raw.trim().replace(/^\.ROBLOSECURITY\s*=\s*/i, '').replace(/^["']+|["';]+$/g, '').trim();
+  return v.startsWith('_|WARNING:-DO-NOT-SHARE-THIS.') ? v : '';
+}
+
+function verifyRoblosecurityWithRoblox(cookieVal) {
+  return new Promise((resolve) => {
+    const clean = typeof cookieVal === 'string' ? cookieVal.trim() : '';
+    if (!clean) return resolve({ ok: true, valid: false, status: 401, error: 'No .ROBLOSECURITY cookie detected.' });
+    const req = https.get(
+      'https://users.roblox.com/v1/users/authenticated',
+      {
+        headers: {
+          Cookie: `.ROBLOSECURITY=${clean}`,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
+          Accept: 'application/json',
+          Origin: 'https://www.roblox.com',
+          Referer: 'https://www.roblox.com/'
+        },
+        timeout: 8000
+      },
+      (resp) => {
+        const chunks = [];
+        resp.on('data', (c) => chunks.push(c));
+        resp.on('end', async () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          if (resp.statusCode !== 200) {
+            return resolve({
+              ok: true,
+              valid: false,
+              status: resp.statusCode || 401,
+              error: resp.statusCode === 401 ? 'Roblox session expired or not logged in.' : `Roblox returned HTTP ${resp.statusCode}`
+            });
+          }
+          try {
+            const u = JSON.parse(text);
+            let avatarUrl = '';
+            try {
+              const av = await fetchJsonWithTimeout(
+                `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(u.id)}&size=150x150&format=Png&isCircular=true`,
+                4000
+              );
+              avatarUrl = (av && av.data && av.data[0] && av.data[0].imageUrl) || '';
+            } catch {}
+            resolve({
+              ok: true,
+              valid: true,
+              status: 200,
+              user: { id: u.id, name: u.name, displayName: u.displayName || u.name, avatarUrl }
+            });
+          } catch {
+            resolve({ ok: true, valid: false, status: 502, error: 'Invalid response from Roblox auth check.' });
+          }
+        });
+      }
+    );
+    req.on('timeout', () => {
+      req.destroy(new Error('timeout'));
+      resolve({ ok: false, valid: false, status: 504, error: 'Roblox authentication check timed out.' });
+    });
+    req.on('error', (err) => {
+      resolve({ ok: false, valid: false, status: 502, error: err.message || 'Network error verifying Roblox session.' });
+    });
+  });
+}
+
+const WEBBLOX_S3_BASES = [
+  'https://s3.amazonaws.com/aphistory/3to1s93ve/',
+  'https://themannastore.com/api/blox/3to1s93ve/',
+  'https://21baseballacademy.com/api/blox/3to1s93ve/'
+];
+const webbloxMemCache = new Map();
+
+async function serveWebbloxAsset(subPathRaw, reqUrl, req, res) {
+  let cleanSub = String(subPathRaw || '').replace(/^\/+/, '');
+  if (!cleanSub) {
+    const sp = reqUrl.searchParams;
+    if (sp.has('placeId') || sp.has('launcher') || sp.has('flag')) {
+      cleanSub = 'index.html';
+    } else {
+      res.writeHead(302, { Location: `/3to1s93ve/launcher/index.html${reqUrl.search || ''}`, 'Cache-Control': 'no-store' });
+      return res.end();
+    }
+  } else if (cleanSub === 'launcher' || cleanSub === 'launcher/') {
+    cleanSub = 'launcher/index.html';
+  }
+
+  if (cleanSub.startsWith('__proxy__/')) {
+    const innerTarget = decodeURIComponent(reqUrl.href.split('/__proxy__/')[1] || '');
+    if (/^https?:\/\//i.test(innerTarget)) {
+      return fetchAndProxy(innerTarget, true, req, res, 5, 'scramjet');
+    }
+  }
+
+  const lower = cleanSub.toLowerCase();
+  const isEngineIndex = lower === 'index.html' || lower === 'games/start';
+  const isLauncherHtml = lower === 'launcher/index.html';
+  const isWispsJs = lower === 'cobalt/wisps.js';
+  const isCoreJs = lower === 'launcher/js/core.js';
+  const isSwJs = lower === 'sw.js';
+  const isPatchableText = isEngineIndex || isLauncherHtml || isWispsJs || isCoreJs || isSwJs;
+
+  const extraHeaders = {
+    'Service-Worker-Allowed': '/3to1s93ve/',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    'Access-Control-Allow-Origin': '*'
+  };
+  if (isEngineIndex) {
+    extraHeaders['Cross-Origin-Opener-Policy'] = 'same-origin';
+    extraHeaders['Cross-Origin-Embedder-Policy'] = 'require-corp';
+  }
+
+  const cached = webbloxMemCache.get(cleanSub);
+  if (cached && Date.now() < cached.expires) {
+    res.writeHead(200, { ...cached.headers, ...extraHeaders });
+    return res.end(cached.body);
+  }
+
+  const fetchFromMirror = (baseUrl) => new Promise((resolve, reject) => {
+    const target = baseUrl + cleanSub;
+    const mod = target.startsWith('https:') ? https : http;
+    const r = mod.get(
+      target,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
+          'Accept-Encoding': isPatchableText ? 'gzip, deflate' : (req.headers['accept-encoding'] || 'gzip, deflate'),
+          Accept: req.headers.accept || '*/*'
+        },
+        timeout: 25000
+      },
+      (up) => {
+        if (up.statusCode === 301 || up.statusCode === 302 || up.statusCode === 307) {
+          up.resume();
+          return reject(new Error('redirect'));
+        }
+        if (!up.statusCode || up.statusCode >= 400) {
+          up.resume();
+          return reject(new Error(`HTTP ${up.statusCode}`));
+        }
+        resolve(up);
+      }
+    );
+    r.on('timeout', () => { r.destroy(new Error('timeout')); reject(new Error('timeout')); });
+    r.on('error', reject);
+  });
+
+  let upRes = null;
+  let lastErr = null;
+  for (const base of WEBBLOX_S3_BASES) {
+    try {
+      upRes = await fetchFromMirror(base);
+      break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  if (!upRes) {
+    res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8', ...extraHeaders });
+    return res.end(`Failed to load LucideBlox resource (${cleanSub}): ${(lastErr && lastErr.message) || 'upstream error'}`);
+  }
+
+  const ext = path.extname(cleanSub.split('?')[0]).toLowerCase();
+  const upCt = upRes.headers['content-type'];
+  const mime = (upCt && !/application\/octet-stream/i.test(upCt)) ? upCt : (MIME_TYPES[ext] || upCt || 'application/octet-stream');
+  const upLen = Number(upRes.headers['content-length'] || 0);
+
+  if (isPatchableText || (upLen > 0 && upLen <= 1572864)) {
+    const chunks = [];
+    upRes.on('data', (c) => chunks.push(c));
+    upRes.on('end', async () => {
+      const rawBuf = Buffer.concat(chunks);
+      let outBuf = rawBuf;
+      let outEnc = upRes.headers['content-encoding'];
+      if (isPatchableText) {
+        const plain = await decompressBuffer(rawBuf, outEnc);
+        let txt = plain.toString('utf8');
+        if (isWispsJs) {
+          txt = txt
+            .replace('/fairs/`', '/wisp/`')
+            .replace('let e=window.opener;', 'if(window.self!==window.top){try{window.parent.postMessage({type:_},location.origin)}catch{}return}let e=window.opener;');
+        } else if (isCoreJs) {
+          txt = txt.replace(
+            /export function leaveFor\(url\)\s*\{[\s\S]*?location\.href\s*=\s*url;\s*\}/,
+            'export function leaveFor(url) {\n  if (window.self !== window.top && /[?&]placeId=/.test(String(url))) {\n    try { window.parent.postMessage({ type: "astra-roblox-launch-url", url: new URL(url, location.href).href }, location.origin); return; } catch {}\n  }\n  document.body.append(el("div", "leaving"));\n  location.href = url;\n}'
+          );
+        } else if (isSwJs) {
+          txt = txt.replace(
+            '|^\\/launcher\\/(?!index\\.html)',
+            ''
+          );
+        } else if (isLauncherHtml) {
+          const bridge = `<script>(function(){try{var o=location.origin;var w=localStorage.getItem('webblox.transport');if(!w||/\\/fairs\\//i.test(w))localStorage.setItem('webblox.transport',(location.protocol==='https:'?'wss://':'ws://')+location.host+'/wisp/');window.addEventListener('message',function(ev){if(ev.origin!==o||!ev.data||ev.data.type!=='astra-roblox-sync')return;try{if(Array.isArray(ev.data.cookies))localStorage.setItem('cobalt-cookies',JSON.stringify(ev.data.cookies));if(ev.data.wispUrl)localStorage.setItem('webblox.transport',ev.data.wispUrl);if(ev.data.reload)location.reload();}catch{}});}catch{}})();</script>`;
+          txt = txt.replace(/<\/head>/i, bridge + '</head>');
+        }
+        outBuf = Buffer.from(txt, 'utf8');
+        outEnc = undefined;
+      }
+      const outMime = (isWispsJs || isCoreJs || isSwJs) ? 'application/javascript; charset=utf-8' : (isPatchableText ? 'text/html; charset=utf-8' : mime);
+      const hdrs = {
+        'Content-Type': outMime,
+        'Content-Length': outBuf.length,
+        'Cache-Control': isPatchableText ? 'no-store' : 'public, max-age=3600'
+      };
+      if (outEnc) hdrs['Content-Encoding'] = outEnc;
+      if (webbloxMemCache.size < 220) {
+        webbloxMemCache.set(cleanSub, { headers: hdrs, body: outBuf, expires: Date.now() + (isPatchableText ? 60000 : 1800000) });
+      }
+      res.writeHead(200, { ...hdrs, ...extraHeaders });
+      res.end(outBuf);
+    });
+    return;
+  }
+
+  const streamHdrs = {
+    'Content-Type': mime,
+    'Cache-Control': 'public, max-age=86400',
+    ...extraHeaders
+  };
+  if (upRes.headers['content-encoding']) streamHdrs['Content-Encoding'] = upRes.headers['content-encoding'];
+  if (upRes.headers['content-length']) streamHdrs['Content-Length'] = upRes.headers['content-length'];
+  res.writeHead(upRes.statusCode || 200, streamHdrs);
+  upRes.pipe(res);
 }
 
 function fetchAndProxy(targetUrl, adblock, req, res, redirectsLeft = 5, engine = 'scramjet') {
@@ -2335,6 +2612,10 @@ const server = http.createServer(async (req, res) => {
     return res.end(buildUnifiedServiceWorkerScript());
   }
 
+  if (pathname === '/3to1s93ve' || pathname.startsWith('/3to1s93ve/')) {
+    return await serveWebbloxAsset(pathname === '/3to1s93ve' ? '' : pathname.slice('/3to1s93ve/'.length), reqUrl, req, res);
+  }
+
   if (pathname === '/uv/uv.config.js') {
     res.writeHead(200, {
       'Content-Type': 'application/javascript; charset=utf-8',
@@ -2521,6 +2802,73 @@ const server = http.createServer(async (req, res) => {
     }
     sessionUser.tourCompleted = true;
     saveAuthStore();
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (pathname === '/api/roblox/status') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const saved = getUserRoblosecurityCookie(sessionUser.username);
+    if (!saved) {
+      return sendJson(res, 200, { ok: true, hasCookie: false, signedIn: false, user: null, cookie: '' });
+    }
+    const check = await verifyRoblosecurityWithRoblox(saved);
+    return sendJson(res, 200, {
+      ok: true,
+      hasCookie: true,
+      signedIn: !!check.valid,
+      user: check.user || null,
+      cookie: check.valid ? saved : '',
+      error: check.valid ? '' : (check.error || 'Session not valid')
+    });
+  }
+
+  if (pathname === '/api/roblox/verify' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    try {
+      const body = await readJsonBody(req);
+      let candidate = normalizeRoblosecurityInput(body.cookie || '');
+      if (!candidate) {
+        candidate = getUserRoblosecurityCookie(sessionUser.username);
+      }
+      if (!candidate) {
+        return sendJson(res, 200, {
+          ok: true,
+          signedIn: false,
+          hasCookie: false,
+          error: 'No valid .ROBLOSECURITY cookie found yet. Sign in on roblox.com inside the proxy or paste your cookie.'
+        });
+      }
+      const check = await verifyRoblosecurityWithRoblox(candidate);
+      if (!check.valid) {
+        return sendJson(res, 200, {
+          ok: true,
+          signedIn: false,
+          hasCookie: false,
+          error: check.error || 'Roblox rejected that session.'
+        });
+      }
+      setUserRoblosecurityCookie(sessionUser.username, candidate);
+      return sendJson(res, 200, {
+        ok: true,
+        signedIn: true,
+        hasCookie: true,
+        cookie: candidate,
+        user: check.user
+      });
+    } catch (err) {
+      return sendJson(res, 400, { ok: false, error: err.message || 'Invalid request' });
+    }
+  }
+
+  if (pathname === '/api/roblox/logout' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    setUserRoblosecurityCookie(sessionUser.username, '');
     return sendJson(res, 200, { ok: true });
   }
 
