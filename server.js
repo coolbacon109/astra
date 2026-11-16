@@ -659,7 +659,9 @@ const AD_HOSTS = [
   'stripchat.com',
   'bongacams.com',
   'livejasmin.com',
-  'camsoda.com'
+  'camsoda.com',
+  'palmyap.com',
+  'tagivi.com'
 ];
 
 function loadServerConfig() {
@@ -966,17 +968,117 @@ function getMergedAdHosts() {
   return [...new Set([...AD_HOSTS, ...extra.map((x) => String(x || '').trim().toLowerCase()).filter(Boolean)])];
 }
 
+const UBLOCK_CACHE_FILE = path.join(DATA_DIR, 'ublock-domains.txt');
+const UBLOCK_FILTER_SOURCES = [
+  'https://easylist.to/easylist/easylist.txt',
+  'https://ublockorigin.github.io/uAssets/filters/filters.min.txt',
+  'https://ublockorigin.github.io/uAssets/filters/badware.min.txt',
+  'https://ublockorigin.github.io/uAssets/filters/annoyances-others.txt',
+  'https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext'
+];
+let ublockDomainSet = new Set();
+let ublockRulesTextCache = '';
+
+function rebuildUblockTextCache() {
+  const combined = new Set(ublockDomainSet);
+  for (const h of getMergedAdHosts()) combined.add(h);
+  ublockRulesTextCache = [...combined].join('\n');
+}
+
+function loadUblockCacheFromDisk() {
+  try {
+    if (!fs.existsSync(UBLOCK_CACHE_FILE)) return false;
+    const raw = fs.readFileSync(UBLOCK_CACHE_FILE, 'utf8');
+    const lines = raw.split(/\r?\n/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (lines.length > 500) {
+      ublockDomainSet = new Set(lines);
+      rebuildUblockTextCache();
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+async function refreshUblockFilterLists() {
+  const SAFE_TLDS = new Set(['com', 'net', 'org', 'io', 'co', 'tv', 'me', 'info', 'biz', 'xyz', 'top', 'fun', 'ru', 'de', 'uk', 'fr', 'jp', 'br', 'hn', 'be', 'to', 'cc']);
+  const blocked = new Set(AD_HOSTS);
+  const allowed = new Set();
+  for (const srcUrl of UBLOCK_FILTER_SOURCES) {
+    try {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 8000);
+      const r = await fetch(srcUrl, { signal: ac.signal });
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const txt = await r.text();
+      for (let line of txt.split(/\r?\n/)) {
+        line = line.trim();
+        if (!line || line.startsWith('!') || line.startsWith('#')) continue;
+        const hm = line.match(/^127\.0\.0\.1\s+([a-z0-9.-]+\.[a-z]{2,})$/i);
+        if (hm) { blocked.add(hm[1].toLowerCase()); continue; }
+        if (line.startsWith('@@||')) {
+          const am = line.match(/^@@\|\|([a-z0-9.-]+\.[a-z]{2,})\^?$/i);
+          if (am) allowed.add(am[1].toLowerCase());
+          continue;
+        }
+        const m = line.match(/^\|\|([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:\^)?(?:\$(.*))?$/i);
+        if (!m) continue;
+        const host = m[1].toLowerCase();
+        if (SAFE_TLDS.has(host) || host.length < 4) continue;
+        const opts = (m[2] || '').toLowerCase();
+        if (opts && (opts.includes('domain=') || opts.includes('badfilter'))) continue;
+        blocked.add(host);
+      }
+    } catch {}
+  }
+  for (const a of allowed) blocked.delete(a);
+  if (blocked.size > AD_HOSTS.length) {
+    ublockDomainSet = blocked;
+    rebuildUblockTextCache();
+    try {
+      const tmp = `${UBLOCK_CACHE_FILE}.tmp.${process.pid}`;
+      fs.writeFileSync(tmp, [...blocked].join('\n'), 'utf8');
+      fs.renameSync(tmp, UBLOCK_CACHE_FILE);
+    } catch {}
+    console.log(`[uBlock] Synced ${ublockDomainSet.size} EasyList/uBlock domains.`);
+  }
+}
+
+(function initUblockListsOnBoot() {
+  const hadDiskCache = loadUblockCacheFromDisk();
+  let stale = true;
+  try {
+    if (hadDiskCache) {
+      const st = fs.statSync(UBLOCK_CACHE_FILE);
+      stale = (Date.now() - st.mtimeMs) > 12 * 3600 * 1000;
+    }
+  } catch {}
+  if (!hadDiskCache) rebuildUblockTextCache();
+  if (stale) setTimeout(() => { refreshUblockFilterLists().catch(() => {}); }, 250);
+  setInterval(() => { refreshUblockFilterLists().catch(() => {}); }, 12 * 3600 * 1000).unref();
+})();
+
+function isHostInDomainSet(host, domainSet) {
+  if (!host || !domainSet || !domainSet.size) return false;
+  const parts = host.split('.');
+  for (let i = 0; i <= parts.length - 2; i++) {
+    if (domainSet.has(parts.slice(i).join('.'))) return true;
+  }
+  return domainSet.has(host);
+}
+
 function isBlockedAdHost(targetUrl) {
   try {
     const u = new URL(targetUrl);
     const host = u.hostname.toLowerCase();
     const list = getMergedAdHosts();
     if (list.some((d) => host === d || host.endsWith('.' + d))) return true;
+    if (isHostInDomainSet(host, ublockDomainSet)) return true;
     if ((host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtube-nocookie.com' || host.endsWith('.youtube-nocookie.com')) &&
         /(?:^\/pagead\/|^\/ptracking|^\/api\/stats\/(?:ads|atr)|^\/youtubei\/v1\/player\/ad_break|^\/get_midroll_info)/i.test(u.pathname)) {
       return true;
     }
-    if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast(?:\d)?\.xml|\/vmap(?:\.xml)?|\/ima3(?:\.js)?|\/vpaid|\/preroll|\/ad[-_]?tag|\/adserver\/|\/onclick\.js)/i.test(u.pathname)) {
+    if (/(?:\/pop(?:\.min)?\.js$|\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast(?:\d)?\.xml|\/vmap(?:\.xml)?|\/ima3(?:\.js)?|\/vpaid|\/preroll|\/ad[-_]?tag|\/adserver\/|\/onclick\.js)/i.test(u.pathname)) {
       return true;
     }
     return false;
@@ -1146,7 +1248,7 @@ function buildInjectedShim(baseUrl, adblock, engine = 'scramjet', pageUrl = base
       var h = parsed.hostname.toLowerCase();
       if (AD_HOSTS.some(function(d) { return h === d || h.endsWith('.' + d); })) return true;
       var p = parsed.pathname || '';
-      if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast\.xml|\/vpaid|\/adserver\/)/i.test(p)) return true;
+      if (/(?:\/pop(?:\.min)?\.js$|\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast(?:\d)?\.xml|\/vmap(?:\.xml)?|\/ima3(?:\.js)?|\/vpaid|\/preroll|\/ad[-_]?tag|\/adserver\/|\/onclick\.js)/i.test(p)) return true;
       if ((h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')) &&
           /(?:^\/pagead\/|^\/ptracking|^\/api\/stats\/(?:ads|atr)|^\/youtubei\/v1\/player\/ad_break|^\/get_midroll_info)/i.test(p)) {
         return true;
@@ -2869,9 +2971,9 @@ const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
     '<script data-astra-frame-fix="1">(function(){try{Object.defineProperty(window,"outerWidth",{get:function(){return window.innerWidth||1280;},configurable:true});Object.defineProperty(window,"outerHeight",{get:function(){return window.innerHeight||800;},configurable:true});Object.defineProperty(window,"frameElement",{get:function(){return null;},configurable:true});}catch(e){}})();</script>'
   )};
 const ASTRA_COSMETIC_ADBLOCK_SNIPPET = ${JSON.stringify(
-    '<style id="astraAdCosmetic">ins.adsbygoogle,[id^="google_ads_iframe"],[id^="div-gpt-ad"],[data-google-query-id],iframe[src*="doubleclick"],iframe[src*="googlesyndication"],iframe[src*="adsterra"],iframe[src*="highperformanceformat"],iframe[src*="profitableratecpm"],iframe[src*="effectivegatecpm"],iframe[src*="exoclick"],iframe[src*="propeller"],iframe[src*="monetag"],[id^="taboola-"],.taboola_wrap,.OUTBRAIN,[data-widget-id*="taboola"],.mgbox,[id^="M"][id*="Composite"],[id*="floating_ad"],.sticky-ad,.vast-blocker,.vast-skip-button,.ad-overlay,.ad-banner,.ad-slot,.advertisement-banner,.adsbox,a[href*="highperformanceformat"],a[href*="profitableratecpm"],a[href*="effectivegatecpm"],a[href*="adsterra"],a[href*="1win"],a[href*="1xbet"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;pointer-events:none!important;}</style><script data-astra-cosmetic-adblock="1">(function(){if(window.__astraCosmeticShield)return;window.__astraCosmeticShield=true;var hosts=' +
+    '<style id="astraAdCosmetic">ins.adsbygoogle,[id^="google_ads_iframe"],[id^="div-gpt-ad"],[data-google-query-id],iframe[src*="doubleclick"],iframe[src*="googlesyndication"],iframe[src*="adsterra"],iframe[src*="highperformanceformat"],iframe[src*="profitableratecpm"],iframe[src*="effectivegatecpm"],iframe[src*="exoclick"],iframe[src*="propeller"],iframe[src*="monetag"],iframe[src*="palmyap"],iframe[src*="tagivi"],iframe[width="728"][height="90"],iframe[width="300"][height="250"],iframe[width="160"][height="600"],iframe[width="468"][height="60"],iframe[width="320"][height="50"],[id^="taboola-"],.taboola_wrap,.OUTBRAIN,[data-widget-id*="taboola"],.mgbox,[id^="M"][id*="Composite"],[id*="floating_ad"],.sticky-ad,.vast-blocker,.vast-skip-button,.ad-overlay,.ad-banner,.ad-slot,.advertisement-banner,.adsbox,.exo-native-widget,.adsbyexoclick,a[href*="highperformanceformat"],a[href*="profitableratecpm"],a[href*="effectivegatecpm"],a[href*="adsterra"],a[href*="palmyap"],a[href*="tagivi"],a[href*="1win"],a[href*="1xbet"],a[href*="betwinner"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;pointer-events:none!important;}</style><script data-astra-cosmetic-adblock="1">(function(){if(window.__astraCosmeticShield)return;window.__astraCosmeticShield=true;var hosts=' +
       JSON.stringify(getMergedAdHosts()) +
-      ';function isAdHref(u){if(!u||typeof u!=="string")return false;try{var x=new URL(u,location.href);var h=x.hostname.toLowerCase();return hosts.some(function(d){return h===d||h.endsWith("."+d);})||/(?:popunder|pagead|adserver|clickadu|adsterra|highperformanceformat|profitableratecpm|effectivegatecpm|exoclick|monetag|propeller|vast|vpaid|1xbet|1win|betwinner|chaturbate|stripchat)/i.test(u);}catch(e){return false;}}try{if(window.Notification){Notification.requestPermission=function(){return Promise.resolve("denied");};}}catch(e){}try{var ow=window.open;window.open=function(u,t,f){if(!u||isAdHref(String(u)))return null;if(window.self!==window.top&&(t==="_blank"||!t))return null;if(t==="_blank"||!t){try{location.assign(u);}catch(e){}return null;}return ow?ow.apply(this,arguments):null;};}catch(e){}try{var origAClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){var h=this.getAttribute("href")||this.href||"";if(isAdHref(h)||(this.target==="_blank"&&window.self!==window.top))return;return origAClick.apply(this,arguments);};}catch(e){}function isTrapOverlay(el){if(!el||el.nodeType!==1)return false;var tag=el.tagName;if(tag!=="DIV"&&tag!=="A"&&tag!=="SPAN"&&tag!=="SECTION")return false;if(el.querySelector&&el.querySelector("video,audio,button,input,select,textarea,canvas"))return false;var cs=getComputedStyle(el);if(cs.pointerEvents==="none")return false;if(cs.position!=="fixed"&&cs.position!=="absolute")return false;var r=el.getBoundingClientRect();if(r.width<200||r.height<110)return false;var z=parseInt(cs.zIndex||"0",10);var op=parseFloat(cs.opacity||"1");var bg=cs.backgroundColor||"";var isClear=(op<=0.15||bg==="transparent"||bg==="rgba(0, 0, 0, 0)");var noTxt=!el.innerText||el.innerText.trim().length===0;var coverView=(r.width>=window.innerWidth*0.7&&r.height>=window.innerHeight*0.7);return (noTxt&&isClear&&(z>=50||coverView||(tag==="A"&&el.target==="_blank")));}["pointerdown","mousedown","click","auxclick","touchend"].forEach(function(evtName){document.addEventListener(evtName,function(ev){try{var t=ev.target;if(isTrapOverlay(t)){ev.preventDefault();ev.stopPropagation();t.remove();return;}var a=t&&t.closest?t.closest("a[href]"):null;if(a){var hr=a.getAttribute("href")||"";if(isAdHref(hr)||(window.self!==window.top&&a.target==="_blank"&&rIsEmpty(a))){ev.preventDefault();ev.stopPropagation();a.remove();}}}catch(e){}},true);});function rIsEmpty(a){return !a.innerText||a.innerText.trim().length===0;}setInterval(function(){try{if(!document.body)return;var els=document.querySelectorAll("div,a");for(var i=0;i<els.length&&i<160;i++){if(isTrapOverlay(els[i]))els[i].remove();}}catch(e){}},1400);})();</script>'
+      ';function isAdHref(u){if(!u||typeof u!=="string")return false;try{var x=new URL(u,location.href);var h=x.hostname.toLowerCase();return hosts.some(function(d){return h===d||h.endsWith("."+d);})||/(?:pop\\.js|popunder|pagead|adserver|clickadu|adsterra|highperformanceformat|profitableratecpm|effectivegatecpm|palmyap|tagivi|exoclick|monetag|propeller|vast|vpaid|1xbet|1win|betwinner|chaturbate|stripchat|bongacams|livejasmin|camsoda)/i.test(u);}catch(e){return false;}}try{if(window.Notification){Notification.requestPermission=function(){return Promise.resolve("denied");};}}catch(e){}function fakePopWin(u){return {closed:false,close:function(){},focus:function(){},blur:function(){},postMessage:function(){},opener:null,location:{href:String(u||""),replace:function(){},assign:function(){}},document:{write:function(){},writeln:function(){},open:function(){},close:function(){}}};}var blockedOpen=function(u,t,f){return fakePopWin(u);};try{Object.defineProperty(window,"open",{configurable:true,get:function(){return blockedOpen;},set:function(){}});}catch(e){try{window.open=blockedOpen;}catch(e2){}}try{var origAClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){var h=this.getAttribute("href")||this.href||"";if(isAdHref(h)||this.target==="_blank"||!this.innerText||this.innerText.trim().length===0)return;return origAClick.apply(this,arguments);};}catch(e){}function isTrapOverlay(el){if(!el||el.nodeType!==1)return false;var tag=el.tagName;if(tag!=="DIV"&&tag!=="A"&&tag!=="SPAN"&&tag!=="SECTION")return false;if(el.querySelector&&el.querySelector("video,audio,button,input,select,textarea,canvas"))return false;var cs=getComputedStyle(el);if(cs.pointerEvents==="none")return false;if(cs.position!=="fixed"&&cs.position!=="absolute")return false;var r=el.getBoundingClientRect();if(r.width<160||r.height<90)return false;var z=parseInt(cs.zIndex||"0",10);var op=parseFloat(cs.opacity||"1");var bg=cs.backgroundColor||"";var isClear=(op<=0.18||bg==="transparent"||bg==="rgba(0, 0, 0, 0)");var noTxt=!el.innerText||el.innerText.trim().length===0;var coverView=(r.width>=window.innerWidth*0.65&&r.height>=window.innerHeight*0.65);return (noTxt&&isClear&&(z>=40||coverView||(tag==="A"&&el.target==="_blank")));}function rIsEmpty(a){return !a.innerText||a.innerText.trim().length===0;}["pointerdown","mousedown","click","auxclick","touchend"].forEach(function(evtName){window.addEventListener(evtName,function(ev){try{var t=ev.target;if(isTrapOverlay(t)){ev.preventDefault();ev.stopPropagation();t.remove();return;}var a=t&&t.closest?t.closest("a[href]"):null;if(a){var hr=a.getAttribute("href")||"";var hasAdImg=!!(a.querySelector&&a.querySelector("img[src*=\\".gif\\"]"));if(isAdHref(hr)||(a.target==="_blank"&&(rIsEmpty(a)||hasAdImg||window.self!==window.top))){ev.preventDefault();ev.stopPropagation();if(isAdHref(hr)||hasAdImg)a.remove();}}}catch(e){}},true);});setInterval(function(){try{if(!document.body)return;var els=document.querySelectorAll("div,a");for(var i=0;i<els.length&&i<180;i++){if(isTrapOverlay(els[i]))els[i].remove();}var blanks=document.querySelectorAll("a[target=\\"_blank\\"]>img[src*=\\".gif\\"]");for(var j=0;j<blanks.length;j++){if(blanks[j].parentElement)blanks[j].parentElement.remove();}}catch(e){}},1000);})();</script>'
   )};
 const ASTRA_YT_ADBLOCK_SNIPPET = ${JSON.stringify(
     '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-display-ad-renderer,ytd-statement-banner-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer,#masthead-ad,#player-ads,ytd-companion-slot-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;var wasAd=false;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-slot button");if(sk)sk.click();var adOn=!!(p&&p.classList.contains("ad-showing"));if(adOn&&v){wasAd=true;v.muted=true;try{v.playbackRate=16;}catch(e){}if(isFinite(v.duration)&&v.duration>0){v.currentTime=Math.max(0,v.duration-0.1);}}else if(wasAd&&!adOn&&v){wasAd=false;v.muted=false;try{v.playbackRate=1;}catch(e){}}}catch(e){}},250);})();</script>'
@@ -2986,6 +3088,38 @@ function notifyAstraAdBlocked(urlStr) {
   } catch {}
 }
 
+const ASTRA_AD_HOST_SET = new Set(ASTRA_AD_HOSTS);
+let astraUblockDomainSet = new Set();
+let astraUblockLoadPromise = null;
+function ensureUblockRulesLoaded() {
+  if (astraUblockDomainSet.size > 0) return Promise.resolve();
+  if (!astraUblockLoadPromise) {
+    astraUblockLoadPromise = fetch(location.origin + '/api/adblock/rules')
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((txt) => {
+        if (txt) {
+          const s = new Set();
+          for (const line of txt.split('\\n')) {
+            const h = line.trim();
+            if (h) s.add(h);
+          }
+          if (s.size > 0) astraUblockDomainSet = s;
+        }
+      })
+      .catch(() => {})
+      .finally(() => { astraUblockLoadPromise = null; });
+  }
+  return astraUblockLoadPromise;
+}
+function isSwHostInSet(host, set) {
+  if (!host || !set || !set.size) return false;
+  const parts = host.split('.');
+  for (let i = 0; i <= parts.length - 2; i++) {
+    if (set.has(parts.slice(i).join('.'))) return true;
+  }
+  return set.has(host);
+}
+
 function createBlockedAdResponse(urlStr, isBare, dest) {
   let body = '';
   let status = 204;
@@ -2995,12 +3129,12 @@ function createBlockedAdResponse(urlStr, isBare, dest) {
     body = '<!doctype html><html><body style="margin:0;background:transparent"></body></html>';
     status = 200;
     ct = 'text/html; charset=utf-8';
-  } else if (/\\.m?js(?:$|\\?)|\\/prebid|\\/adsbygoogle|\\/pubads|\\/popunder|\\/ima3|\\/onclick/i.test(low)) {
-    body = '/* blocked by astra adblock */';
+  } else if (dest === 'script' || /\\.m?js(?:$|\\?)|\\/pop(?:\\.min)?\\.js$|\\/prebid|\\/adsbygoogle|\\/pubads|\\/popunder|\\/ima3|\\/onclick/i.test(low)) {
+    body = '/* blocked by astra ublock */';
     status = 200;
     ct = 'application/javascript; charset=utf-8';
-  } else if (/\\.css(?:$|\\?)/i.test(low)) {
-    body = '/* blocked by astra adblock */';
+  } else if (dest === 'style' || /\\.css(?:$|\\?)/i.test(low)) {
+    body = '/* blocked by astra ublock */';
     status = 200;
     ct = 'text/css; charset=utf-8';
   } else if (/\\/vast|\\/vmap|vast\\.xml|vmap\\.xml/i.test(low)) {
@@ -3217,13 +3351,13 @@ function isAdBlockedTarget(urlStr) {
   try {
     const u = new URL(urlStr);
     const h = u.hostname.toLowerCase();
-    if (ASTRA_AD_HOSTS.some((d) => h === d || h.endsWith('.' + d))) return true;
+    if (isSwHostInSet(h, ASTRA_AD_HOST_SET) || isSwHostInSet(h, astraUblockDomainSet)) return true;
     const p = u.pathname || '';
     if ((h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')) &&
         /(?:^\\/pagead\\/|^\\/ptracking|^\\/api\\/stats\\/(?:ads|atr)|^\\/youtubei\\/v1\\/player\\/ad_break|^\\/get_midroll_info)/i.test(p)) {
       return true;
     }
-    if (/(?:\\/gpt\\/pubads_impl|\\/pagead\\/js\\/adsbygoogle|\\/pagead\\/show_ads|\\/prebid(?:[.-][^/]*)?\\.js|\\/popunder(?:[.-][^/]*)?\\.js|\\/vast(?:\\d)?\\.xml|\\/vmap(?:\\.xml)?|\\/ima3(?:\\.js)?|\\/vpaid|\\/preroll|\\/ad[-_]?tag|\\/adserver\\/|\\/onclick\\.js)/i.test(p)) {
+    if (/(?:\\/pop(?:\\.min)?\\.js$|\\/gpt\\/pubads_impl|\\/pagead\\/js\\/adsbygoogle|\\/pagead\\/show_ads|\\/prebid(?:[.-][^/]*)?\\.js|\\/popunder(?:[.-][^/]*)?\\.js|\\/vast(?:\\d)?\\.xml|\\/vmap(?:\\.xml)?|\\/ima3(?:\\.js)?|\\/vpaid|\\/preroll|\\/ad[-_]?tag|\\/adserver\\/|\\/onclick\\.js)/i.test(p)) {
       return true;
     }
     return false;
@@ -3315,6 +3449,12 @@ self.addEventListener('message', (event) => {
 
 async function handleRequest(event) {
   const reqUrl = event && event.request ? (event.request.url || '') : '';
+  if (reqUrl.startsWith(location.origin + '/api/adblock/rules')) {
+    return await fetch(event.request);
+  }
+  if (astraUblockDomainSet.size === 0) {
+    try { await Promise.race([ensureUblockRulesLoaded(), new Promise((r) => setTimeout(r, 250))]); } catch {}
+  }
   const isScramjetReq =
     reqUrl.startsWith(location.origin + '/scramjet/') ||
     reqUrl.startsWith(location.origin + '/scram/scramjet.wasm.wasm');
@@ -3323,7 +3463,7 @@ async function handleRequest(event) {
     if (reqUrl && !reqUrl.startsWith(location.origin) && /^https?:\\/\\//i.test(reqUrl) && event.request.mode !== 'navigate') {
       if (isAdBlockedTarget(reqUrl)) {
         notifyAstraAdBlocked(reqUrl);
-        return createBlockedAdResponse(reqUrl, false);
+        return createBlockedAdResponse(reqUrl, false, event.request.destination);
       }
       try {
         const leakCtx = await getUpstreamContext(event);
@@ -3794,6 +3934,16 @@ const server = http.createServer(async (req, res) => {
     return serveFromDir(LIBCURL_PATH, pathname.slice('/libcurl/'.length), req, res);
   }
 
+  if (pathname === '/api/adblock/rules') {
+    if (!ublockRulesTextCache) rebuildUblockTextCache();
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=900',
+      'Access-Control-Allow-Origin': '*'
+    });
+    return res.end(ublockRulesTextCache || '');
+  }
+
   if (pathname === '/api/health') {
     return sendJson(
       res,
@@ -3803,6 +3953,7 @@ const server = http.createServer(async (req, res) => {
         mode: 'proxy',
         port: PORT,
         authenticated: !!sessionUser,
+        ublockRules: ublockDomainSet.size,
         ...getPublicServerConfig()
       },
       { 'Access-Control-Allow-Origin': '*' }
