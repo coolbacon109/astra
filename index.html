@@ -6250,6 +6250,32 @@
       transform: scale(1.1);
       color: #fff;
     }
+    body.lite-gfx *,
+    body.lite-gfx *::before,
+    body.lite-gfx *::after {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    body.lite-gfx .bg-video,
+    body.lite-gfx .bg-canvas {
+      display: none !important;
+    }
+    body.lite-gfx .bg-gradient-layer {
+      background: radial-gradient(circle at 50% 28%, rgba(var(--accent), 0.12), rgba(7, 8, 13, 0.98) 70%) !important;
+    }
+    body.lite-gfx .side-dock,
+    body.lite-gfx .tab-strip-shell,
+    body.lite-gfx .settings-card-inner,
+    body.lite-gfx .chat-shell,
+    body.lite-gfx .chat-modal-card,
+    body.lite-gfx .adblock-popover,
+    body.lite-gfx .auth-card-inner,
+    body.lite-gfx .music-side-card,
+    body.lite-gfx .hero-search-inner,
+    body.lite-gfx .top-url-bar,
+    body.lite-gfx .bottom-dock {
+      background-color: rgba(13, 15, 24, 0.94) !important;
+    }
     .chat-reply-quote {
       display: flex;
       align-items: center;
@@ -7763,6 +7789,14 @@
 
                 <div class="settings-toggle-row">
                   <div>
+                    lite graphics mode (chromebooks &amp; low-spec)
+                    <small>auto-on for chromebooks — disables blur &amp; background video for smooth 60fps</small>
+                  </div>
+                  <button class="astra-switch" id="settingsLiteGfxSwitch"></button>
+                </div>
+
+                <div class="settings-toggle-row">
+                  <div>
                     astra ad shield
                     <small>blocks ad domains, popups &amp; url tracking parameters</small>
                   </div>
@@ -8868,6 +8902,7 @@
     const settingsLayoutSideBtn = document.getElementById('settingsLayoutSideBtn');
     const settingsLayoutRegularBtn = document.getElementById('settingsLayoutRegularBtn');
     const settingsAutoFixSwitch = document.getElementById('settingsAutoFixSwitch');
+    const settingsLiteGfxSwitch = document.getElementById('settingsLiteGfxSwitch');
     const settingsAdBlockSwitch = document.getElementById('settingsAdBlockSwitch');
     const settingsPopupSwitch = document.getElementById('settingsPopupSwitch');
     const cloakPresetPills = document.getElementById('cloakPresetPills');
@@ -8892,6 +8927,7 @@
       brightness: 90,
       blur: 0,
       autoFixStuck: true,
+      liteGraphics: null,
       tabCloak: 'google',
       customCloakTitle: '',
       panicKey: 'off',
@@ -9551,7 +9587,7 @@
     }
     if (typeof setInterval === 'function') {
       themeColorTimerId = setInterval(() => {
-        if (!astraSettings.autoColorDetect) return;
+        if (!astraSettings.autoColorDetect || isLiteGraphicsEnabled() || !astraHomeMediaActive || document.hidden) return;
         const wp = astraSettings.wallpaper || 'silk';
         if (THEME_VIDEO_SRCS[wp] || wp === 'custom') {
           autoDetectThemePalette();
@@ -9559,7 +9595,72 @@
       }, 3600);
     }
 
+    let astraHomeMediaActive = true;
+
+    function isLowSpecClient() {
+      try {
+        const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+        if (/\bCrOS\b/i.test(ua)) return true;
+        if (typeof navigator !== 'undefined' && typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4) return true;
+        if (typeof navigator !== 'undefined' && typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4) return true;
+        if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+      } catch {}
+      return false;
+    }
+
+    function isLiteGraphicsEnabled() {
+      if (astraSettings.liteGraphics === true) return true;
+      if (astraSettings.liteGraphics === false) return false;
+      return isLowSpecClient();
+    }
+
+    function syncBackgroundMediaPower(homeVisible) {
+      if (typeof homeVisible === 'boolean') astraHomeMediaActive = homeVisible;
+      const lite = isLiteGraphicsEnabled();
+      const hiddenTab = typeof document !== 'undefined' && !!document.hidden;
+      const shouldAnimate = astraHomeMediaActive && !lite && !hiddenTab;
+      if (!shouldAnimate) {
+        if (bgVideo && typeof bgVideo.pause === 'function' && !bgVideo.paused) {
+          try { bgVideo.pause(); } catch {}
+        }
+        stopCanvasWallpaper();
+        return;
+      }
+      const wp = astraSettings.wallpaper || 'silk';
+      if (bgVideo && (THEME_VIDEO_SRCS[wp] || (wp === 'custom' && bgVideo.style.display !== 'none'))) {
+        if (bgVideo.paused && typeof bgVideo.play === 'function') {
+          Promise.resolve(bgVideo.play()).catch(() => {});
+        }
+      }
+      if (wp === 'starfield' || wp === 'grid' || wp === 'frutiger-aero') {
+        startCanvasWallpaper(wp);
+      }
+    }
+
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      document.addEventListener('visibilitychange', () => syncBackgroundMediaPower());
+    }
+
     function applyWallpaper() {
+      const lite = isLiteGraphicsEnabled();
+      if (document.body && document.body.classList) {
+        document.body.classList.toggle('lite-gfx', lite);
+      }
+      if (lite) {
+        if (document.body && document.body.classList) {
+          document.body.classList.toggle('theme-frutiger-aero', false);
+        }
+        stopCanvasWallpaper();
+        if (bgVideo) {
+          try { bgVideo.pause(); } catch {}
+          bgVideo.style.display = 'none';
+        }
+        if (bgCustomImg) bgCustomImg.style.display = 'none';
+        if (bgGradientLayer) bgGradientLayer.className = 'bg-gradient-layer';
+        const pal = THEME_PRESET_PALETTES[astraSettings.wallpaper || 'silk'] || THEME_PRESET_PALETTES.silk;
+        if (pal && typeof setAccentRgb === 'function') setAccentRgb(pal.accent, pal.soft);
+        return;
+      }
       const wp = astraSettings.wallpaper || 'silk';
       if (document.body && document.body.classList) {
         document.body.classList.toggle('theme-frutiger-aero', wp === 'frutiger-aero');
@@ -9720,6 +9821,7 @@
       if (wallpaperBlurRange) wallpaperBlurRange.value = String(astraSettings.blur);
       if (blurValLabel) blurValLabel.textContent = `${astraSettings.blur}px`;
       if (settingsAutoFixSwitch) settingsAutoFixSwitch.classList.toggle('on', !!astraSettings.autoFixStuck);
+      if (settingsLiteGfxSwitch) settingsLiteGfxSwitch.classList.toggle('on', isLiteGraphicsEnabled());
       if (settingsAdBlockSwitch) settingsAdBlockSwitch.classList.toggle('on', !!adblockCfg.enabled);
       if (settingsPopupSwitch) settingsPopupSwitch.classList.toggle('on', !!adblockCfg.enabled && !!adblockCfg.blockPopups);
       if (cloakPresetPills) {
@@ -9950,6 +10052,15 @@
       });
     }
 
+    if (settingsLiteGfxSwitch) {
+      settingsLiteGfxSwitch.addEventListener('click', () => {
+        astraSettings.liteGraphics = !isLiteGraphicsEnabled();
+        saveAstraSettings(astraSettings.liteGraphics ? 'lite graphics enabled' : 'full graphics enabled');
+        applyWallpaper();
+        syncSettingsUI();
+      });
+    }
+
     if (settingsAdBlockSwitch) {
       settingsAdBlockSwitch.addEventListener('click', () => {
         adblockCfg.enabled = !adblockCfg.enabled;
@@ -10167,11 +10278,13 @@
         topUrlInput.value = current.route;
         mainSearchInput.value = '';
         routeView.classList.remove('active');
+        syncBackgroundMediaPower(true);
       } else {
         heroSection.style.display = 'none';
         footerBar.style.display = 'none';
         routeView.classList.remove('active');
         browserViewport.classList.add('active');
+        syncBackgroundMediaPower(false);
 
         if (showAdminHub) {
           stopConnectingScreen();
@@ -13687,10 +13800,19 @@
       chatMessagesFeed.scrollTop = chatMessagesFeed.scrollHeight;
     }
 
+    function astraImgProxyUrl(rawUrl) {
+      const s = String(rawUrl || '');
+      if (!s || typeof window === 'undefined' || !window.location || !String(window.location.protocol || '').startsWith('http')) return s;
+      if (/^https:\/\/(?:cdn\.discordapp\.com|media\.tenor\.com|media\.giphy\.com|i\.ytimg\.com|yt3\.ggpht\.com)\//i.test(s)) {
+        return `${proxyOrigin || ''}/api/img?url=${encodeURIComponent(s)}`;
+      }
+      return s;
+    }
+
     const dcDeco = (id, label, asset) => ({
       id,
       label,
-      render: () => `<img class="chat-deco-discord-img" src="https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=240&amp;passthrough=true" alt="" />`
+      render: () => `<img class="chat-deco-discord-img" src="${escapeMusicHtml(astraImgProxyUrl(`https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=240&passthrough=true`))}" alt="" loading="lazy" />`
     });
     const CHAT_DECORATIONS = [
       { id: '', label: 'None', render: () => '' },
