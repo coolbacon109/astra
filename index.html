@@ -6372,6 +6372,124 @@
       background: linear-gradient(122deg, rgba(255, 255, 255, 0.48), rgba(var(--accent-soft), 0.3) 52%, rgba(255, 255, 255, 0.14)) !important;
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.56), 0 0 26px rgba(var(--accent), 0.28) !important;
     }
+
+    /* Ultra-Minimalist & Chromebook School Laptop Optimization Pass */
+    .logo-container,
+    .hero-greeting-pill,
+    .astra-logo {
+      animation: none !important;
+    }
+    .astra-logo-shimmer {
+      display: none !important;
+      animation: none !important;
+    }
+    .side-dock-item,
+    .tab-item,
+    .quick-app-tile,
+    .ext-btn,
+    .hero-greeting-pill,
+    .search-box,
+    .chat-msg-actions,
+    .games-cat-pill,
+    .hero-kbd,
+    .footer-glass-pill {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .side-dock-item {
+      background: rgba(12, 14, 20, 0.72) !important;
+    }
+    .search-box {
+      background: rgba(10, 12, 18, 0.88) !important;
+    }
+    .hero-tip-line {
+      display: none !important;
+    }
+    .hero-palette-hint {
+      margin-top: 22px !important;
+      opacity: 0.48;
+      font-size: 11px !important;
+    }
+    .quick-apps-section {
+      max-width: 520px !important;
+      margin: 22px auto 0 !important;
+    }
+    .quick-apps-head {
+      display: none !important;
+    }
+    .quick-apps-grid {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      align-items: flex-start !important;
+      gap: 16px !important;
+    }
+    .quick-app-tile {
+      width: 62px !important;
+      min-height: 0 !important;
+      padding: 4px 2px !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 7px !important;
+      transition: transform 0.16s ease, opacity 0.16s ease !important;
+    }
+    .quick-app-tile:hover {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      transform: translateY(-2px) !important;
+    }
+    .quick-app-icon-ring {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(16, 18, 26, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.86);
+      transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+    }
+    .quick-app-tile:hover .quick-app-icon-ring {
+      background: rgba(24, 28, 38, 0.92);
+      border-color: rgba(255, 255, 255, 0.26);
+      color: #ffffff;
+    }
+    .quick-app-icon-ring svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .quick-app-tile::before,
+    .quick-app-tile::after {
+      display: none !important;
+      content: none !important;
+    }
+    .footer-glass-pill.shield-active,
+    .footer-glass-pill.shield-active:hover {
+      box-shadow: none !important;
+      border-color: rgba(110, 231, 183, 0.28) !important;
+      background: rgba(12, 16, 18, 0.78) !important;
+    }
+    .astra-moon-badge {
+      filter: none !important;
+      animation: none !important;
+    }
+    .quick-app-tile span {
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      color: rgba(255, 255, 255, 0.62) !important;
+      letter-spacing: 0.01em;
+    }
+    .quick-app-tile:hover span {
+      color: rgba(255, 255, 255, 0.92) !important;
+    }
     .chat-reply-quote {
       display: flex;
       align-items: center;
@@ -8272,18 +8390,18 @@
 
         <div class="home-vis-anchor" id="homeVisAnchor"></div>
 
-        <div class="hero-palette-hint" id="heroPaletteHint">
-          <span>Press</span>
-          <span class="hero-kbd">Ctrl+Y</span>
-          <span>to open command palette</span>
-        </div>
-
         <div class="quick-apps-section" id="homeQuickApps">
           <div class="quick-apps-head">
             <span>quick apps</span>
             <span>click to launch</span>
           </div>
           <div class="quick-apps-grid" id="quickAppsGrid"></div>
+        </div>
+
+        <div class="hero-palette-hint" id="heroPaletteHint">
+          <span>Press</span>
+          <span class="hero-kbd">Ctrl+Y</span>
+          <span>to open command palette</span>
         </div>
 
         <!-- Sub-page container for /g -->
@@ -9528,8 +9646,8 @@
         }
 
         if (mode === 'lunar-space') {
-          const mx = w * 0.78 - bgMouseX * 14;
-          const my = h * 0.24 - bgMouseY * 10 + Math.sin(tSec * 0.4) * 5;
+          const mx = w * 0.85 - bgMouseX * 14;
+          const my = h * 0.19 - bgMouseY * 10 + Math.sin(tSec * 0.4) * 5;
           const mr = Math.max(36, Math.min(68, w * 0.048));
           const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3.1);
           halo.addColorStop(0, 'rgba(215, 228, 255, 0.24)');
@@ -15137,20 +15255,7 @@
     function startHeroTipLoop() {
       if (heroTipStarted || !heroTipLine) return;
       heroTipStarted = true;
-      const typeNext = () => {
-        const phrase = HERO_TIPS[heroTipIdx % HERO_TIPS.length];
-        heroTipIdx++;
-        let i = 0;
-        const typeTimer = setInterval(() => {
-          i++;
-          heroTipLine.textContent = phrase.slice(0, i) + (i < phrase.length ? '▍' : '');
-          if (i >= phrase.length) {
-            clearInterval(typeTimer);
-            setTimeout(typeNext, 4200);
-          }
-        }, 36);
-      };
-      typeNext();
+      heroTipLine.textContent = '';
     }
 
     let homeVisRaf = null;
@@ -15206,7 +15311,7 @@
     function runVisualizerTick() {
       const brandGroup = document.querySelector('.astra-brand-group');
       const moonEl = document.getElementById('astraMoonBadge');
-      if (!musicCurrentTrack) {
+      if (!musicCurrentTrack || document.hidden || isLiteGraphicsEnabled()) {
         if (brandGroup) brandGroup.style.transform = '';
         if (moonEl) moonEl.style.transform = '';
         homeVisRaf = null;
@@ -15509,9 +15614,13 @@
     }
 
     if (quickAppsGrid) {
-      quickAppsGrid.innerHTML = QUICK_APPS.map((a, idx) => `
-        <button type="button" class="quick-app-tile" data-quick-app-idx="${idx}">
-          ${a.svg ? a.svg : `<img src="${a.icon}" alt="" loading="lazy" />`}
+      const homeMinimalHubNames = new Set(['Games', 'Movies', 'Music', 'Roblox', 'Chat']);
+      const homeMinimalApps = QUICK_APPS
+        .map((app, idx) => ({ app, idx }))
+        .filter((item) => homeMinimalHubNames.has(item.app.name) && item.app.svg);
+      quickAppsGrid.innerHTML = homeMinimalApps.map(({ app: a, idx }) => `
+        <button type="button" class="quick-app-tile" data-quick-app-idx="${idx}" title="${a.name}">
+          <div class="quick-app-icon-ring">${a.svg}</div>
           <span>${a.name}</span>
         </button>
       `).join('');
