@@ -2322,7 +2322,7 @@ function patchBareClientInstance(client) {
         const th = targetUrl.hostname.toLowerCase();
         if (th === 'roblox.com' || th.endsWith('.roblox.com')) {
           const outCookie = getHeaderCI('cookie');
-          const m = outCookie && outCookie.match(/(?:^|;\\s*)\\.ROBLOSECURITY=([^;\\s]+)/);
+          const m = outCookie && outCookie.match(/(?:^|[;,\\s])\\.ROBLOSECURITY=([^;\\s]+)/);
           if (m && m[1]) saveAstraRoblosecurityCookie(decodeURIComponent(m[1]));
         }
       } catch {}
@@ -2334,10 +2334,25 @@ function patchBareClientInstance(client) {
       const th = u.hostname.toLowerCase();
       if (th === 'roblox.com' || th.endsWith('.roblox.com')) {
         try {
-          const scRaw = (resp && resp.rawHeaders && (resp.rawHeaders['set-cookie'] || resp.rawHeaders['Set-Cookie'])) || resp.headers.get('set-cookie');
-          const scList = Array.isArray(scRaw) ? scRaw : (scRaw ? [String(scRaw)] : []);
+          const scList = [];
+          if (resp && resp.rawHeaders && typeof resp.rawHeaders === 'object') {
+            for (const [hk, hv] of Object.entries(resp.rawHeaders)) {
+              if (String(hk).toLowerCase() === 'set-cookie') {
+                if (Array.isArray(hv)) scList.push(...hv);
+                else if (hv) scList.push(String(hv));
+              }
+            }
+          }
+          if (resp && resp.headers) {
+            if (typeof resp.headers.getSetCookie === 'function') {
+              scList.push(...resp.headers.getSetCookie());
+            } else {
+              const gsc = resp.headers.get('set-cookie');
+              if (gsc) scList.push(gsc);
+            }
+          }
           for (const entry of scList) {
-            const m = String(entry || '').match(/(?:^|,\\s*)\\.ROBLOSECURITY=([^;\\s]+)/);
+            const m = String(entry || '').match(/(?:^|[;,\\s])\\.ROBLOSECURITY=([^;\\s]+)/);
             if (m && m[1]) saveAstraRoblosecurityCookie(decodeURIComponent(m[1]));
           }
         } catch {}

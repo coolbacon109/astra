@@ -7656,8 +7656,8 @@
               <div class="roblox-step-stage" id="robloxStepStage2" style="display:none;">
                 <div class="roblox-stage-title">Sign in on Roblox Website</div>
                 <div class="roblox-stage-desc">
-                  Open <strong>https://www.roblox.com/</strong> inside Astra’s proxy and sign into your account.<br><br>
-                  <strong>Important tip:</strong> Choose the <strong>Email one-time code</strong> login option on Roblox — passkeys, external QR approvals, or hardware keys won’t complete inside a web proxy. Once you see your Roblox home feed, come back to this tab to continue.
+                  Open <strong>https://www.roblox.com/</strong> inside Astra’s proxy and sign in.<br><br>
+                  <strong>Use Email One-Time Code:</strong> Click <em>Email Me a One-Time Code</em> on Roblox — other login methods (password captcha, passkeys, Quick Sign-In) won’t work through a web proxy. Once logged in, return to this tab — Astra will sync your session automatically.
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
                   <button type="button" class="roblox-primary-btn" id="rbxOpenSiteStepBtn">Open https://www.roblox.com/ ↗</button>
@@ -15040,8 +15040,23 @@
           updateRobloxSessionUI(data);
           return { ok: true, user: data.user, cookie: data.cookie };
         }
+        // Fallback: if SW/IDB didn't yield the HttpOnly token directly, check live proxied Roblox auth status so we can give an accurate message
+        if (!candidate && allowProbe && proxyAvailable) {
+          try {
+            const pUrl = buildProxyTargetUrl('https://users.roblox.com/v1/users/authenticated');
+            const pr = await fetch(pUrl, { credentials: 'include', cache: 'no-store' });
+            if (pr.ok) {
+              const pUser = await pr.json().catch(() => null);
+              if (pUser && pUser.id) {
+                const retryCookie = await extractProxiedRoblosecurityAsync(false);
+                if (retryCookie) return verifyAndSyncRobloxSession(retryCookie, false);
+                return { ok: false, error: `Detected proxy login as @${pUser.name}, but browser hid .ROBLOSECURITY cookie. Open Step 2 or reload roblox.com once, or paste your cookie below.` };
+              }
+            }
+          } catch {}
+        }
         updateRobloxSessionUI({ signedIn: false });
-        return { ok: false, error: (data && data.error) || 'No active Roblox login detected yet.' };
+        return { ok: false, error: (data && data.error) || 'No active Roblox login detected yet. Sign in with Email One-Time Code on roblox.com first.' };
       } catch (err) {
         return { ok: false, error: (err && err.message) || 'Could not reach Astra verification endpoint.' };
       }
@@ -15152,7 +15167,8 @@
       if (existing) {
         switchTab(existing.id);
       } else {
-        const nt = { id: nextTabId++, route: '/web', title: 'Roblox', query: null, url: 'https://www.roblox.com/' };
+        const targetUrl = fromSetupStep ? 'https://www.roblox.com/login' : 'https://www.roblox.com/';
+        const nt = { id: nextTabId++, route: '/web', title: 'Roblox', query: null, url: targetUrl };
         tabs.push(nt);
         activeTabId = nt.id;
         renderTabs();
@@ -15202,12 +15218,16 @@
     if (robloxOpenSiteTopBtn) robloxOpenSiteTopBtn.addEventListener('click', () => openRobloxWebsiteInProxyTab(false));
     if (rbxAlreadySignedBtn) rbxAlreadySignedBtn.addEventListener('click', () => showRobloxWizardStep(3));
     if (robloxReturnPillBtn) {
-      robloxReturnPillBtn.addEventListener('click', () => {
+      robloxReturnPillBtn.addEventListener('click', async () => {
         robloxSetupVisitedSite = false;
         const rbxTab = tabs.find(t => t.route === '/roblox' && !t.url && !t.query);
         if (rbxTab) switchTab(rbxTab.id);
         else navigateRoute('/roblox');
         openRobloxWizardGuide(3);
+        const autoCheck = await verifyAndSyncRobloxSession('', true);
+        if (autoCheck.ok && typeof showToast === 'function') {
+          showToast(`verified roblox account: @${autoCheck.user.name}`);
+        }
       });
     }
     if (rbxBackBtn) {
