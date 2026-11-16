@@ -10391,10 +10391,13 @@
     const connectedAudioEls = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
     let beatDir = 1;
     let lastBeatTs = 0;
-    let bassMovingAvg = 0.25;
+    let bassMovingAvg = 0.18;
     let beatTilt = 0;
     let beatLift = 0;
     let beatScale = 1;
+    let moonScale = 1;
+    let moonSpinAngle = 0;
+    let beatCounter = 0;
 
     function ensureAudioAnalyserForVideo(videoEl) {
       if (!videoEl || typeof window === 'undefined') return null;
@@ -10437,7 +10440,7 @@
 
       if (analyser && astraFreqData) {
         analyser.getByteFrequencyData(astraFreqData);
-        bass = ((astraFreqData[0] || 0) + (astraFreqData[1] || 0) + (astraFreqData[2] || 0)) / (3 * 255);
+        bass = ((astraFreqData[0] || 0) + (astraFreqData[1] || 0) + (astraFreqData[2] || 0) + (astraFreqData[3] || 0) + (astraFreqData[4] || 0)) / (5 * 255);
         if (homeVisBars) {
           const bars = homeVisBars.querySelectorAll('.home-vis-bar');
           bars.forEach((b, idx) => {
@@ -10449,25 +10452,31 @@
       }
 
       const now = performance.now();
-      bassMovingAvg = bassMovingAvg * 0.92 + bass * 0.08;
-      if (bass > 0.30 && bass > bassMovingAvg * 1.22 && (now - lastBeatTs) > 250) {
+      bassMovingAvg = bassMovingAvg * 0.90 + bass * 0.10;
+      if (bass > 0.16 && bass > bassMovingAvg * 1.09 && (now - lastBeatTs) > 175) {
         lastBeatTs = now;
+        beatCounter++;
         beatDir = -beatDir;
-        const punch = Math.min(1.4, (bass - bassMovingAvg) * 3.2 + 0.65);
-        beatTilt = beatDir * (4.8 * punch);
-        beatLift = -(6.5 * punch);
-        beatScale = 1 + (0.065 * punch);
+        const punch = Math.min(1.45, (bass - bassMovingAvg) * 3.4 + 0.72);
+        beatTilt = beatDir * (5.2 * punch);
+        beatLift = -(7.0 * punch);
+        beatScale = 1 + (0.07 * punch);
+        moonScale = 1 + (0.20 * punch);
+        if (beatCounter % 4 === 0) {
+          moonSpinAngle += beatDir * 360;
+        }
       } else {
-        beatTilt *= 0.84;
-        beatLift *= 0.84;
-        beatScale = 1 + (beatScale - 1) * 0.84;
+        beatTilt *= 0.82;
+        beatLift *= 0.82;
+        beatScale = 1 + (beatScale - 1) * 0.82;
+        moonScale = 1 + (moonScale - 1) * 0.78;
       }
 
       if (brandGroup) {
         brandGroup.style.transform = `translateY(${beatLift.toFixed(2)}px) rotate(${beatTilt.toFixed(2)}deg) scale(${beatScale.toFixed(3)})`;
       }
       if (moonEl) {
-        moonEl.style.transform = `rotate(${(beatTilt * 1.8).toFixed(2)}deg) scale(${(1 + (beatScale - 1) * 1.25).toFixed(3)})`;
+        moonEl.style.transform = `rotate(${(moonSpinAngle + beatTilt * 2.0).toFixed(2)}deg) scale(${moonScale.toFixed(3)})`;
       }
 
       homeVisRaf = requestAnimationFrame(runVisualizerTick);
