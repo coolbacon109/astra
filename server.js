@@ -106,6 +106,8 @@ function getChatMembersList() {
     displayName: u.displayName || u.username,
     role: u.role || 'user',
     avatar: u.avatar || '',
+    decoration: u.decoration || '',
+    customStatus: u.customStatus || '',
     online: onlineNames.has(u.username)
   })).sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
 }
@@ -3534,6 +3536,48 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (pathname === '/api/chat/decoration' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const ALLOWED_DECORATIONS = new Set([
+      '',
+      'astra-halo',
+      'cyber-neon',
+      'crimson-flame',
+      'emerald-matrix',
+      'starlight-orbit',
+      'royal-crown',
+      'void-prism',
+      'cherry-bloom'
+    ]);
+    try {
+      const body = await readJsonBody(req);
+      const decoration = String((body && body.decoration) || '').trim();
+      if (!ALLOWED_DECORATIONS.has(decoration)) {
+        return sendJson(res, 400, { ok: false, error: 'Unknown decoration preset' });
+      }
+      const customStatus = body && typeof body.customStatus === 'string'
+        ? body.customStatus.trim().slice(0, 48)
+        : undefined;
+      if (authStore && authStore.users && authStore.users[sessionUser.username]) {
+        authStore.users[sessionUser.username].decoration = decoration;
+        if (customStatus !== undefined) authStore.users[sessionUser.username].customStatus = customStatus;
+        saveAuthStore();
+      }
+      const members = getChatMembersList();
+      broadcastChatWs({ type: 'members-update', members });
+      return sendJson(res, 200, {
+        ok: true,
+        decoration,
+        customStatus: (authStore.users[sessionUser.username] && authStore.users[sessionUser.username].customStatus) || '',
+        members
+      });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+    }
+  }
+
   const DEFAULT_CHAT_CHANNELS = [
     { id: 'announcements', name: 'announcements', topic: 'admin updates & server news', type: 'text', category: 'Text Channels', adminOnly: true, locked: true },
     { id: 'general', name: 'general', topic: 'main server chat', type: 'text', category: 'Text Channels', locked: true },
@@ -3682,7 +3726,8 @@ const server = http.createServer(async (req, res) => {
       writeChatStore(data);
       const hydrated = {
         ...msg,
-        avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || ''
+        avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || '',
+        decoration: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].decoration) || msg.decoration || ''
       };
       broadcastChatWs({ type: 'message-update', channel: chId, message: hydrated });
       return sendJson(res, 200, { ok: true, message: hydrated });
@@ -3703,7 +3748,8 @@ const server = http.createServer(async (req, res) => {
       const rawMessages = Array.isArray(data[channel]) ? data[channel] : [];
       const messages = rawMessages.map((m) => ({
         ...m,
-        avatar: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].avatar) || m.avatar || ''
+        avatar: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].avatar) || m.avatar || '',
+        decoration: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].decoration) || m.decoration || ''
       }));
       const canPost = !(channelObj && channelObj.adminOnly) || sessionUser.role === 'admin';
       return sendJson(res, 200, {
@@ -3746,7 +3792,9 @@ const server = http.createServer(async (req, res) => {
             };
           }
         }
-        const userAvatar = (authStore && authStore.users && authStore.users[sessionUser.username] && authStore.users[sessionUser.username].avatar) || '';
+        const userRec = authStore && authStore.users && authStore.users[sessionUser.username];
+        const userAvatar = (userRec && userRec.avatar) || '';
+        const userDecoration = (userRec && userRec.decoration) || '';
         const entry = {
           id: crypto.randomBytes(8).toString('hex'),
           channel,
@@ -3754,6 +3802,7 @@ const server = http.createServer(async (req, res) => {
           displayName: sessionUser.displayName || sessionUser.username,
           role: sessionUser.role || 'user',
           avatar: userAvatar,
+          decoration: userDecoration,
           text,
           replyTo,
           reactions: {},

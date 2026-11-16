@@ -6149,6 +6149,121 @@
       flex: 1;
       accent-color: rgb(var(--accent-soft));
     }
+
+    /* Discord-Style Profile Decorations + Custom Status */
+    .chat-msg-avatar {
+      position: relative;
+      overflow: visible !important;
+    }
+    .chat-avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    .chat-deco-ring {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .chat-deco-ring svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+    .chat-deco-spin {
+      animation: astraOutlineSpin 5s linear infinite, chatDecoRotate 7s linear infinite;
+    }
+    @keyframes chatDecoRotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes chatDecoPulse {
+      0%, 100% { filter: drop-shadow(0 0 4px currentColor); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 11px currentColor); transform: scale(1.04); }
+    }
+    .chat-deco-pulse {
+      animation: chatDecoPulse 2.4s ease-in-out infinite;
+    }
+    .chat-deco-preview-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .chat-deco-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .chat-deco-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.8);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.14s ease;
+    }
+    .chat-deco-tile:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: translateY(-1px);
+    }
+    .chat-deco-tile.active {
+      background: rgba(var(--accent), 0.22);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(var(--accent), 0.34);
+    }
+    .chat-deco-thumb {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .chat-deco-icon-btn {
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.85);
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.16s ease, transform 0.16s ease;
+    }
+    .chat-deco-icon-btn:hover {
+      background: rgba(var(--accent), 0.26);
+      color: #fff;
+      transform: scale(1.06);
+    }
   </style>
   <script src="/baremux/index.js"></script>
   <script src="/scram/scramjet.all.js"></script>
@@ -6843,16 +6958,17 @@
                 </div>
               </div>
               <div class="chat-user-bar" id="chatUserBar">
-                <div class="chat-user-pill" id="chatChangeAvatarBtn" title="click to upload & crop profile picture">
+                <div class="chat-user-pill" id="chatChangeAvatarBtn" style="flex:1;" title="click to upload & crop profile picture">
                   <div class="chat-avatar-wrap" id="chatSelfAvatarWrap" style="width:30px;height:30px;font-size:11px;">
                     <span id="chatSelfAvatarInitial">A</span>
                     <span class="chat-status-dot"></span>
                   </div>
                   <div style="min-width:0;">
                     <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="chatSelfName">user</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,0.48);">change / crop pfp</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.48);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="chatSelfSub">change / crop pfp</div>
                   </div>
                 </div>
+                <button type="button" class="chat-deco-icon-btn" id="chatOpenDecoBtn" title="Profile Decorations &amp; Status">✨</button>
                 <input type="file" id="chatAvatarInput" accept="image/*" style="display:none;" />
               </div>
               <div id="chatVoiceAudioMount" style="display:none;"></div>
@@ -6960,6 +7076,32 @@
             <div style="display:flex;justify-content:flex-end;gap:8px;">
               <button type="button" class="roblox-secondary-btn" id="pfpCropCancelBtn">Cancel</button>
               <button type="button" class="roblox-primary-btn" id="pfpCropSaveBtn">Apply PFP</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discord Profile Decoration & Custom Status Modal -->
+        <div class="chat-modal-backdrop" id="chatDecorationModal">
+          <div class="chat-modal-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:16px;font-weight:700;color:#fff;">Profile Decoration</div>
+              <button type="button" class="chat-msg-act-btn" id="chatCloseDecoModalBtn">✕</button>
+            </div>
+            <div class="chat-deco-preview-box">
+              <div class="chat-avatar-wrap" id="chatDecoPreviewAvatar" style="width:54px;height:54px;font-size:20px;"></div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:14px;font-weight:700;color:#fff;" id="chatDecoPreviewName">user</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.58);" id="chatDecoPreviewLabel">None</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Custom Status</div>
+              <input type="text" id="chatDecoStatusInput" class="settings-input" placeholder="e.g. vibing on astra / playing roblox" maxlength="48" autocomplete="off" />
+            </div>
+            <div class="chat-deco-grid" id="chatDecoGrid"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button type="button" class="roblox-secondary-btn" id="chatDecoCancelBtn">Cancel</button>
+              <button type="button" class="roblox-primary-btn" id="chatDecoSaveBtn">Save Profile</button>
             </div>
           </div>
         </div>
@@ -12616,7 +12758,7 @@
         return `
           <div class="chat-msg-row">
             ${hoverActions}
-            <div class="chat-msg-avatar" style="overflow:hidden;">${avatarHtml}</div>
+            <div class="chat-msg-avatar">${renderAvatarBoxInner(avatarHtml, m.decoration)}</div>
             <div class="chat-msg-body">
               ${replyHtml}
               <div class="chat-msg-meta">
@@ -12651,22 +12793,86 @@
       chatMessagesFeed.scrollTop = chatMessagesFeed.scrollHeight;
     }
 
+    const CHAT_DECORATIONS = [
+      { id: '', label: 'None', render: () => '' },
+      {
+        id: 'astra-halo',
+        label: 'Astra Halo',
+        render: () => `<span class="chat-deco-ring chat-deco-spin"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="url(#gradHalo)" stroke-width="4.5" stroke-dasharray="160 40"/><defs><linearGradient id="gradHalo" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="50%" stop-color="#c084fc"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs><circle cx="50" cy="4" r="4" fill="#fff"/></svg></span>`
+      },
+      {
+        id: 'cyber-neon',
+        label: 'Cyber Neon',
+        render: () => `<span class="chat-deco-ring chat-deco-pulse" style="color:#22d3ee;"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#22d3ee" stroke-width="3.5" stroke-dasharray="14 7"/><circle cx="50" cy="50" r="42" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="40 16"/></svg></span>`
+      },
+      {
+        id: 'crimson-flame',
+        label: 'Inferno',
+        render: () => `<span class="chat-deco-ring chat-deco-pulse" style="color:#fb923c;"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#ef4444" stroke-width="4.5"/><path d="M50 0 L56 12 L44 12 Z M88 22 L86 35 L77 27 Z M12 22 L23 27 L14 35 Z" fill="#fbbf24"/></svg></span>`
+      },
+      {
+        id: 'emerald-matrix',
+        label: 'Emerald Pulse',
+        render: () => `<span class="chat-deco-ring chat-deco-spin" style="color:#34d399;"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#10b981" stroke-width="4" stroke-dasharray="22 8"/><rect x="46" y="1" width="8" height="8" rx="2" fill="#a7f3d0"/><rect x="46" y="91" width="8" height="8" rx="2" fill="#34d399"/></svg></span>`
+      },
+      {
+        id: 'starlight-orbit',
+        label: 'Starlight',
+        render: () => `<span class="chat-deco-ring chat-deco-spin"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#fde047" stroke-width="2.5" stroke-dasharray="8 8"/><path d="M50 -2 L53 6 L61 9 L53 12 L50 20 L47 12 L39 9 L47 6 Z" fill="#fef08a"/><circle cx="12" cy="76" r="3" fill="#fff"/></svg></span>`
+      },
+      {
+        id: 'royal-crown',
+        label: 'Royal Crown',
+        render: () => `<span class="chat-deco-ring chat-deco-pulse" style="color:#fbbf24;"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#fbbf24" stroke-width="4"/><path d="M30 10 L36 -6 L50 4 L64 -6 L70 10 Z" fill="#fde047" stroke="#b45309" stroke-width="2"/></svg></span>`
+      },
+      {
+        id: 'void-prism',
+        label: 'Void Prism',
+        render: () => `<span class="chat-deco-ring chat-deco-spin"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="url(#gradPrism)" stroke-width="5"/><defs><linearGradient id="gradPrism" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f43f5e"/><stop offset="33%" stop-color="#eab308"/><stop offset="66%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg></span>`
+      },
+      {
+        id: 'cherry-bloom',
+        label: 'Sakura',
+        render: () => `<span class="chat-deco-ring chat-deco-pulse" style="color:#f9a8d4;"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#f472b6" stroke-width="3.5"/><circle cx="20" cy="18" r="5" fill="#fbcfe8"/><circle cx="84" cy="24" r="4" fill="#f9a8d4"/><circle cx="76" cy="86" r="5" fill="#fbcfe8"/></svg></span>`
+      }
+    ];
+
+    function renderChatDecorationRing(decoId) {
+      const found = CHAT_DECORATIONS.find((d) => d.id === decoId);
+      return found ? found.render() : '';
+    }
+
+    function renderAvatarBoxInner(avatarHtml, decoId) {
+      return `<div class="chat-avatar-inner">${avatarHtml}</div>${renderChatDecorationRing(decoId)}`;
+    }
+
     function renderChatMembers(members) {
       const membersListEl = document.getElementById('chatMembersList');
       const membersHeadEl = document.getElementById('chatMembersHead');
       const selfNameEl = document.getElementById('chatSelfName');
+      const selfSubEl = document.getElementById('chatSelfSub');
       const selfAvatarWrap = document.getElementById('chatSelfAvatarWrap');
       const list = Array.isArray(members) ? members : [];
+      const me = currentUser ? list.find((u) => u.username === currentUser.username) : null;
+      if (me && currentUser) {
+        if (me.avatar) currentUser.avatar = me.avatar;
+        currentUser.decoration = me.decoration || '';
+        currentUser.customStatus = me.customStatus || '';
+      }
       if (selfNameEl && currentUser) {
         selfNameEl.textContent = currentUser.displayName || currentUser.username || 'user';
       }
+      if (selfSubEl && currentUser) {
+        selfSubEl.textContent = (me && me.customStatus) || currentUser.customStatus || 'change / crop pfp';
+      }
       if (selfAvatarWrap && currentUser) {
-        const me = list.find((u) => u.username === currentUser.username);
         const myAvatar = (me && me.avatar) || currentUser.avatar || '';
+        const myDeco = (me && me.decoration) || currentUser.decoration || '';
         const initial = String(currentUser.displayName || currentUser.username || 'A').slice(0, 1).toUpperCase();
-        selfAvatarWrap.innerHTML = myAvatar
-          ? `<img src="${escapeMusicHtml(myAvatar)}" class="chat-avatar-img" alt="" /><span class="chat-status-dot"></span>`
-          : `<span>${escapeMusicHtml(initial)}</span><span class="chat-status-dot"></span>`;
+        const inner = myAvatar
+          ? `<img src="${escapeMusicHtml(myAvatar)}" class="chat-avatar-img" alt="" />`
+          : `<span>${escapeMusicHtml(initial)}</span>`;
+        selfAvatarWrap.innerHTML = `${renderAvatarBoxInner(inner, myDeco)}<span class="chat-status-dot"></span>`;
       }
       if (!membersListEl) return;
       const onlineCount = list.filter((m) => m.online).length;
@@ -12677,15 +12883,16 @@
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : `<span>${escapeMusicHtml(initial)}</span>`;
         const crown = m.role === 'admin' ? ' <span title="Admin" style="color:#fbbf24;">★</span>' : '';
+        const subText = m.customStatus ? escapeMusicHtml(m.customStatus) : (m.online ? 'online' : 'offline');
         return `
           <div class="chat-member-row" style="opacity:${m.online ? '1' : '0.48'};">
             <div class="chat-avatar-wrap">
-              ${av}
+              ${renderAvatarBoxInner(av, m.decoration || '')}
               <span class="chat-status-dot ${m.online ? '' : 'offline'}"></span>
             </div>
             <div style="min-width:0;flex:1;">
               <div style="font-size:12.5px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeMusicHtml(m.displayName || m.username)}${crown}</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.45);">${m.online ? 'online' : 'offline'}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${subText}</div>
             </div>
           </div>
         `;
@@ -13298,6 +13505,96 @@
         };
         reader.readAsDataURL(file);
         chatAvatarInput.value = '';
+      });
+    }
+
+    // Profile Decorations & Custom Status Modal Controller
+    const chatOpenDecoBtn = document.getElementById('chatOpenDecoBtn');
+    const chatDecorationModal = document.getElementById('chatDecorationModal');
+    const chatCloseDecoModalBtn = document.getElementById('chatCloseDecoModalBtn');
+    const chatDecoCancelBtn = document.getElementById('chatDecoCancelBtn');
+    const chatDecoSaveBtn = document.getElementById('chatDecoSaveBtn');
+    const chatDecoGrid = document.getElementById('chatDecoGrid');
+    const chatDecoPreviewAvatar = document.getElementById('chatDecoPreviewAvatar');
+    const chatDecoPreviewName = document.getElementById('chatDecoPreviewName');
+    const chatDecoPreviewLabel = document.getElementById('chatDecoPreviewLabel');
+    const chatDecoStatusInput = document.getElementById('chatDecoStatusInput');
+    let selectedChatDecoration = '';
+
+    function renderDecorationModalUI() {
+      const initial = String((currentUser && (currentUser.displayName || currentUser.username)) || 'A').slice(0, 1).toUpperCase();
+      const myAv = (currentUser && currentUser.avatar) || '';
+      const avInner = myAv ? `<img src="${escapeMusicHtml(myAv)}" class="chat-avatar-img" alt="" />` : `<span>${escapeMusicHtml(initial)}</span>`;
+      if (chatDecoPreviewAvatar) {
+        chatDecoPreviewAvatar.innerHTML = renderAvatarBoxInner(avInner, selectedChatDecoration);
+      }
+      if (chatDecoPreviewName && currentUser) {
+        chatDecoPreviewName.textContent = currentUser.displayName || currentUser.username || 'user';
+      }
+      const preset = CHAT_DECORATIONS.find((d) => d.id === selectedChatDecoration) || CHAT_DECORATIONS[0];
+      if (chatDecoPreviewLabel) chatDecoPreviewLabel.textContent = `Effect: ${preset.label}`;
+      if (chatDecoGrid) {
+        chatDecoGrid.innerHTML = CHAT_DECORATIONS.map((d) => `
+          <button type="button" class="chat-deco-tile ${d.id === selectedChatDecoration ? 'active' : ''}" data-pick-deco="${escapeMusicHtml(d.id)}">
+            <div class="chat-deco-thumb">
+              ${renderAvatarBoxInner(`<span>${escapeMusicHtml(initial)}</span>`, d.id)}
+            </div>
+            <span>${escapeMusicHtml(d.label)}</span>
+          </button>
+        `).join('');
+        chatDecoGrid.querySelectorAll('[data-pick-deco]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            selectedChatDecoration = btn.dataset.pickDeco || '';
+            renderDecorationModalUI();
+          });
+        });
+      }
+    }
+
+    function openChatDecorationModal() {
+      selectedChatDecoration = (currentUser && currentUser.decoration) || '';
+      if (chatDecoStatusInput) chatDecoStatusInput.value = (currentUser && currentUser.customStatus) || '';
+      renderDecorationModalUI();
+      if (chatDecorationModal) chatDecorationModal.classList.add('open');
+    }
+
+    if (chatOpenDecoBtn) chatOpenDecoBtn.addEventListener('click', openChatDecorationModal);
+    if (chatCloseDecoModalBtn) chatCloseDecoModalBtn.addEventListener('click', () => chatDecorationModal && chatDecorationModal.classList.remove('open'));
+    if (chatDecoCancelBtn) chatDecoCancelBtn.addEventListener('click', () => chatDecorationModal && chatDecorationModal.classList.remove('open'));
+    if (chatDecorationModal) {
+      chatDecorationModal.addEventListener('click', (e) => {
+        if (e.target === chatDecorationModal) chatDecorationModal.classList.remove('open');
+      });
+    }
+    if (chatDecoSaveBtn) {
+      chatDecoSaveBtn.addEventListener('click', async () => {
+        chatDecoSaveBtn.disabled = true;
+        chatDecoSaveBtn.textContent = 'Saving...';
+        try {
+          await proxyHealthPromise;
+          const customStatus = chatDecoStatusInput ? chatDecoStatusInput.value.trim() : '';
+          const r = await fetch(`${proxyOrigin}/api/chat/decoration`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ decoration: selectedChatDecoration, customStatus })
+          });
+          const j = await r.json();
+          if (r.ok && j && j.ok) {
+            if (currentUser) {
+              currentUser.decoration = j.decoration || '';
+              currentUser.customStatus = j.customStatus || '';
+            }
+            if (j.members) renderChatMembers(j.members);
+            loadChatChannel(chatActiveChannel);
+            if (chatDecorationModal) chatDecorationModal.classList.remove('open');
+            if (typeof showToast === 'function') showToast('profile decoration applied!');
+          } else if (typeof showToast === 'function') {
+            showToast((j && j.error) || 'Failed to save decoration');
+          }
+        } catch {}
+        chatDecoSaveBtn.disabled = false;
+        chatDecoSaveBtn.textContent = 'Save Profile';
       });
     }
 
