@@ -8908,10 +8908,7 @@
       clearTimeout(frameLoadTimer);
       clearTimeout(frameWatchdogTimer);
       clearTimeout(frameRetryTimer);
-      startConnectingScreen();
-      frameLoadTimer = setTimeout(() => {
-        stopConnectingScreen();
-      }, 12000);
+      stopConnectingScreen();
       browserFrame.classList.add('active-frame', 'loaded');
 
       try {
