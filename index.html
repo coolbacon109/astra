@@ -4727,7 +4727,59 @@
       z-index: 20;
       border-radius: 0;
       border: none;
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      grid-template-rows: auto 1fr;
     }
+    .spicy-lyrics-overlay.fullscreen .spicy-top-pill-wrap {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .spicy-lyrics-overlay.fullscreen .spicy-lyrics-scroll {
+      grid-column: 1;
+      grid-row: 2;
+      padding: 28px clamp(28px, 7vw, 110px) 120px;
+      gap: 20px;
+    }
+    .spicy-np-aside {
+      display: none;
+      position: relative;
+      z-index: 2;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 11, 16, 0.36);
+      backdrop-filter: blur(18px);
+      padding: 18px 14px;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+    .spicy-lyrics-overlay.fullscreen .spicy-np-aside {
+      display: flex;
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+    @keyframes spicyDotPulse {
+      0%, 80%, 100% { opacity: 0.32; transform: scale(0.85); }
+      40% { opacity: 1; transform: scale(1.15); }
+    }
+    .spicy-dots {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0 6px;
+    }
+    .spicy-dots.visible {
+      display: inline-flex;
+    }
+    .spicy-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fff;
+      animation: spicyDotPulse 1.35s ease-in-out infinite;
+    }
+    .spicy-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .spicy-dots span:nth-child(3) { animation-delay: 0.4s; }
     .spicy-liquify-bg {
       position: absolute;
       inset: -25%;
@@ -4833,45 +4885,39 @@
     .spicy-line {
       font-size: 20px;
       font-weight: 700;
-      line-height: 1.32;
+      line-height: 1.3;
       letter-spacing: -0.02em;
       cursor: pointer;
       opacity: 0.36;
-      filter: blur(0.4px);
-      transform: scale(0.98);
+      transform: scale(0.99);
       transform-origin: left center;
-      transition: opacity 0.24s ease, transform 0.24s ease, filter 0.24s ease;
+      transition: opacity 0.22s ease, transform 0.22s ease;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.26em;
+      gap: 0.25em;
     }
     .spicy-lyrics-overlay.fullscreen .spicy-line {
-      font-size: clamp(24px, 3.2vw, 36px);
+      font-size: clamp(26px, 3.1vw, 38px);
     }
     .spicy-line:hover {
-      opacity: 0.75;
-      filter: none;
+      opacity: 0.78;
     }
     .spicy-line.active {
       opacity: 1;
-      filter: none;
-      transform: scale(1.03);
+      transform: scale(1.015);
     }
     .spicy-line.past {
-      opacity: 0.45;
-      filter: none;
+      opacity: 0.24;
     }
     .spicy-word {
       display: inline-block;
-      background: linear-gradient(90deg, #ffffff var(--wprog, 0%), rgba(255, 255, 255, 0.34) var(--wprog, 0%));
+      background: linear-gradient(90deg, #ffffff var(--wprog, 0%), rgba(255, 255, 255, 0.38) var(--wprog, 0%));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      transition: transform 0.12s ease;
     }
     .spicy-line.active .spicy-word.glowing {
-      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.72));
-      transform: translateY(-1px);
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.48));
     }
   </style>
   <script src="/baremux/index.js"></script>
@@ -5372,7 +5418,20 @@
                   <button type="button" class="spicy-pill-btn" id="spicyLyricsCloseBtn" title="Close lyrics">✕</button>
                 </div>
               </div>
-              <div class="spicy-lyrics-scroll" id="spicyLyricsScroll"></div>
+              <div class="spicy-lyrics-scroll" id="spicyLyricsScroll">
+                <div class="spicy-dots" id="spicyIntroDots"><span></span><span></span><span></span></div>
+              </div>
+              <aside class="spicy-np-aside" id="spicyNpAside">
+                <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.72);">Now Playing</div>
+                <img id="spicyAsideThumb" src="" alt="" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:#111;" />
+                <div>
+                  <div id="spicyAsideTitle" style="font-size:17px;font-weight:700;color:#fff;line-height:1.25;">Astra Music</div>
+                  <div id="spicyAsideArtist" style="font-size:13px;color:rgba(255,255,255,0.62);margin-top:4px;">YouTube</div>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;font-size:11.5px;color:rgba(255,255,255,0.5);">
+                  Click any lyric line on the left to jump right to that timestamp.
+                </div>
+              </aside>
             </div>
           </div>
 
@@ -11387,11 +11446,12 @@
     function renderSpicyLyricsLines() {
       if (!spicyLyricsScroll) return;
       const lines = spicyLyricsData.lines || [];
+      const dotsHtml = '<div class="spicy-dots" id="spicyIntroDots"><span></span><span></span><span></span></div>';
       if (!lines.length) {
-        spicyLyricsScroll.innerHTML = `<div style="margin:auto;text-align:center;color:rgba(255,255,255,0.55);font-size:15px;">${musicCurrentTrack ? 'No lyrics found across 5 providers for this track.' : 'Play a song to see word-by-word Spicy Lyrics.'}</div>`;
+        spicyLyricsScroll.innerHTML = dotsHtml + `<div style="margin:auto;text-align:center;color:rgba(255,255,255,0.55);font-size:15px;">${musicCurrentTrack ? 'No lyrics found across 5 providers for this track.' : 'Play a song to see word-by-word Spicy Lyrics.'}</div>`;
         return;
       }
-      spicyLyricsScroll.innerHTML = lines.map((line, lIdx) => {
+      spicyLyricsScroll.innerHTML = dotsHtml + lines.map((line, lIdx) => {
         const wordsHtml = (line.words || []).map((w, wIdx) =>
           `<span class="spicy-word" data-l="${lIdx}" data-w="${wIdx}">${escapeMusicHtml(w.text)}</span>`
         ).join('');
@@ -11414,7 +11474,14 @@
 
     async function loadSpicyLyricsForSong(song) {
       if (!song) return;
-      extractAlbumLiquifyColors(getProxiedThumbUrl(song.thumbnail));
+      const thumb = getProxiedThumbUrl(song.thumbnail);
+      extractAlbumLiquifyColors(thumb);
+      const asideThumb = document.getElementById('spicyAsideThumb');
+      const asideTitle = document.getElementById('spicyAsideTitle');
+      const asideArtist = document.getElementById('spicyAsideArtist');
+      if (asideThumb) asideThumb.src = thumb;
+      if (asideTitle) asideTitle.textContent = song.title || 'Astra Music';
+      if (asideArtist) asideArtist.textContent = song.artist || 'YouTube';
       if (spicyLyricsData.songId === song.id && spicyLyricsData.lines.length) return;
       spicyLyricsData = { songId: song.id, lines: [], provider: 'loading...', synced: false };
       if (spicyProviderBadge) spicyProviderBadge.textContent = 'searching 5 providers...';
@@ -11448,6 +11515,10 @@
       const lines = spicyLyricsData.lines || [];
       if (v && lines.length && spicyLyricsScroll) {
         const t = v.currentTime || 0;
+        const introDots = document.getElementById('spicyIntroDots');
+        if (introDots) {
+          introDots.classList.toggle('visible', t < (lines[0].time - 0.5));
+        }
         let activeIdx = -1;
         for (let i = 0; i < lines.length; i++) {
           if (t >= lines[i].time) activeIdx = i;
@@ -11472,7 +11543,8 @@
             }
           });
           if (activeIdx >= 0 && lineEls[activeIdx]) {
-            lineEls[activeIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const targetTop = Math.max(0, lineEls[activeIdx].offsetTop - spicyLyricsScroll.clientHeight * 0.30);
+            spicyLyricsScroll.scrollTo({ top: targetTop, behavior: 'smooth' });
           }
         }
         if (activeIdx >= 0 && lineEls[activeIdx]) {
