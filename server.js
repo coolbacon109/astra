@@ -14,6 +14,7 @@ const { WebSocketServer } = require('ws');
 
 const PORT = Number(process.env.PORT) || 6740;
 const ROOT_DIR = __dirname;
+const DATA_DIR = process.env.ASTRA_DATA_DIR || (fs.existsSync('/data') ? '/data' : ROOT_DIR);
 const EPOXY_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'epoxy-transport', 'dist');
 const LIBCURL_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'libcurl-transport', 'dist');
 const SERVER_START_MS = Date.now();
@@ -2721,7 +2722,7 @@ const server = http.createServer(async (req, res) => {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'login required' });
     }
-    const plFile = path.join(ROOT_DIR, 'music-playlists.json');
+    const plFile = path.join(DATA_DIR, 'music-playlists.json');
     let all = {};
     try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
     return sendJson(res, 200, { ok: true, playlists: Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [] });
@@ -2734,10 +2735,20 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const action = String((body && body.action) || 'update');
-      const plFile = path.join(ROOT_DIR, 'music-playlists.json');
+      const plFile = path.join(DATA_DIR, 'music-playlists.json');
       let all = {};
       try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
       const userList = Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [];
+      if (action === 'sync-all' && Array.isArray(body && body.playlists)) {
+        const merged = userList.slice();
+        for (const pl of body.playlists.slice(0, 40)) {
+          if (!pl || !pl.id || !Array.isArray(pl.songs)) continue;
+          if (!merged.some((x) => x.id === pl.id)) merged.push(pl);
+        }
+        all[sessionUser.username] = merged;
+        fs.writeFileSync(plFile, JSON.stringify(all, null, 2), 'utf8');
+        return sendJson(res, 200, { ok: true, playlists: merged });
+      }
       if (action === 'update' && body && body.playlistId) {
         const pl = userList.find((p) => p.id === body.playlistId);
         if (!pl) return sendJson(res, 404, { ok: false, error: 'playlist not found' });
@@ -2881,7 +2892,7 @@ const server = http.createServer(async (req, res) => {
         }));
         resolved.forEach((s) => { if (s) songs.push(s); });
       }
-      const plFile = path.join(ROOT_DIR, 'music-playlists.json');
+      const plFile = path.join(DATA_DIR, 'music-playlists.json');
       let all = {};
       try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
       const userList = Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [];
@@ -2925,19 +2936,45 @@ const server = http.createServer(async (req, res) => {
     const rawArtist = (reqUrl.searchParams.get('artist') || '').trim();
     const durationSec = Number(reqUrl.searchParams.get('duration') || 0) || 180;
 
-    const cleanMeta = (s) => String(s || '')
-      .replace(/\s*[\(\[](?:official\s*(?:music\s*)?(?:video|audio|lyric\s*video|visualizer)|lyrics?|hd|4k|explicit|feat\.?[^\)\]]*|ft\.?[^\)\]]*)[\)\]]/gi, '')
-      .replace(/\s*-\s*topic$/i, '')
-      .replace(/\s*(?:vevo|official)$/i, '')
-      .replace(/\s+/g, ' ')
+    // Strip YouTube noise: (Lyrics), (Official Music Video), [HD], trailing "| ...", unbracketed "Lyrics", "Official Audio", etc.
+    const cleanMeta = (s) => {
+      let out = String(s || '');
+      // Keep only the first segment before pipe / divider / double-slash junk tails
+      out = out.split(/\s*(?:\||\/\/|•|【)/)[0];
+      // Remove any bracketed or parenthesized release/lyric tags
+      out = out.replace(/\s*[\(\[](?:[^)\]]*(?:lyrics?|lyric\s*video|music\s*video|official\s*(?:video|audio|mv|hd|visualizer)|visualizer|audio|video|hd|4k|8k|remaster(?:ed)?|slowed|reverb|sped\s*up|clean|explicit|live|session|TikTok|version|prod\.?|feat\.?|ft\.?)[^)\]]*)[\)\]]/gi, '');
+      // Remove bare trailing tags even without parentheses (e.g. "Song Title Lyric Video", "Song Lyrics")
+      out = out
+        .replace(/\b(?:official\s+(?:music\s+)?(?:video|audio|lyric\s+video|visualizer)|lyric\s+video|music\s+video|on\s+screen\s+lyrics?|w\/\s*lyrics?|with\s+lyrics?|lyrics?\s+video|lyrics?)\b/gi, '')
+        .replace(/\s*[\(\[]\s*[\)\]]/g, '')
+        .replace(/\s+(?:ft\.?|feat\.?|featuring)\s+[^-\u2013\u2014]+$/gi, '')
+        .replace(/\s*-\s*topic$/i, '')
+        .replace(/\s*(?:vevo|official)$/i, '')
+        .replace(/^["'\s]+|["'\s]+$/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return out;
+    };
+
+    const stripFeatArtist = (s) => String(s || '')
+      .replace(/\s*(?:ft\.?|feat\.?|featuring|&|,|x)\s+.+$/i, '')
       .trim();
 
     let title = cleanMeta(rawTitle);
     let artist = cleanMeta(rawArtist);
-    if (title.includes(' - ') && (!artist || artist.toLowerCase() === 'youtube')) {
-      const parts = title.split(' - ');
-      artist = cleanMeta(parts[0]);
-      title = cleanMeta(parts.slice(1).join(' - '));
+
+    // Split "Artist - Track" / "Artist — Track" / "Artist: Track" taking clean first/second parts
+    const sepMatch = title.match(/^(.+?)\s*(?:-|—|–)\s+(.+)$/);
+    if (sepMatch) {
+      const pLeft = cleanMeta(sepMatch[1]);
+      const pRight = cleanMeta(sepMatch[2]);
+      if (!artist || artist.toLowerCase() === 'youtube' || artist.toLowerCase() === 'various artists' || pLeft.toLowerCase().includes(artist.toLowerCase()) || artist.toLowerCase().includes(pLeft.toLowerCase())) {
+        artist = pLeft || artist;
+        title = pRight || title;
+      } else {
+        // Still prefer the cleaner title part after separator if left matches channel or artist-like prefix
+        title = pRight || title;
+      }
     }
 
     const buildWordTimings = (lines, totalDur) => {
@@ -2965,6 +3002,9 @@ const server = http.createServer(async (req, res) => {
     };
 
     const parseLrc = (lrcText, totalDur) => {
+      let lrcOffsetSec = 0;
+      const offMatch = String(lrcText || '').match(/\[offset:\s*([+-]?\d+)\]/i);
+      if (offMatch) lrcOffsetSec = Number(offMatch[1]) / 1000;
       const parsed = [];
       for (const rawLine of String(lrcText || '').split(/\r?\n/)) {
         const m = rawLine.match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)$/);
@@ -2973,7 +3013,9 @@ const server = http.createServer(async (req, res) => {
         const sec = Number(m[2]);
         const ms = m[3] ? Number(m[3].padEnd(3, '0')) / 1000 : 0;
         const txt = (m[4] || '').trim();
-        if (txt) parsed.push({ time: min * 60 + sec + ms, text: txt });
+        if (txt && !/^\[?(?:ti|ar|al|by|offset|length):/i.test(txt)) {
+          parsed.push({ time: Math.max(0, min * 60 + sec + ms - lrcOffsetSec), text: txt });
+        }
       }
       parsed.sort((a, b) => a.time - b.time);
       return buildWordTimings(parsed, totalDur);
@@ -3001,23 +3043,62 @@ const server = http.createServer(async (req, res) => {
       }
     };
 
-    try {
-      // Provider 1: LRCLIB Exact
-      const p1 = await fetchWithTimeout(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`);
-      if (p1 && (p1.syncedLyrics || p1.plainLyrics)) {
-        const synced = !!p1.syncedLyrics;
-        const lines = synced ? parseLrc(p1.syncedLyrics, durationSec) : parsePlain(p1.plainLyrics, durationSec);
-        if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib', synced, lines });
-      }
+    const pickBestLrclibMatch = (arr) => {
+      if (!Array.isArray(arr) || !arr.length) return null;
+      const withLyrics = arr.filter((x) => x && (x.syncedLyrics || x.plainLyrics));
+      if (!withLyrics.length) return null;
+      const scored = withLyrics.map((x) => {
+        const hasSync = x.syncedLyrics ? 100 : 0;
+        const durDiff = (x.duration && durationSec > 20) ? Math.abs(Number(x.duration) - durationSec) : 10;
+        const durScore = Math.max(0, 40 - durDiff * 1.5);
+        const titleSim = String(x.trackName || '').toLowerCase().includes(title.toLowerCase()) ? 25 : 0;
+        return { x, score: hasSync + durScore + titleSim };
+      });
+      scored.sort((a, b) => b.score - a.score);
+      return scored[0] ? scored[0].x : withLyrics[0];
+    };
 
-      // Provider 2: LRCLIB Search
-      const p2 = await fetchWithTimeout(`https://lrclib.net/api/search?q=${encodeURIComponent(`${artist} ${title}`.trim())}`);
-      if (Array.isArray(p2) && p2.length) {
-        const best = p2.find(x => x.syncedLyrics) || p2.find(x => x.plainLyrics);
+    try {
+      const candidates = [];
+      const addCand = (a, t) => {
+        const ca = cleanMeta(a);
+        const ct = cleanMeta(t);
+        if (!ct) return;
+        const key = `${ca.toLowerCase()}::${ct.toLowerCase()}`;
+        if (!candidates.some((c) => c.key === key)) candidates.push({ artist: ca, title: ct, key });
+      };
+      addCand(artist, title);
+      addCand(stripFeatArtist(artist), title);
+      if (sepMatch) addCand(sepMatch[2], sepMatch[1]);
+      if (artist && title) addCand('', `${artist} ${title}`);
+
+      for (const c of candidates) {
+        if (c.artist) {
+          const p1 = await fetchWithTimeout(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(c.artist)}&track_name=${encodeURIComponent(c.title)}`);
+          if (p1 && (p1.syncedLyrics || p1.plainLyrics)) {
+            const synced = !!p1.syncedLyrics;
+            const lines = synced ? parseLrc(p1.syncedLyrics, durationSec) : parsePlain(p1.plainLyrics, durationSec);
+            if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib', synced, lines });
+          }
+        }
+        const qStr = `${c.artist} ${c.title}`.trim();
+        const p2 = await fetchWithTimeout(`https://lrclib.net/api/search?q=${encodeURIComponent(qStr)}`);
+        const best = pickBestLrclibMatch(p2);
         if (best) {
           const synced = !!best.syncedLyrics;
           const lines = synced ? parseLrc(best.syncedLyrics, durationSec) : parsePlain(best.plainLyrics, durationSec);
           if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib-search', synced, lines });
+        }
+      }
+
+      // Broad title-only fallback on LRCLib
+      if (title) {
+        const pBroad = await fetchWithTimeout(`https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}`);
+        const bestBroad = pickBestLrclibMatch(pBroad);
+        if (bestBroad) {
+          const synced = !!bestBroad.syncedLyrics;
+          const lines = synced ? parseLrc(bestBroad.syncedLyrics, durationSec) : parsePlain(bestBroad.plainLyrics, durationSec);
+          if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib-title', synced, lines });
         }
       }
 
@@ -3030,7 +3111,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Provider 4: Lyrist
-      const p4 = await fetchWithTimeout(`https://lyrist.vercel.app/api/${encodeURIComponent(title)}/${encodeURIComponent(artist)}`);
+      const p4 = await fetchWithTimeout(`https://lyrist.vercel.app/api/${encodeURIComponent(title)}/${encodeURIComponent(stripFeatArtist(artist) || artist)}`);
       if (p4 && p4.lyrics) {
         const lines = parsePlain(p4.lyrics, durationSec);
         if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lyrist', synced: false, lines });
@@ -3038,7 +3119,7 @@ const server = http.createServer(async (req, res) => {
 
       // Provider 5: Lyrics.ovh
       if (artist && title) {
-        const p5 = await fetchWithTimeout(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+        const p5 = await fetchWithTimeout(`https://api.lyrics.ovh/v1/${encodeURIComponent(stripFeatArtist(artist) || artist)}/${encodeURIComponent(title)}`);
         if (p5 && p5.lyrics) {
           const lines = parsePlain(p5.lyrics, durationSec);
           if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lyrics.ovh', synced: false, lines });
@@ -3154,7 +3235,7 @@ const server = http.createServer(async (req, res) => {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'login required' });
     }
-    const likesFile = path.join(ROOT_DIR, 'music-likes.json');
+    const likesFile = path.join(DATA_DIR, 'music-likes.json');
     const readLikes = () => {
       try {
         return JSON.parse(fs.readFileSync(likesFile, 'utf8')) || {};
@@ -3173,6 +3254,16 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       try {
         const body = await readJsonBody(req);
+        if (body && body.action === 'sync-all' && Array.isArray(body.songs)) {
+          const all = readLikes();
+          const list = Array.isArray(all[uname]) ? all[uname] : [];
+          for (const s of body.songs.slice(0, 120)) {
+            if (s && s.id && !list.some((x) => x.id === s.id)) list.push(s);
+          }
+          all[uname] = list;
+          writeLikes(all);
+          return sendJson(res, 200, { ok: true, songs: list });
+        }
         const song = body && body.song ? body.song : null;
         if (!song || !song.id) {
           return sendJson(res, 400, { ok: false, error: 'song.id required' });
