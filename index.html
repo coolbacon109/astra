@@ -11010,7 +11010,7 @@
     function launchQuickApp(app) {
       if (!app) return;
       if (app.route) navigateRoute(app.route);
-      else if (app.target) navigate(app.target);
+      else if (app.target) triggerSearch(app.target);
     }
 
     if (quickAppsGrid) {
@@ -11090,7 +11090,7 @@
             launchQuickApp(cmdFiltered[cmdSelectedIdx]);
             closeCommandPalette();
           } else if (cmdPaletteInput.value.trim()) {
-            navigate(cmdPaletteInput.value.trim());
+            triggerSearch(cmdPaletteInput.value.trim());
             closeCommandPalette();
           }
         } else if (e.key === 'Escape') {
@@ -11286,7 +11286,7 @@
       });
     }
     if (aiOpenGeminiWebBtn) {
-      aiOpenGeminiWebBtn.addEventListener('click', () => navigate('https://gemini.google.com'));
+      aiOpenGeminiWebBtn.addEventListener('click', () => triggerSearch('https://gemini.google.com'));
     }
 
     function captureScreenFrameFromVideo() {
