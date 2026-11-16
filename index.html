@@ -10102,9 +10102,13 @@
     }
 
     let musicUserPaused = false;
+    let musicLastProgressTime = 0;
+    let musicStallTicks = 0;
 
     function startMusicPlayerSyncLoop() {
       clearInterval(musicSyncTimer);
+      musicLastProgressTime = 0;
+      musicStallTicks = 0;
       musicSyncTimer = setInterval(() => {
         const v = getMusicVideoEl();
         if (!v) return;
@@ -10114,13 +10118,34 @@
             const sk = d.querySelector('.ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern');
             if (sk) sk.click();
             const pl = d.querySelector('.html5-video-player');
-            if (pl && pl.classList.contains('ad-showing') && isFinite(v.duration) && v.duration > 0) {
+            const adOverlay = d.querySelector('.ytp-ad-player-overlay, .ytp-ad-text, .ytp-ad-preview-container');
+            if (pl && pl.classList.contains('ad-showing') && adOverlay && isFinite(v.duration) && v.duration > 0 && v.duration < 95) {
               v.muted = true;
               v.currentTime = v.duration;
+            } else if (pl && !pl.classList.contains('ad-showing') && v.muted) {
+              v.muted = false;
             }
           }
           if (v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
             v.play().catch(() => {});
+          }
+          if (!v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
+            if (Math.abs((v.currentTime || 0) - musicLastProgressTime) < 0.05) {
+              musicStallTicks++;
+              if (musicStallTicks === 5) {
+                try { v.currentTime = (v.currentTime || 0) + 0.1; } catch {}
+                v.play().catch(() => {});
+              } else if (musicStallTicks >= 12 && musicCurrentTrack && musicPlayerFrame) {
+                musicStallTicks = 0;
+                const resumeSec = Math.max(0, Math.floor(v.currentTime || 0));
+                const resumeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(musicCurrentTrack.id)}&autoplay=1&t=${resumeSec}s`;
+                const scramPath = `/scramjet/${encodeURIComponent(resumeUrl)}`;
+                musicPlayerFrame.src = proxyOrigin ? `${proxyOrigin}${scramPath}` : scramPath;
+              }
+            } else {
+              musicLastProgressTime = v.currentTime || 0;
+              musicStallTicks = 0;
+            }
           }
           if (musicVolumeRange) v.volume = Number(musicVolumeRange.value || 85) / 100;
           if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
