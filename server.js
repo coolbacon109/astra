@@ -2698,6 +2698,140 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (pathname === '/api/music/lyrics') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const rawTitle = (reqUrl.searchParams.get('title') || '').trim();
+    const rawArtist = (reqUrl.searchParams.get('artist') || '').trim();
+    const durationSec = Number(reqUrl.searchParams.get('duration') || 0) || 180;
+
+    const cleanMeta = (s) => String(s || '')
+      .replace(/\s*[\(\[](?:official\s*(?:music\s*)?(?:video|audio|lyric\s*video|visualizer)|lyrics?|hd|4k|explicit|feat\.?[^\)\]]*|ft\.?[^\)\]]*)[\)\]]/gi, '')
+      .replace(/\s*-\s*topic$/i, '')
+      .replace(/\s*(?:vevo|official)$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    let title = cleanMeta(rawTitle);
+    let artist = cleanMeta(rawArtist);
+    if (title.includes(' - ') && (!artist || artist.toLowerCase() === 'youtube')) {
+      const parts = title.split(' - ');
+      artist = cleanMeta(parts[0]);
+      title = cleanMeta(parts.slice(1).join(' - '));
+    }
+
+    const buildWordTimings = (lines, totalDur) => {
+      const out = [];
+      for (let i = 0; i < lines.length; i++) {
+        const cur = lines[i];
+        const nextTime = (i + 1 < lines.length && lines[i + 1].time > cur.time)
+          ? lines[i + 1].time
+          : Math.min(totalDur || cur.time + 4.5, cur.time + 4.5);
+        const endTime = Math.max(cur.time + 0.6, nextTime);
+        const rawWords = String(cur.text || '').trim().split(/\s+/).filter(Boolean);
+        if (!rawWords.length) continue;
+        const totalChars = rawWords.reduce((acc, w) => acc + w.length, 0) || rawWords.length;
+        let cursor = cur.time;
+        const span = Math.max(0.4, (endTime - cur.time) * 0.92);
+        const words = rawWords.map((w) => {
+          const wDur = span * (w.length / totalChars);
+          const item = { time: cursor, endTime: cursor + wDur, text: w };
+          cursor += wDur;
+          return item;
+        });
+        out.push({ time: cur.time, endTime, text: cur.text, words });
+      }
+      return out;
+    };
+
+    const parseLrc = (lrcText, totalDur) => {
+      const parsed = [];
+      for (const rawLine of String(lrcText || '').split(/\r?\n/)) {
+        const m = rawLine.match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)$/);
+        if (!m) continue;
+        const min = Number(m[1]);
+        const sec = Number(m[2]);
+        const ms = m[3] ? Number(m[3].padEnd(3, '0')) / 1000 : 0;
+        const txt = (m[4] || '').trim();
+        if (txt) parsed.push({ time: min * 60 + sec + ms, text: txt });
+      }
+      parsed.sort((a, b) => a.time - b.time);
+      return buildWordTimings(parsed, totalDur);
+    };
+
+    const parsePlain = (plainText, totalDur) => {
+      const rawLines = String(plainText || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!rawLines.length) return [];
+      const step = Math.max(2.2, (totalDur > 20 ? totalDur - 10 : rawLines.length * 3) / rawLines.length);
+      const pseudo = rawLines.map((text, idx) => ({ time: 4 + idx * step, text }));
+      return buildWordTimings(pseudo, totalDur);
+    };
+
+    const fetchWithTimeout = async (url) => {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        const r = await fetch(url, { headers: { 'User-Agent': 'AstraMusic/1.0' }, signal: ctrl.signal });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(t);
+      }
+    };
+
+    try {
+      // Provider 1: LRCLIB Exact
+      const p1 = await fetchWithTimeout(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`);
+      if (p1 && (p1.syncedLyrics || p1.plainLyrics)) {
+        const synced = !!p1.syncedLyrics;
+        const lines = synced ? parseLrc(p1.syncedLyrics, durationSec) : parsePlain(p1.plainLyrics, durationSec);
+        if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib', synced, lines });
+      }
+
+      // Provider 2: LRCLIB Search
+      const p2 = await fetchWithTimeout(`https://lrclib.net/api/search?q=${encodeURIComponent(`${artist} ${title}`.trim())}`);
+      if (Array.isArray(p2) && p2.length) {
+        const best = p2.find(x => x.syncedLyrics) || p2.find(x => x.plainLyrics);
+        if (best) {
+          const synced = !!best.syncedLyrics;
+          const lines = synced ? parseLrc(best.syncedLyrics, durationSec) : parsePlain(best.plainLyrics, durationSec);
+          if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lrclib-search', synced, lines });
+        }
+      }
+
+      // Provider 3: Textyl (synced timestamps)
+      const p3 = await fetchWithTimeout(`https://api.textyl.co/api/lyrics?q=${encodeURIComponent(`${artist} ${title}`.trim())}`);
+      if (Array.isArray(p3) && p3.length) {
+        const raw = p3.filter(x => x && x.lyrics).map(x => ({ time: Number(x.seconds || 0), text: String(x.lyrics).trim() }));
+        const lines = buildWordTimings(raw, durationSec);
+        if (lines.length) return sendJson(res, 200, { ok: true, provider: 'textyl', synced: true, lines });
+      }
+
+      // Provider 4: Lyrist
+      const p4 = await fetchWithTimeout(`https://lyrist.vercel.app/api/${encodeURIComponent(title)}/${encodeURIComponent(artist)}`);
+      if (p4 && p4.lyrics) {
+        const lines = parsePlain(p4.lyrics, durationSec);
+        if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lyrist', synced: false, lines });
+      }
+
+      // Provider 5: Lyrics.ovh
+      if (artist && title) {
+        const p5 = await fetchWithTimeout(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+        if (p5 && p5.lyrics) {
+          const lines = parsePlain(p5.lyrics, durationSec);
+          if (lines.length) return sendJson(res, 200, { ok: true, provider: 'lyrics.ovh', synced: false, lines });
+        }
+      }
+
+      return sendJson(res, 404, { ok: false, error: 'No lyrics found across 5 providers', lines: [] });
+    } catch (e) {
+      return sendJson(res, 500, { ok: false, error: e.message || 'Lyrics lookup failed', lines: [] });
+    }
+  }
+
   if (pathname === '/api/chat/avatar' && req.method === 'POST') {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'login required' });
@@ -3003,6 +3137,46 @@ const server = http.createServer(async (req, res) => {
       }
     } catch (e) {
       return sendJson(res, 500, { ok: false, error: e.message || 'AI request failed' });
+    }
+  }
+
+  if (pathname === '/api/user/state') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const profileFile = path.join(ROOT_DIR, 'user-profiles.json');
+    const readProfiles = () => {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+      } catch {
+        return {};
+      }
+    };
+    const writeProfiles = (data) => {
+      fs.writeFileSync(profileFile, JSON.stringify(data, null, 2), 'utf8');
+    };
+    if (req.method === 'GET') {
+      const all = readProfiles();
+      const state = all[sessionUser.username] || {};
+      return sendJson(res, 200, { ok: true, username: sessionUser.username, state });
+    }
+    if (req.method === 'POST') {
+      try {
+        const body = await readJsonBody(req, 512 * 1024);
+        const all = readProfiles();
+        const prev = all[sessionUser.username] || {};
+        const next = { ...prev };
+        for (const key of ['settings', 'adblock', 'recentGames', 'tabs', 'aiThreads', 'aiUsage', 'lastTrack']) {
+          if (body && body[key] !== undefined) next[key] = body[key];
+        }
+        next.updatedAt = Date.now();
+        all[sessionUser.username] = next;
+        writeProfiles(all);
+        return sendJson(res, 200, { ok: true, state: next });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
     }
   }
 

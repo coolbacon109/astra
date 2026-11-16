@@ -4,3 +4,4 @@ chat-history.json
 music-playlists.json
 .env
 *.log
+user-profiles.json
