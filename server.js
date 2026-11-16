@@ -474,16 +474,131 @@ const AD_HOSTS = [
   'googlesyndication.com',
   'googleadservices.com',
   'adservice.google.com',
+  'google-analytics.com',
+  'googletagmanager.com',
+  'googletagservices.com',
+  'fundingchoicesmessages.google.com',
+  'imasdk.googleapis.com',
+  'ima3vpaid.appspot.com',
   'popads.net',
   'popcash.net',
   'propellerads.com',
+  'propellerclick.com',
+  'monetag.com',
+  'onclickalgo.com',
+  'onclickmax.com',
+  'onclickperformance.com',
   'exoclick.com',
+  'exosrv.com',
   'adsterra.com',
+  'adsterratools.com',
+  'al5sm.com',
+  'dolohen.com',
+  'thaudray.com',
+  'acscdn.com',
+  'admaven.com',
+  'hilltopads.net',
+  'juicyads.com',
+  'trafficjunky.net',
+  'trafficfactory.biz',
+  'ero-advertising.com',
+  'clickadu.com',
+  'evadav.com',
+  'rollerads.com',
+  'galaksion.com',
+  'richpush.co',
+  'richads.com',
+  'adspyglass.com',
+  'pushground.com',
   'taboola.com',
   'outbrain.com',
+  'mgid.com',
+  'revcontent.com',
+  'zergnet.com',
+  'nativery.com',
   'ads.yahoo.com',
   'adnxs.com',
-  'criteo.com'
+  'criteo.com',
+  'criteo.net',
+  'rubiconproject.com',
+  'pubmatic.com',
+  'openx.net',
+  'openx.com',
+  'casalemedia.com',
+  'indexexchange.com',
+  '33across.com',
+  'sovrn.com',
+  'lijit.com',
+  'sonobi.com',
+  'smartadserver.com',
+  'adsrvr.org',
+  'bidswitch.net',
+  'contextweb.com',
+  'rhythmone.com',
+  'triplelift.com',
+  'gumgum.com',
+  'sharethrough.com',
+  'yieldmo.com',
+  'teads.tv',
+  'spotxchange.com',
+  'spotx.tv',
+  'springserve.com',
+  'connatix.com',
+  'amazon-adsystem.com',
+  'flashtalking.com',
+  'sizmek.com',
+  'serving-sys.com',
+  'moatads.com',
+  'doubleverify.com',
+  'adsafeprotected.com',
+  'iasds01.com',
+  'mediavine.com',
+  'cafemedia.com',
+  'adthrive.com',
+  'raptive.com',
+  'ezoic.net',
+  'ezodn.com',
+  'nitropay.com',
+  'snigelweb.com',
+  'buysellads.com',
+  'carbonads.net',
+  'carbonads.com',
+  'cpmstar.com',
+  'playwire.com',
+  'intergi.com',
+  'adform.net',
+  'mathtag.com',
+  'bluekai.com',
+  'demdex.net',
+  'omtrdc.net',
+  'krxd.net',
+  'rlcdn.com',
+  'quantserve.com',
+  'scorecardresearch.com',
+  'chartbeat.com',
+  'hotjar.com',
+  'mouseflow.com',
+  'fullstory.com',
+  'clarity.ms',
+  'mc.yandex.ru',
+  'connect.facebook.net',
+  'analytics.tiktok.com',
+  'ads-twitter.com',
+  'analytics.twitter.com',
+  'bat.bing.com',
+  'ads.linkedin.com',
+  'mixpanel.com',
+  'amplitude.com',
+  'heapanalytics.com',
+  'branch.io',
+  'appsflyer.com',
+  'adjust.com',
+  'kochava.com',
+  'singular.net',
+  'ouo.io',
+  'ouo.press',
+  'adf.ly',
+  'linkvertise.com'
 ];
 
 function loadServerConfig() {
@@ -784,11 +899,26 @@ function sendJson(res, status, data, extraHeaders = {}) {
   res.end(JSON.stringify(data));
 }
 
+function getMergedAdHosts() {
+  const extra = Array.isArray(serverConfig && serverConfig.extraBlockedHosts) ? serverConfig.extraBlockedHosts : [];
+  if (!extra.length) return AD_HOSTS;
+  return [...new Set([...AD_HOSTS, ...extra.map((x) => String(x || '').trim().toLowerCase()).filter(Boolean)])];
+}
+
 function isBlockedAdHost(targetUrl) {
   try {
-    const host = new URL(targetUrl).hostname.toLowerCase();
-    const list = AD_HOSTS.concat(Array.isArray(serverConfig.extraBlockedHosts) ? serverConfig.extraBlockedHosts : []);
-    return list.some((d) => host === d || host.endsWith('.' + d));
+    const u = new URL(targetUrl);
+    const host = u.hostname.toLowerCase();
+    const list = getMergedAdHosts();
+    if (list.some((d) => host === d || host.endsWith('.' + d))) return true;
+    if ((host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtube-nocookie.com' || host.endsWith('.youtube-nocookie.com')) &&
+        /(?:^\/pagead\/|^\/ptracking|^\/api\/stats\/(?:ads|atr)|^\/youtubei\/v1\/player\/ad_break|^\/get_midroll_info)/i.test(u.pathname)) {
+      return true;
+    }
+    if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast\.xml|\/vpaid|\/adserver\/)/i.test(u.pathname)) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -873,7 +1003,7 @@ function buildInjectedShim(baseUrl, adblock, engine = 'scramjet', pageUrl = base
   const safePageUrl = JSON.stringify(pageUrl || baseUrl);
   const hasCustomBase = pageUrl && pageUrl !== baseUrl ? 'true' : 'false';
   const adFlag = adblock ? 'true' : 'false';
-  const adList = JSON.stringify(AD_HOSTS);
+  const adList = JSON.stringify(getMergedAdHosts());
   return `<script data-astra-proxy="1" data-astra-engine="${eng}">
 (function() {
   var BASE = ${safeBase};
@@ -951,8 +1081,16 @@ function buildInjectedShim(baseUrl, adblock, engine = 'scramjet', pageUrl = base
   function isAd(u) {
     if (!ADBLOCK) return false;
     try {
-      var h = new URL(decodeProxyUrl(u), getCurrentTargetUrl()).hostname.toLowerCase();
-      return AD_HOSTS.some(function(d) { return h === d || h.endsWith('.' + d); });
+      var parsed = new URL(decodeProxyUrl(u), getCurrentTargetUrl());
+      var h = parsed.hostname.toLowerCase();
+      if (AD_HOSTS.some(function(d) { return h === d || h.endsWith('.' + d); })) return true;
+      var p = parsed.pathname || '';
+      if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast\.xml|\/vpaid|\/adserver\/)/i.test(p)) return true;
+      if ((h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')) &&
+          /(?:^\/pagead\/|^\/ptracking|^\/api\/stats\/(?:ads|atr)|^\/youtubei\/v1\/player\/ad_break|^\/get_midroll_info)/i.test(p)) {
+        return true;
+      }
+      return false;
     } catch (e) { return false; }
   }
   function toProxy(u) {
@@ -2664,13 +2802,18 @@ async function readAstraRoblosecurityFromSwStores() {
   });
   return fromUv || '';
 }
-const ASTRA_AD_HOSTS = ${JSON.stringify(AD_HOSTS)};
+const ASTRA_AD_HOSTS = ${JSON.stringify(getMergedAdHosts())};
 const ASTRA_UNITY_FIX_SNIPPET = ${JSON.stringify(unityFixSnippet)};
 const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
     '<script data-astra-frame-fix="1">(function(){try{Object.defineProperty(window,"outerWidth",{get:function(){return window.innerWidth||1280;},configurable:true});Object.defineProperty(window,"outerHeight",{get:function(){return window.innerHeight||800;},configurable:true});Object.defineProperty(window,"frameElement",{get:function(){return null;},configurable:true});}catch(e){}})();</script>'
   )};
+const ASTRA_COSMETIC_ADBLOCK_SNIPPET = ${JSON.stringify(
+    '<style id="astraAdCosmetic">ins.adsbygoogle,[id^="google_ads_iframe"],[id^="div-gpt-ad"],[data-google-query-id],iframe[src*="doubleclick"],iframe[src*="googlesyndication"],iframe[src*="adsterra"],iframe[src*="exoclick"],iframe[src*="propeller"],iframe[src*="monetag"],[id^="taboola-"],.taboola_wrap,.OUTBRAIN,[data-widget-id*="taboola"],.mgbox,[id^="M"][id*="Composite"],.ad-banner,.ad-slot,.advertisement-banner,.adsbox{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;pointer-events:none!important;}</style><script data-astra-cosmetic-adblock="1">(function(){if(window.__astraCosmeticShield)return;window.__astraCosmeticShield=true;var hosts=' +
+      JSON.stringify(getMergedAdHosts()) +
+      ';function isAdHref(u){if(!u||typeof u!=="string")return false;try{var x=new URL(u,location.href);if((x.pathname.indexOf("/scramjet/")===0||x.pathname.indexOf("/uv/service/")===0)&&x.href){/* handled by SW */}var h=x.hostname.toLowerCase();return hosts.some(function(d){return h===d||h.endsWith("."+d);})||/(?:popunder|pagead|adserver|clickadu|adsterra|exoclick|monetag|propeller)/i.test(u);}catch(e){return false;}}try{var ow=window.open;window.open=function(u,t,f){if(!u||isAdHref(String(u)))return null;if(t==="_blank"||!t){try{location.assign(u);}catch(e){}return null;}return ow?ow.apply(this,arguments):null;};}catch(e){}document.addEventListener("click",function(ev){try{var tgt=ev.target;if(tgt&&tgt.tagName==="DIV"||tgt&&tgt.tagName==="A"){var cs=getComputedStyle(tgt);var r=tgt.getBoundingClientRect();if(cs.position==="fixed"&&r.width>=window.innerWidth*0.85&&r.height>=window.innerHeight*0.85&&(!tgt.innerText||tgt.innerText.trim().length===0)&&(parseFloat(cs.opacity||"1")<=0.05||parseInt(cs.zIndex||"0",10)>=9999)){ev.preventDefault();ev.stopPropagation();tgt.remove();return;}}var a=tgt&&tgt.closest?tgt.closest("a[href]"):null;if(a&&isAdHref(a.getAttribute("href"))){ev.preventDefault();ev.stopPropagation();a.remove();}}catch(e){}},true);})();</script>'
+  )};
 const ASTRA_YT_ADBLOCK_SNIPPET = ${JSON.stringify(
-    '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern");if(sk)sk.click();var ao=document.querySelector(".ytp-ad-player-overlay,.ytp-ad-text,.ytp-ad-preview-container");if(p&&p.classList.contains("ad-showing")&&ao&&v&&isFinite(v.duration)&&v.duration>0&&v.duration<95){v.muted=true;v.currentTime=v.duration;}else if(p&&!p.classList.contains("ad-showing")&&v&&v.muted){v.muted=false;}}catch(e){}},350);})();</script>'
+    '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-display-ad-renderer,ytd-statement-banner-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer,#masthead-ad,#player-ads,ytd-companion-slot-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;var wasAd=false;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-slot button");if(sk)sk.click();var adOn=!!(p&&p.classList.contains("ad-showing"));if(adOn&&v){wasAd=true;v.muted=true;try{v.playbackRate=16;}catch(e){}if(isFinite(v.duration)&&v.duration>0){v.currentTime=Math.max(0,v.duration-0.1);}}else if(wasAd&&!adOn&&v){wasAd=false;v.muted=false;try{v.playbackRate=1;}catch(e){}}}catch(e){}},250);})();</script>'
   )};
 
 function astraXorDecode(str) {
@@ -2772,14 +2915,56 @@ async function getUpstreamContext(event) {
   return null;
 }
 
+function notifyAstraAdBlocked(urlStr) {
+  try {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cls) => {
+      for (const c of cls) {
+        try { c.postMessage({ type: 'astra-ad-blocked', count: 1, url: urlStr || '' }); } catch {}
+      }
+    }).catch(() => {});
+  } catch {}
+}
+
+function createBlockedAdResponse(urlStr, isBare) {
+  let body = '';
+  let status = 204;
+  let ct = 'text/plain; charset=utf-8';
+  const low = String(urlStr || '').toLowerCase();
+  if (/\\.m?js(?:$|\\?)|\\/prebid|\\/adsbygoogle|\\/pubads|\\/popunder/i.test(low)) {
+    body = '/* blocked by astra adblock */';
+    status = 200;
+    ct = 'application/javascript; charset=utf-8';
+  } else if (/\\.css(?:$|\\?)/i.test(low)) {
+    body = '/* blocked by astra adblock */';
+    status = 200;
+    ct = 'text/css; charset=utf-8';
+  } else if (/\\.json(?:$|\\?)|\\/api\\/stats\\/|\\/player\\/ad_break|\\/get_midroll/i.test(low)) {
+    body = '{}';
+    status = 200;
+    ct = 'application/json; charset=utf-8';
+  }
+  const headers = new Headers({ 'content-type': ct, 'access-control-allow-origin': '*' });
+  const r = new Response(status === 204 ? null : body, { status, statusText: status === 204 ? 'No Content' : 'OK', headers });
+  if (isBare) {
+    r.rawHeaders = { 'content-type': ct, 'access-control-allow-origin': '*' };
+    r.finalURL = String(urlStr || '');
+  }
+  return r;
+}
+
 function patchBareClientInstance(client) {
   if (!client || client.__astraPatched || typeof client.fetch !== 'function') return;
   client.__astraPatched = true;
   const origFetch = client.fetch.bind(client);
   client.fetch = async function patchedBareFetch(remote, init) {
     let nextInit = init;
+    const rawTargetStr = String(remote || '');
+    if (astraAdblockEnabled && isAdBlockedTarget(rawTargetStr)) {
+      notifyAstraAdBlocked(rawTargetStr);
+      return createBlockedAdResponse(rawTargetStr, true);
+    }
     try {
-      const targetStr = String(remote || '');
+      const targetStr = rawTargetStr;
       const targetKey = normalizeTargetKey(targetStr);
       const ctx = takePendingCtx(targetKey);
       const targetUrl = new URL(targetStr);
@@ -2899,8 +3084,33 @@ function patchBareClientInstance(client) {
           }
         } catch {}
       }
-      const isRawHost = /(?:^|\\.)(raw\\.githubusercontent\\.com|gist\\.githubusercontent\\.com|githack\\.com)$/i.test(u.hostname);
       const origCt = (resp.headers.get('content-type') || '').toLowerCase();
+      if (astraAdblockEnabled && /youtubei\\/v1\\/player/i.test(targetStr) && origCt.includes('json')) {
+        try {
+          const data = await resp.clone().json();
+          if (data && typeof data === 'object' && (data.adPlacements || data.playerAds || data.adSlots)) {
+            delete data.adPlacements;
+            delete data.playerAds;
+            delete data.adSlots;
+            notifyAstraAdBlocked(targetStr);
+            const headers = new Headers(resp.headers);
+            headers.delete('content-length');
+            const rawHeaders = Object.assign({}, resp.rawHeaders || {});
+            delete rawHeaders['content-length'];
+            delete rawHeaders['Content-Length'];
+            const cleaned = new Response(JSON.stringify(data), {
+              status: resp.status,
+              statusText: resp.statusText,
+              headers
+            });
+            cleaned.rawHeaders = rawHeaders;
+            cleaned.rawResponse = resp.rawResponse;
+            cleaned.finalURL = resp.finalURL;
+            return cleaned;
+          }
+        } catch {}
+      }
+      const isRawHost = /(?:^|\\.)(raw\\.githubusercontent\\.com|gist\\.githubusercontent\\.com|githack\\.com)$/i.test(u.hostname);
       if (isRawHost && (!origCt || origCt.includes('text/plain'))) {
         let newCt = '';
         if (/\\.html?$/i.test(u.pathname)) newCt = 'text/html; charset=utf-8';
@@ -2939,8 +3149,12 @@ function isAdBlockedTarget(urlStr) {
     const u = new URL(urlStr);
     const h = u.hostname.toLowerCase();
     if (ASTRA_AD_HOSTS.some((d) => h === d || h.endsWith('.' + d))) return true;
+    const p = u.pathname || '';
     if ((h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')) &&
-        /(?:^\\/pagead\\/|^\\/ptracking|^\\/api\\/stats\\/ads|^\\/youtubei\\/v1\\/player\\/ad_break|^\\/get_midroll_info)/i.test(u.pathname)) {
+        /(?:^\\/pagead\\/|^\\/ptracking|^\\/api\\/stats\\/(?:ads|atr)|^\\/youtubei\\/v1\\/player\\/ad_break|^\\/get_midroll_info)/i.test(p)) {
+      return true;
+    }
+    if (/(?:\\/gpt\\/pubads_impl|\\/pagead\\/js\\/adsbygoogle|\\/pagead\\/show_ads|\\/prebid(?:[.-][^/]*)?\\.js|\\/popunder(?:[.-][^/]*)?\\.js|\\/vast\\.xml|\\/vpaid|\\/adserver\\/)/i.test(p)) {
       return true;
     }
     return false;
@@ -2964,7 +3178,7 @@ async function maybePatchProxiedHtml(event, res) {
     const isUnity = /gameContainer|unityContainer|unity-container|UnityLoader/i.test(text);
     const decTarget = decodeProxiedUrlStr((event && event.request && event.request.url) || '');
     const isYt = astraAdblockEnabled && /(?:youtube\\.com|youtube-nocookie\\.com|youtu\\.be)/i.test(decTarget);
-    const injectPayload = ASTRA_FRAME_FIX_SNIPPET + (isUnity ? ASTRA_UNITY_FIX_SNIPPET : '') + (isYt ? ASTRA_YT_ADBLOCK_SNIPPET : '');
+    const injectPayload = ASTRA_FRAME_FIX_SNIPPET + (isUnity ? ASTRA_UNITY_FIX_SNIPPET : '') + (astraAdblockEnabled ? ASTRA_COSMETIC_ADBLOCK_SNIPPET : '') + (isYt ? ASTRA_YT_ADBLOCK_SNIPPET : '');
     let patched = text;
     if (/<\\/head>/i.test(text)) {
       patched = text.replace(/<\\/head>/i, injectPayload + '</head>');
@@ -3039,7 +3253,8 @@ async function handleRequest(event) {
   if (!isScramjetReq && !isUvReq) {
     if (reqUrl && !reqUrl.startsWith(location.origin) && /^https?:\\/\\//i.test(reqUrl) && event.request.mode !== 'navigate') {
       if (isAdBlockedTarget(reqUrl)) {
-        return new Response('', { status: 204 });
+        notifyAstraAdBlocked(reqUrl);
+        return createBlockedAdResponse(reqUrl, false);
       }
       try {
         const leakCtx = await getUpstreamContext(event);
@@ -3161,7 +3376,8 @@ async function handleRequest(event) {
               } catch {}
             }
             if (event.request.mode !== 'navigate' && isAdBlockedTarget(d)) {
-              return new Response('', { status: 204 });
+              notifyAstraAdBlocked(d);
+              return createBlockedAdResponse(d, false);
             }
           }
         } catch {}
@@ -3194,7 +3410,8 @@ async function handleRequest(event) {
               } catch {}
             }
             if (event.request.mode !== 'navigate' && isAdBlockedTarget(d)) {
-              return new Response('', { status: 204 });
+              notifyAstraAdBlocked(d);
+              return createBlockedAdResponse(d, false);
             }
           }
         } catch {}

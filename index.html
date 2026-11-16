@@ -8476,14 +8476,32 @@
       'googlesyndication.com',
       'googleadservices.com',
       'adservice.google.com',
+      'google-analytics.com',
+      'googletagmanager.com',
+      'googletagservices.com',
       'popads.net',
       'popcash.net',
       'propellerads.com',
+      'monetag.com',
       'exoclick.com',
       'adsterra.com',
+      'admaven.com',
+      'hilltopads.net',
+      'clickadu.com',
       'taboola.com',
       'outbrain.com',
-      'ads.yahoo.com'
+      'mgid.com',
+      'revcontent.com',
+      'ads.yahoo.com',
+      'adnxs.com',
+      'criteo.com',
+      'amazon-adsystem.com',
+      'hotjar.com',
+      'clarity.ms',
+      'quantserve.com',
+      'scorecardresearch.com',
+      'ouo.io',
+      'linkvertise.com'
     ];
     const TRACKER_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'yclid', 'mc_cid', 'mc_eid'];
 
@@ -9081,13 +9099,29 @@
 
     function syncAdblockToServiceWorker() {
       try {
-        if (typeof navigator !== 'undefined' && navigator.serviceWorker && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          const msg = {
             type: 'astra-adblock',
             enabled: !!(typeof adblockCfg !== 'undefined' && adblockCfg.enabled)
-          });
+          };
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage(msg);
+          }
+          if (navigator.serviceWorker.ready && typeof navigator.serviceWorker.ready.then === 'function') {
+            navigator.serviceWorker.ready.then((reg) => {
+              if (reg && reg.active) reg.active.postMessage(msg);
+            }).catch(() => {});
+          }
         }
       } catch {}
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.serviceWorker && typeof navigator.serviceWorker.addEventListener === 'function') {
+      navigator.serviceWorker.addEventListener('message', (ev) => {
+        if (ev && ev.data && ev.data.type === 'astra-ad-blocked') {
+          incrementBlocked(Number(ev.data.count) || 1);
+        }
+      });
     }
 
     async function ensureProxyRuntimeReady() {
