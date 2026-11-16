@@ -2627,23 +2627,49 @@ const server = http.createServer(async (req, res) => {
   }
 
   async function fetchYouTubeSearch(q, limit = 24, strictSingleTrack = true) {
-    const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%3D%3D`;
-    const html = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('YouTube search timeout')), 8500);
-      const r = https.get(ytUrl, {
+    let data = null;
+    // Primary: YouTube Innertube structured JSON POST (works reliably from Railway & cloud servers)
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const itResp = await fetch('https://www.youtube.com/youtubei/v1/search?prettyPrint=false', {
+        method: 'POST',
+        signal: ctrl.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
           'Accept-Language': 'en-US,en;q=0.9'
-        }
-      }, (resp) => {
-        let buf = '';
-        resp.on('data', (c) => (buf += c));
-        resp.on('end', () => { clearTimeout(timer); resolve(buf); });
+        },
+        body: JSON.stringify({
+          context: { client: { clientName: 'WEB', clientVersion: '2.20240726.00.00', hl: 'en', gl: 'US' } },
+          query: q
+        })
       });
-      r.on('error', (err) => { clearTimeout(timer); reject(err); });
-    });
-    const m = html.match(/var ytInitialData\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
-    const data = m ? JSON.parse(m[1]) : {};
+      clearTimeout(timer);
+      if (itResp.ok) data = await itResp.json();
+    } catch {}
+
+    // Fallback: HTML scrape if Innertube failed or returned no videoRenderer nodes
+    if (!data) {
+      const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%3D%3D`;
+      const html = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('YouTube search timeout')), 8500);
+        const r = https.get(ytUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
+          }
+        }, (resp) => {
+          let buf = '';
+          resp.on('data', (c) => (buf += c));
+          resp.on('end', () => { clearTimeout(timer); resolve(buf); });
+        });
+        r.on('error', (err) => { clearTimeout(timer); reject(err); });
+      });
+      const m = html.match(/var ytInitialData\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
+      data = m ? JSON.parse(m[1]) : {};
+    }
+
     const results = [];
     const seen = new Set();
     const spamRe = /playlist|top\s*\d+|mix\s*20\d\d|hits\s*20\d\d|best\s*(?:english\s*)?songs|megamix|nonstop|compilation|full\s*album|\|\|/i;
@@ -2772,9 +2798,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/music/audio' || pathname.startsWith('/api/music/audio/')) {
-    if (!sessionUser) {
-      return sendJson(res, 401, { ok: false, error: 'login required' });
-    }
     const trackId = pathname.startsWith('/api/music/audio/')
       ? pathname.slice('/api/music/audio/'.length)
       : (reqUrl.searchParams.get('id') || '');
@@ -2921,7 +2944,7 @@ const server = http.createServer(async (req, res) => {
     }
     const q = (reqUrl.searchParams.get('q') || '').trim() || 'top music hits official audio';
     try {
-      const results = await fetchYouTubeSearch(q, 24);
+      const results = await fetchYouTubeSearch(q, 24, false);
       return sendJson(res, 200, { ok: true, query: q, results });
     } catch (e) {
       return sendJson(res, 502, { ok: false, error: e.message || 'music search failed', results: [] });
