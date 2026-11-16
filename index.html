@@ -14855,26 +14855,121 @@
       return `${wsProto}${baseOrigin.replace(/^https?:\/\//i, '')}/wisp/`;
     }
 
-    function extractScramjetRoblosecurity() {
-      try {
-        if (scramjetController && scramjetController.cookieJar && typeof scramjetController.cookieJar.dump === 'function') {
-          const dumped = JSON.parse(scramjetController.cookieJar.dump() || '{}');
-          if (dumped && typeof dumped === 'object') {
-            for (const c of Object.values(dumped)) {
-              if (!c || typeof c !== 'object') continue;
-              const dom = String(c.domain || '').replace(/^\./, '').toLowerCase();
-              if (c.name === '.ROBLOSECURITY' && typeof c.value === 'string' && c.value && (dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
-                return c.value;
-              }
+    function findRoblosecurityInStoreObj(obj) {
+      if (!obj) return '';
+      const arr = Array.isArray(obj) ? obj : (typeof obj === 'object' ? Object.values(obj) : []);
+      for (const c of arr) {
+        if (!c || typeof c !== 'object') continue;
+        const dom = String(c.domain || c.d || '').replace(/^\./, '').toLowerCase();
+        const nm = c.name || c.n;
+        const val = c.value || c.v;
+        if (nm === '.ROBLOSECURITY' && typeof val === 'string' && val && (!dom || dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
+          return val;
+        }
+      }
+      return '';
+    }
+
+    function readIdbStoreSafe(dbName, storeName, keyName = null) {
+      return new Promise((resolve) => {
+        if (typeof indexedDB === 'undefined') return resolve('');
+        try {
+          const req = indexedDB.open(dbName);
+          let createdNew = false;
+          req.onupgradeneeded = () => { createdNew = true; };
+          req.onerror = () => resolve('');
+          req.onsuccess = () => {
+            const db = req.result;
+            if (createdNew || !db.objectStoreNames.contains(storeName)) {
+              try {
+                db.close();
+                if (createdNew) indexedDB.deleteDatabase(dbName);
+              } catch {}
+              return resolve('');
             }
+            try {
+              const store = db.transaction(storeName, 'readonly').objectStore(storeName);
+              const q = keyName !== null ? store.get(keyName) : store.getAll();
+              q.onsuccess = () => {
+                try { db.close(); } catch {}
+                if (typeof q.result === 'string') return resolve(q.result);
+                resolve(findRoblosecurityInStoreObj(q.result));
+              };
+              q.onerror = () => { try { db.close(); } catch {} resolve(''); };
+            } catch {
+              try { db.close(); } catch {}
+              resolve('');
+            }
+          };
+        } catch { resolve(''); }
+      });
+    }
+
+    async function askServiceWorkerForRoblosecurity() {
+      try {
+        if (!navigator.serviceWorker) return '';
+        const sw = navigator.serviceWorker.controller || (await navigator.serviceWorker.ready).active;
+        if (!sw) return '';
+        return await new Promise((resolve) => {
+          const ch = new MessageChannel();
+          const timer = setTimeout(() => resolve(''), 1200);
+          ch.port1.onmessage = (e) => {
+            clearTimeout(timer);
+            resolve((e && e.data && e.data.cookie) || '');
+          };
+          sw.postMessage({ type: 'astra-get-roblox-cookie' }, [ch.port2]);
+        });
+      } catch {
+        return '';
+      }
+    }
+
+    async function extractProxiedRoblosecurityAsync(allowProbe = false) {
+      // 1. Live Scramjet 1.1.0 cookieStore (and legacy cookieJar fallback)
+      try {
+        const jar = scramjetController && (scramjetController.cookieStore || scramjetController.cookieJar);
+        if (jar) {
+          if (jar.cookies) {
+            const h1 = findRoblosecurityInStoreObj(jar.cookies);
+            if (h1) return h1;
+          }
+          if (typeof jar.dump === 'function') {
+            const h2 = findRoblosecurityInStoreObj(JSON.parse(jar.dump() || '{}'));
+            if (h2) return h2;
           }
         }
       } catch {}
+
+      // 2. Active /sw.js Service Worker (in-memory scramjet.cookieStore + captured headers)
+      const fromSw = await askServiceWorkerForRoblosecurity();
+      if (fromSw) return fromSw;
+
+      // 3. Direct IndexedDB lookup across Astra, Scramjet ($scramjet), and Ultraviolet (__op)
+      const fromAstraDb = await readIdbStoreSafe('$astra_rbx', 'kv', 'cookie');
+      if (fromAstraDb) return fromAstraDb;
+      const fromSjDb = await readIdbStoreSafe('$scramjet', 'cookies', 'cookies');
+      if (fromSjDb) return fromSjDb;
+      const fromUvDb = await readIdbStoreSafe('__op', 'cookies', null);
+      if (fromUvDb) return fromUvDb;
+
+      // 4. Local cobalt-cookies cache
       try {
         const raw = JSON.parse(localStorage.getItem('cobalt-cookies') || '[]');
-        const hit = Array.isArray(raw) ? raw.find(c => c && c.n === '.ROBLOSECURITY' && typeof c.v === 'string' && c.v) : null;
-        if (hit) return hit.v;
+        const hit = findRoblosecurityInStoreObj(raw);
+        if (hit) return hit;
       } catch {}
+
+      // 5. Probe proxied users.roblox.com once so SW captures outgoing cookie if held in transport
+      if (allowProbe && proxyAvailable) {
+        try {
+          await ensureProxyRuntimeReady();
+          const probeUrl = buildProxyTargetUrl('https://users.roblox.com/v1/users/authenticated');
+          await fetch(probeUrl, { credentials: 'include', cache: 'no-store' }).catch(() => {});
+          await new Promise((r) => setTimeout(r, 150));
+          const retrySw = await askServiceWorkerForRoblosecurity();
+          if (retrySw) return retrySw;
+        } catch {}
+      }
       return '';
     }
 
@@ -14927,8 +15022,8 @@
       }
     }
 
-    async function verifyAndSyncRobloxSession(manualCookie = '') {
-      const candidate = manualCookie || extractScramjetRoblosecurity();
+    async function verifyAndSyncRobloxSession(manualCookie = '', allowProbe = true) {
+      const candidate = manualCookie || (await extractProxiedRoblosecurityAsync(allowProbe));
       try {
         const base = proxyOrigin || '';
         const res = candidate
@@ -14996,9 +15091,10 @@
       }
     }
 
-    function openRobloxLauncherExperience(forceReload = false) {
+    async function openRobloxLauncherExperience(forceReload = false) {
       try { localStorage.setItem(ROBLOX_SETUP_DONE_KEY, '1'); } catch {}
-      writeCobaltSessionStorage(robloxVerifiedState.cookie || extractScramjetRoblosecurity());
+      const cVal = robloxVerifiedState.cookie || (await extractProxiedRoblosecurityAsync(false));
+      writeCobaltSessionStorage(cVal);
       if (robloxWizardPanel) robloxWizardPanel.style.display = 'none';
       if (robloxLauncherPanel) robloxLauncherPanel.classList.add('visible');
       if (robloxReloadLauncherBtn) robloxReloadLauncherBtn.style.display = 'inline-flex';
@@ -15018,8 +15114,9 @@
       showRobloxWizardStep(startStep);
     }
 
-    function openIsolatedRobloxGameWindow(fullUrl) {
-      writeCobaltSessionStorage(robloxVerifiedState.cookie || extractScramjetRoblosecurity());
+    async function openIsolatedRobloxGameWindow(fullUrl) {
+      const cVal = robloxVerifiedState.cookie || (await extractProxiedRoblosecurityAsync(false));
+      writeCobaltSessionStorage(cVal);
       const w = Math.round(window.screen.availWidth * 0.9);
       const h = Math.round(window.screen.availHeight * 0.9);
       const l = Math.round((window.screen.availWidth - w) / 2);
@@ -15084,8 +15181,9 @@
         } catch {}
         rbxChipWebgl.textContent = gpuText;
       }
-      writeCobaltSessionStorage(extractScramjetRoblosecurity());
-      const st = await verifyAndSyncRobloxSession();
+      const foundInitCookie = await extractProxiedRoblosecurityAsync(false);
+      writeCobaltSessionStorage(foundInitCookie);
+      const st = await verifyAndSyncRobloxSession(foundInitCookie, true);
       if (!robloxHubInitialized) {
         robloxHubInitialized = true;
         let setupDone = false;

@@ -2033,6 +2033,95 @@ const scramjet = new ScramjetServiceWorker();
 const uv = new UVServiceWorker();
 
 let astraAdblockEnabled = true;
+let astraCapturedRoblosecurity = '';
+function findRoblosecurityInJarObj(obj) {
+  if (!obj) return '';
+  const list = Array.isArray(obj) ? obj : (typeof obj === 'object' ? Object.values(obj) : []);
+  for (const c of list) {
+    if (!c || typeof c !== 'object') continue;
+    const dom = String(c.domain || c.d || '').replace(/^\\./, '').toLowerCase();
+    const nm = c.name || c.n;
+    const val = c.value || c.v;
+    if (nm === '.ROBLOSECURITY' && typeof val === 'string' && val && (!dom || dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
+      return val;
+    }
+  }
+  return '';
+}
+function saveAstraRoblosecurityCookie(val) {
+  if (!val || typeof val !== 'string') return;
+  const clean = val.trim();
+  if (!clean) return;
+  astraCapturedRoblosecurity = clean;
+  try {
+    const req = indexedDB.open('$astra_rbx', 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+    };
+    req.onsuccess = () => {
+      try {
+        const db = req.result;
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(clean, 'cookie');
+      } catch {}
+    };
+  } catch {}
+}
+function readIdbSafe(dbName, fn) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(dbName);
+      let upgraded = false;
+      req.onupgradeneeded = () => { upgraded = true; };
+      req.onerror = () => resolve('');
+      req.onsuccess = () => {
+        const db = req.result;
+        if (upgraded) {
+          try { db.close(); indexedDB.deleteDatabase(dbName); } catch {}
+          return resolve('');
+        }
+        fn(db, (v) => { try { db.close(); } catch {} resolve(v || ''); });
+      };
+    } catch { resolve(''); }
+  });
+}
+async function readAstraRoblosecurityFromSwStores() {
+  if (astraCapturedRoblosecurity) return astraCapturedRoblosecurity;
+  try {
+    if (scramjet && scramjet.cookieStore) {
+      const hit = findRoblosecurityInJarObj(scramjet.cookieStore.cookies || (typeof scramjet.cookieStore.dump === 'function' ? JSON.parse(scramjet.cookieStore.dump() || '{}') : null));
+      if (hit) return hit;
+    }
+  } catch {}
+  const fromAstra = await readIdbSafe('$astra_rbx', (db, done) => {
+    try {
+      if (!db.objectStoreNames.contains('kv')) return done('');
+      const r = db.transaction('kv', 'readonly').objectStore('kv').get('cookie');
+      r.onsuccess = () => done(typeof r.result === 'string' ? r.result : '');
+      r.onerror = () => done('');
+    } catch { done(''); }
+  });
+  if (fromAstra) return fromAstra;
+  const fromSj = await readIdbSafe('$scramjet', (db, done) => {
+    try {
+      if (!db.objectStoreNames.contains('cookies')) return done('');
+      const r = db.transaction('cookies', 'readonly').objectStore('cookies').get('cookies');
+      r.onsuccess = () => done(findRoblosecurityInJarObj(r.result));
+      r.onerror = () => done('');
+    } catch { done(''); }
+  });
+  if (fromSj) return fromSj;
+  const fromUv = await readIdbSafe('__op', (db, done) => {
+    try {
+      if (!db.objectStoreNames.contains('cookies')) return done('');
+      const r = db.transaction('cookies', 'readonly').objectStore('cookies').getAll();
+      r.onsuccess = () => done(findRoblosecurityInJarObj(r.result));
+      r.onerror = () => done('');
+    } catch { done(''); }
+  });
+  return fromUv || '';
+}
 const ASTRA_AD_HOSTS = ${JSON.stringify(AD_HOSTS)};
 const ASTRA_UNITY_FIX_SNIPPET = ${JSON.stringify(unityFixSnippet)};
 const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
@@ -2229,11 +2318,30 @@ function patchBareClientInstance(client) {
       }
 
       nextInit = Object.assign({}, init || {}, { headers: reqHeadersObj });
+      try {
+        const th = targetUrl.hostname.toLowerCase();
+        if (th === 'roblox.com' || th.endsWith('.roblox.com')) {
+          const outCookie = getHeaderCI('cookie');
+          const m = outCookie && outCookie.match(/(?:^|;\\s*)\\.ROBLOSECURITY=([^;\\s]+)/);
+          if (m && m[1]) saveAstraRoblosecurityCookie(decodeURIComponent(m[1]));
+        }
+      } catch {}
     } catch {}
     const resp = await origFetch(remote, nextInit);
     try {
       const targetStr = String((resp && resp.finalURL) || remote || '');
       const u = new URL(targetStr);
+      const th = u.hostname.toLowerCase();
+      if (th === 'roblox.com' || th.endsWith('.roblox.com')) {
+        try {
+          const scRaw = (resp && resp.rawHeaders && (resp.rawHeaders['set-cookie'] || resp.rawHeaders['Set-Cookie'])) || resp.headers.get('set-cookie');
+          const scList = Array.isArray(scRaw) ? scRaw : (scRaw ? [String(scRaw)] : []);
+          for (const entry of scList) {
+            const m = String(entry || '').match(/(?:^|,\\s*)\\.ROBLOSECURITY=([^;\\s]+)/);
+            if (m && m[1]) saveAstraRoblosecurityCookie(decodeURIComponent(m[1]));
+          }
+        } catch {}
+      }
       const isRawHost = /(?:^|\\.)(raw\\.githubusercontent\\.com|gist\\.githubusercontent\\.com|githack\\.com)$/i.test(u.hostname);
       const origCt = (resp.headers.get('content-type') || '').toLowerCase();
       if (isRawHost && (!origCt || origCt.includes('text/plain'))) {
@@ -2353,6 +2461,15 @@ self.addEventListener('message', (event) => {
     astraAdblockEnabled = !!event.data.enabled;
   } else if (event && event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  } else if (event && event.data && event.data.type === 'astra-get-roblox-cookie' && event.ports && event.ports[0]) {
+    event.waitUntil((async () => {
+      try {
+        const cookie = await readAstraRoblosecurityFromSwStores();
+        event.ports[0].postMessage({ cookie: cookie || '' });
+      } catch {
+        event.ports[0].postMessage({ cookie: '' });
+      }
+    })());
   }
 });
 
