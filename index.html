@@ -4644,8 +4644,8 @@
     <iframe id="cleverCloakFrame" src="clever-cloak/Clever.html" title="Clever | Portal"></iframe>
   </div>
 
-  <!-- Persistent Background Music Iframe (keeps playing when switching to Home/Games/Chat/AI) -->
-  <iframe class="music-yt-embed" id="musicPlayerFrame" allow="autoplay; encrypted-media" style="position:fixed;right:16px;bottom:84px;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-1;"></iframe>
+  <!-- Persistent Floating YouTube Video Player (visible 16:9 mini-player so Chrome/YouTube never throttles playback) -->
+  <iframe class="music-yt-embed" id="musicPlayerFrame" allow="autoplay; encrypted-media" style="position:fixed;right:16px;bottom:84px;width:224px;height:126px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);box-shadow:0 12px 32px rgba(0,0,0,0.65);background:#000;z-index:30;display:none;"></iframe>
 
   <!-- Command Palette (Ctrl+Y / Ctrl+K) -->
   <div class="cmd-palette-backdrop" id="cmdPaletteOverlay">
@@ -9702,6 +9702,8 @@
       }
     }
 
+    let musicUserPaused = false;
+
     function startMusicPlayerSyncLoop() {
       clearInterval(musicSyncTimer);
       musicSyncTimer = setInterval(() => {
@@ -9717,6 +9719,9 @@
               v.muted = true;
               v.currentTime = v.duration;
             }
+          }
+          if (v.paused && !v.ended && !musicUserPaused && musicCurrentTrack) {
+            v.play().catch(() => {});
           }
           if (musicVolumeRange) v.volume = Number(musicVolumeRange.value || 85) / 100;
           if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
@@ -9736,6 +9741,7 @@
     async function playMusicTrack(song, queueList) {
       if (!song || !song.id) return;
       musicCurrentTrack = song;
+      musicUserPaused = false;
       if (Array.isArray(queueList) && queueList.length) musicQueue = queueList.slice();
       if (musicNpThumb) musicNpThumb.src = getProxiedThumbUrl(song.thumbnail);
       if (musicNpTitle) musicNpTitle.textContent = song.title;
@@ -9747,8 +9753,9 @@
       renderMusicTracks();
       await proxyHealthPromise;
       if (proxyAvailable) await ensureProxyRuntimeReady();
-      const targetUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(song.id)}&autoplay=1`;
+      const targetUrl = `https://www.youtube.com/embed/${encodeURIComponent(song.id)}?autoplay=1&playsinline=1&rel=0`;
       if (musicPlayerFrame) {
+        musicPlayerFrame.style.display = 'block';
         const scramPath = `/scramjet/${encodeURIComponent(targetUrl)}`;
         musicPlayerFrame.src = proxyOrigin ? `${proxyOrigin}${scramPath}` : scramPath;
       }
@@ -9860,8 +9867,13 @@
           if (list.length) playMusicTrack(list[0], list);
           return;
         }
-        if (v.paused) v.play().catch(() => {});
-        else v.pause();
+        if (v.paused) {
+          musicUserPaused = false;
+          v.play().catch(() => {});
+        } else {
+          musicUserPaused = true;
+          v.pause();
+        }
         musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
       });
     }
