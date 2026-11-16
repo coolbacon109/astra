@@ -308,6 +308,19 @@ function loadAuthStore() {
     changed = true;
   }
 
+  if (!store.users.mason) {
+    const { salt, hash } = hashPassword('0622074305');
+    store.users.mason = {
+      username: 'mason',
+      displayName: 'Mason',
+      role: 'user',
+      salt,
+      hash,
+      tourCompleted: false
+    };
+    changed = true;
+  }
+
   if (changed) {
     try {
       fs.writeFileSync(AUTH_FILE, JSON.stringify(store, null, 2), 'utf8');
