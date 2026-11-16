@@ -4408,11 +4408,14 @@
       50% { transform: translateY(1px) scale(0.99); }
       75% { transform: translateY(-3px) scale(1.02); }
     }
-    body.music-dancing .astra-brand-group {
-      animation: musicDancePulse 0.85s ease-in-out infinite;
+    .astra-brand-group {
+      transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: center center;
+      will-change: transform;
     }
     body.music-dancing .astra-moon-badge {
       filter: drop-shadow(0 0 18px rgba(147, 197, 253, 0.65));
+      transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1), filter 0.15s ease;
     }
     .hero-tip-line {
       min-height: 20px;
@@ -4470,13 +4473,26 @@
       background: linear-gradient(180deg, #93c5fd, #a7f3d0);
       transition: height 0.09s ease;
     }
-    .home-vis-label {
-      font-size: 11.5px;
-      color: rgba(255, 255, 255, 0.85);
-      max-width: 210px;
-      white-space: nowrap;
+    .home-vis-marquee-wrap {
+      max-width: 220px;
       overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: nowrap;
+      mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+    }
+    @keyframes homeVisSlide {
+      0%, 15% { transform: translateX(0); }
+      45%, 55% { transform: translateX(var(--slide-dist, -40%)); }
+      85%, 100% { transform: translateX(0); }
+    }
+    .home-vis-label {
+      display: inline-block;
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.88);
+      white-space: nowrap;
+    }
+    .home-vis-label.scrolling {
+      animation: homeVisSlide 7s ease-in-out infinite;
     }
     .quick-apps-section {
       width: min(520px, 92vw);
@@ -5801,7 +5817,9 @@
             <div class="home-vis-bar"></div><div class="home-vis-bar"></div><div class="home-vis-bar"></div>
             <div class="home-vis-bar"></div><div class="home-vis-bar"></div><div class="home-vis-bar"></div>
           </div>
-          <span class="home-vis-label" id="homeVisLabel">now playing</span>
+          <div class="home-vis-marquee-wrap" id="homeVisMarqueeWrap">
+            <span class="home-vis-label" id="homeVisLabel">now playing</span>
+          </div>
         </div>
 
         <div class="hero-palette-hint" id="heroPaletteHint">
@@ -10366,27 +10384,117 @@
       typeNext();
     }
 
-    let homeVisTimer = null;
+    let homeVisRaf = null;
+    let astraAudioCtx = null;
+    let astraAnalyser = null;
+    let astraFreqData = null;
+    const connectedAudioEls = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+    let beatDir = 1;
+    let lastBeatTs = 0;
+    let bassMovingAvg = 0.25;
+    let beatTilt = 0;
+    let beatLift = 0;
+    let beatScale = 1;
+
+    function ensureAudioAnalyserForVideo(videoEl) {
+      if (!videoEl || typeof window === 'undefined') return null;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      try {
+        if (!astraAudioCtx) astraAudioCtx = new AudioCtx();
+        if (astraAudioCtx.state === 'suspended') astraAudioCtx.resume().catch(() => {});
+        if (!astraAnalyser) {
+          astraAnalyser = astraAudioCtx.createAnalyser();
+          astraAnalyser.fftSize = 64;
+          astraAnalyser.smoothingTimeConstant = 0.72;
+          astraFreqData = new Uint8Array(astraAnalyser.frequencyBinCount);
+        }
+        if (connectedAudioEls && !connectedAudioEls.has(videoEl)) {
+          const src = astraAudioCtx.createMediaElementSource(videoEl);
+          src.connect(astraAnalyser);
+          astraAnalyser.connect(astraAudioCtx.destination);
+          connectedAudioEls.add(videoEl);
+        }
+        return astraAnalyser;
+      } catch {
+        return null;
+      }
+    }
+
+    function runVisualizerTick() {
+      const brandGroup = document.querySelector('.astra-brand-group');
+      const moonEl = document.getElementById('astraMoonBadge');
+      if (!document.body.classList.contains('music-dancing')) {
+        if (brandGroup) brandGroup.style.transform = '';
+        if (moonEl) moonEl.style.transform = '';
+        homeVisRaf = null;
+        return;
+      }
+
+      const v = typeof getMusicVideoEl === 'function' ? getMusicVideoEl() : null;
+      const analyser = v ? ensureAudioAnalyserForVideo(v) : astraAnalyser;
+      let bass = 0;
+
+      if (analyser && astraFreqData) {
+        analyser.getByteFrequencyData(astraFreqData);
+        bass = ((astraFreqData[0] || 0) + (astraFreqData[1] || 0) + (astraFreqData[2] || 0)) / (3 * 255);
+        if (homeVisBars) {
+          const bars = homeVisBars.querySelectorAll('.home-vis-bar');
+          bars.forEach((b, idx) => {
+            const val = astraFreqData[Math.min(astraFreqData.length - 1, idx)] || 0;
+            const h = 3 + Math.round((val / 255) * 15);
+            b.style.height = `${Math.min(18, h)}px`;
+          });
+        }
+      }
+
+      const now = performance.now();
+      bassMovingAvg = bassMovingAvg * 0.92 + bass * 0.08;
+      if (bass > 0.30 && bass > bassMovingAvg * 1.22 && (now - lastBeatTs) > 250) {
+        lastBeatTs = now;
+        beatDir = -beatDir;
+        const punch = Math.min(1.4, (bass - bassMovingAvg) * 3.2 + 0.65);
+        beatTilt = beatDir * (4.8 * punch);
+        beatLift = -(6.5 * punch);
+        beatScale = 1 + (0.065 * punch);
+      } else {
+        beatTilt *= 0.84;
+        beatLift *= 0.84;
+        beatScale = 1 + (beatScale - 1) * 0.84;
+      }
+
+      if (brandGroup) {
+        brandGroup.style.transform = `translateY(${beatLift.toFixed(2)}px) rotate(${beatTilt.toFixed(2)}deg) scale(${beatScale.toFixed(3)})`;
+      }
+      if (moonEl) {
+        moonEl.style.transform = `rotate(${(beatTilt * 1.8).toFixed(2)}deg) scale(${(1 + (beatScale - 1) * 1.25).toFixed(3)})`;
+      }
+
+      homeVisRaf = requestAnimationFrame(runVisualizerTick);
+    }
+
     function updateHomeMusicDance(isPlaying, song) {
       document.body.classList.toggle('music-dancing', !!isPlaying);
       if (homeVisualizerWrap) {
         homeVisualizerWrap.classList.toggle('active', !!(isPlaying || song));
       }
       if (homeVisLabel && song) {
-        homeVisLabel.textContent = `${song.title} — ${song.artist || 'YouTube'}`;
+        const fullText = `${song.title} — ${song.artist || 'YouTube'}`;
+        if (homeVisLabel.textContent !== fullText) {
+          homeVisLabel.textContent = fullText;
+          homeVisLabel.classList.remove('scrolling');
+          const wrap = document.getElementById('homeVisMarqueeWrap');
+          if (wrap) {
+            const overflow = homeVisLabel.scrollWidth - wrap.clientWidth;
+            if (overflow > 6) {
+              homeVisLabel.style.setProperty('--slide-dist', `-${overflow + 10}px`);
+              homeVisLabel.classList.add('scrolling');
+            }
+          }
+        }
       }
-      if (isPlaying && !homeVisTimer) {
-        homeVisTimer = setInterval(() => {
-          if (!homeVisBars) return;
-          const bars = homeVisBars.querySelectorAll('.home-vis-bar');
-          bars.forEach((b, idx) => {
-            const h = 4 + Math.round(Math.abs(Math.sin(Date.now() / 170 + idx * 0.65)) * 13 + Math.random() * 3);
-            b.style.height = `${Math.min(18, h)}px`;
-          });
-        }, 100);
-      } else if (!isPlaying && homeVisTimer) {
-        clearInterval(homeVisTimer);
-        homeVisTimer = null;
+      if (isPlaying && !homeVisRaf) {
+        homeVisRaf = requestAnimationFrame(runVisualizerTick);
       }
     }
     if (homeVisualizerWrap) {
