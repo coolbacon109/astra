@@ -10782,9 +10782,9 @@
           if (musicProgressBar && isFinite(v.duration) && v.duration > 0) {
             const pct = Math.round((v.currentTime / v.duration) * 100);
             musicProgressBar.value = String(pct);
-            musicProgressBar.style.setProperty('--rprog', `${pct}%`);
+            if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${pct}%`);
           }
-          if (musicVolumeRange) {
+          if (musicVolumeRange && musicVolumeRange.style && typeof musicVolumeRange.style.setProperty === 'function') {
             musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
           }
           if (typeof updateHomeMusicDance === 'function') {
@@ -11037,9 +11037,9 @@
       });
     }
     if (musicProgressBar) {
-      musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
+      if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
       musicProgressBar.addEventListener('input', () => {
-        musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
+        if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
         const v = getMusicVideoEl();
         if (v && isFinite(v.duration) && v.duration > 0) {
           v.currentTime = (Number(musicProgressBar.value) / 100) * v.duration;
@@ -11047,9 +11047,9 @@
       });
     }
     if (musicVolumeRange) {
-      musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
+      if (musicVolumeRange.style && typeof musicVolumeRange.style.setProperty === 'function') musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
       musicVolumeRange.addEventListener('input', () => {
-        musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
+        if (musicVolumeRange.style && typeof musicVolumeRange.style.setProperty === 'function') musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
         const v = getMusicVideoEl();
         if (v) v.volume = Number(musicVolumeRange.value || 85) / 100;
       });
