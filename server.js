@@ -3447,7 +3447,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 if (require.main === module) {
-  const HOST = process.env.HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1');
+  const HOST = process.env.HOST || '0.0.0.0';
   server.listen(PORT, HOST, () => {
     console.log(`Astra server running at http://${HOST}:${PORT}`);
   });
