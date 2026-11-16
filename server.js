@@ -1383,6 +1383,59 @@ function decompressBuffer(buf, encoding) {
   });
 }
 
+const USER_COOKIES_FILE = path.join(ROOT_DIR, 'user-cookies.json');
+let userCookieJars = {};
+try {
+  const rawJar = JSON.parse(fs.readFileSync(USER_COOKIES_FILE, 'utf8'));
+  if (rawJar && typeof rawJar === 'object') userCookieJars = rawJar;
+} catch {}
+let userCookiesSaveTimer = null;
+function scheduleSaveUserCookies() {
+  clearTimeout(userCookiesSaveTimer);
+  userCookiesSaveTimer = setTimeout(() => {
+    try { fs.writeFileSync(USER_COOKIES_FILE, JSON.stringify(userCookieJars), 'utf8'); } catch {}
+  }, 800);
+}
+function getUserCookieHeader(username, hostname) {
+  if (!username || !hostname) return '';
+  const jar = userCookieJars[username];
+  if (!jar || typeof jar !== 'object') return '';
+  const pairs = [];
+  const host = String(hostname).toLowerCase();
+  for (const [dom, cookies] of Object.entries(jar)) {
+    const cleanDom = String(dom).replace(/^\./, '').toLowerCase();
+    if (host === cleanDom || host.endsWith('.' + cleanDom)) {
+      for (const [k, v] of Object.entries(cookies || {})) {
+        if (k && v !== undefined) pairs.push(`${k}=${v}`);
+      }
+    }
+  }
+  return pairs.join('; ');
+}
+function saveUserCookiesFromSetCookie(username, hostname, setCookieArr) {
+  if (!username || !hostname || !Array.isArray(setCookieArr) || !setCookieArr.length) return;
+  if (!userCookieJars[username]) userCookieJars[username] = {};
+  const jar = userCookieJars[username];
+  for (const raw of setCookieArr) {
+    const parts = String(raw || '').split(';').map(s => s.trim());
+    const eqIdx = parts[0] ? parts[0].indexOf('=') : -1;
+    if (eqIdx <= 0) continue;
+    const name = parts[0].slice(0, eqIdx).trim();
+    const val = parts[0].slice(eqIdx + 1).trim();
+    let dom = String(hostname).toLowerCase();
+    let maxAgeZero = false;
+    for (let i = 1; i < parts.length; i++) {
+      const p = parts[i];
+      if (/^Domain=/i.test(p)) dom = p.slice(7).trim().replace(/^\./, '').toLowerCase() || dom;
+      if (/^Max-Age=0$/i.test(p)) maxAgeZero = true;
+    }
+    if (!jar[dom]) jar[dom] = {};
+    if (maxAgeZero || val === '') delete jar[dom][name];
+    else jar[dom][name] = val;
+  }
+  scheduleSaveUserCookies();
+}
+
 function fetchAndProxy(targetUrl, adblock, req, res, redirectsLeft = 5, engine = 'scramjet') {
   const eng = normalizeEngine(engine);
   if (adblock && isBlockedAdHost(targetUrl)) {
@@ -1430,6 +1483,11 @@ function fetchAndProxy(targetUrl, adblock, req, res, redirectsLeft = 5, engine =
     'Accept-Encoding': 'gzip, deflate, br',
     Referer: parsed.origin + '/'
   };
+  const proxySessionUser = typeof getSessionUser === 'function' ? getSessionUser(req) : null;
+  if (proxySessionUser && proxySessionUser.username) {
+    const savedCookieHdr = getUserCookieHeader(proxySessionUser.username, parsed.hostname);
+    if (savedCookieHdr) headers.Cookie = savedCookieHdr;
+  }
   if (method !== 'GET' && method !== 'HEAD') {
     headers.Origin = parsed.origin;
   }
@@ -1483,6 +1541,9 @@ function fetchAndProxy(targetUrl, adblock, req, res, redirectsLeft = 5, engine =
           continue;
         }
         if (lower === 'set-cookie' && Array.isArray(v)) {
+          if (proxySessionUser && proxySessionUser.username) {
+            saveUserCookiesFromSetCookie(proxySessionUser.username, parsed.hostname, v);
+          }
           outHeaders[k] = v.map((c) =>
             c
               .replace(/;\s*Domain=[^;]*/gi, '')

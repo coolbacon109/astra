@@ -7934,6 +7934,10 @@
           closeTab(Number(el.dataset.close));
         });
       });
+
+      if (typeof scheduleSaveUserProfileState === 'function') {
+        scheduleSaveUserProfileState();
+      }
     }
 
     let currentUser = null;
@@ -8590,6 +8594,21 @@
         }
         if (Array.isArray(st.recentGames)) {
           userRecentGames = st.recentGames;
+        }
+        if (Array.isArray(st.tabs) && st.tabs.length > 0 && tabs.length <= 1 && !tabs[0]?.url && (!tabs[0]?.route || tabs[0].route === '/h')) {
+          tabs.length = 0;
+          st.tabs.forEach((t, idx) => {
+            tabs.push({
+              id: t.id || `tab-sync-${idx}-${Date.now()}`,
+              route: t.route || '/h',
+              url: t.url || null,
+              query: null,
+              title: t.title || 'home'
+            });
+          });
+          if (tabs[0]) activeTabId = tabs[0].id;
+          renderTabs();
+          syncActiveTabView();
         }
         if (st.lastTrack && st.lastTrack.id && typeof updateHomeMusicDance === 'function') {
           musicCurrentTrack = st.lastTrack;

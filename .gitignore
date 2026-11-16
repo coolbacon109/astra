@@ -5,3 +5,4 @@ music-playlists.json
 .env
 *.log
 user-profiles.json
+user-cookies.json
