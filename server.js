@@ -2717,7 +2717,7 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (pathname === '/api/music/playlists') {
+  if (pathname === '/api/music/playlists' && req.method === 'GET') {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'login required' });
     }
@@ -2725,6 +2725,39 @@ const server = http.createServer(async (req, res) => {
     let all = {};
     try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
     return sendJson(res, 200, { ok: true, playlists: Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [] });
+  }
+
+  if (pathname === '/api/music/playlists' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    try {
+      const body = await readJsonBody(req);
+      const action = String((body && body.action) || 'update');
+      const plFile = path.join(ROOT_DIR, 'music-playlists.json');
+      let all = {};
+      try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
+      const userList = Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [];
+      if (action === 'update' && body && body.playlistId) {
+        const pl = userList.find((p) => p.id === body.playlistId);
+        if (!pl) return sendJson(res, 404, { ok: false, error: 'playlist not found' });
+        if (typeof body.name === 'string' && body.name.trim()) pl.name = body.name.trim().slice(0, 80);
+        if (typeof body.coverStyle === 'string') pl.coverStyle = body.coverStyle === 'astra-cursive' ? 'astra-cursive' : 'artwork';
+        if (typeof body.coverColor === 'string') pl.coverColor = body.coverColor.slice(0, 32);
+        all[sessionUser.username] = userList;
+        fs.writeFileSync(plFile, JSON.stringify(all, null, 2), 'utf8');
+        return sendJson(res, 200, { ok: true, playlist: pl, playlists: userList });
+      }
+      if (action === 'delete' && body && body.playlistId) {
+        const nextList = userList.filter((p) => p.id !== body.playlistId);
+        all[sessionUser.username] = nextList;
+        fs.writeFileSync(plFile, JSON.stringify(all, null, 2), 'utf8');
+        return sendJson(res, 200, { ok: true, playlists: nextList });
+      }
+      return sendJson(res, 400, { ok: false, error: 'invalid playlist action' });
+    } catch (e) {
+      return sendJson(res, 500, { ok: false, error: e.message || 'playlist update failed' });
+    }
   }
 
   if (pathname === '/api/music/audio' || pathname.startsWith('/api/music/audio/')) {
@@ -2819,7 +2852,13 @@ const server = http.createServer(async (req, res) => {
       }
       const nextData = JSON.parse(nextMatch[1]);
       const entity = nextData?.props?.pageProps?.state?.data?.entity || {};
-      const plName = String(entity.name || entity.title || 'Imported Playlist');
+      const customName = String((body && body.customName) || '').trim();
+      const coverStyle = (body && body.coverStyle) === 'artwork' ? 'artwork' : 'astra-cursive';
+      const plName = customName || String(entity.name || entity.title || 'Imported Playlist');
+      const coverUrl = String(
+        (entity.coverArt && Array.isArray(entity.coverArt.sources) && entity.coverArt.sources[0] && entity.coverArt.sources[0].url) ||
+        (Array.isArray(entity.images) && entity.images[0] && entity.images[0].url) || ''
+      );
       const rawTracks = Array.isArray(entity.trackList) ? entity.trackList.slice(0, 18) : [];
       if (!rawTracks.length) {
         return sendJson(res, 422, { ok: false, error: 'No tracks found in Spotify playlist' });
@@ -2846,7 +2885,14 @@ const server = http.createServer(async (req, res) => {
       let all = {};
       try { all = JSON.parse(fs.readFileSync(plFile, 'utf8')) || {}; } catch {}
       const userList = Array.isArray(all[sessionUser.username]) ? all[sessionUser.username] : [];
-      const playlist = { id: `sp_${spId}`, name: plName, songs, importedAt: Date.now() };
+      const playlist = {
+        id: `sp_${spId}`,
+        name: plName,
+        coverUrl: coverUrl || (songs[0] && songs[0].thumbnail) || '',
+        coverStyle,
+        songs,
+        importedAt: Date.now()
+      };
       const existingIdx = userList.findIndex((p) => p.id === playlist.id);
       if (existingIdx !== -1) userList[existingIdx] = playlist;
       else userList.unshift(playlist);
