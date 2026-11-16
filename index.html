@@ -2513,8 +2513,13 @@
       overflow: hidden;
     }
 
-    .swatch-silk {
-      background: radial-gradient(circle at 30% 35%, rgba(255,255,255,0.22), transparent 55%), linear-gradient(135deg, #09090d 0%, #1c1d27 50%, #050507 100%);
+    .swatch-lunar-space {
+      background:
+        radial-gradient(circle at 74% 34%, #f8fafc 0%, #cbd5e1 16%, rgba(148,163,184,0.22) 26%, transparent 46%),
+        radial-gradient(1.5px 1.5px at 22% 30%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 42% 70%, #dbeafe, transparent),
+        radial-gradient(1px 1px at 14% 72%, #fff, transparent),
+        linear-gradient(150deg, #020308, #070b18);
     }
 
     .swatch-starfield {
@@ -2525,10 +2530,24 @@
                   linear-gradient(160deg, #03040a, #090e1c);
     }
 
-    .swatch-aurora {
-      background: radial-gradient(circle at 25% 30%, rgba(56,189,248,0.48), transparent 60%),
-                  radial-gradient(circle at 75% 70%, rgba(129,140,248,0.42), transparent 60%),
-                  #050814;
+    .swatch-solar-eclipse {
+      background: radial-gradient(circle at 50% 50%, #050508 26%, rgba(251,146,60,0.85) 33%, rgba(239,68,68,0.28) 54%, #040408 82%);
+    }
+
+    .swatch-saturn-cosmos {
+      background: radial-gradient(ellipse 68% 18% at 50% 52%, transparent 32%, rgba(196,181,253,0.55) 45%, transparent 62%),
+                  radial-gradient(circle at 50% 52%, #e0e7ff 0%, #818cf8 22%, transparent 25%),
+                  linear-gradient(155deg, #050410, #0d0b21);
+    }
+
+    .swatch-black-hole {
+      background: radial-gradient(circle at 50% 50%, #000 22%, rgba(251,191,36,0.85) 30%, rgba(249,115,22,0.28) 50%, #040307 78%);
+    }
+
+    .swatch-constellation {
+      background: radial-gradient(circle at 25% 30%, rgba(56,189,248,0.42), transparent 55%),
+                  radial-gradient(circle at 75% 70%, rgba(129,140,248,0.38), transparent 55%),
+                  #040712;
     }
 
     .swatch-grid {
@@ -2538,12 +2557,8 @@
         #05060b;
     }
 
-    .swatch-eclipse {
-      background: radial-gradient(circle at 50% 50%, rgba(239,68,68,0.55) 0%, rgba(127,29,29,0.26) 45%, #070408 82%);
-    }
-
     .swatch-void {
-      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.07), #020203 70%);
+      background: #020204;
     }
 
     .swatch-custom {
@@ -6256,12 +6271,11 @@
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
-    body.lite-gfx .bg-video,
-    body.lite-gfx .bg-canvas {
+    body.lite-gfx .bg-video {
       display: none !important;
     }
     body.lite-gfx .bg-gradient-layer {
-      background: radial-gradient(circle at 50% 28%, rgba(var(--accent), 0.12), rgba(7, 8, 13, 0.98) 70%) !important;
+      background: radial-gradient(circle at 50% 28%, rgba(var(--accent), 0.08), rgba(4, 5, 10, 0.98) 70%) !important;
     }
     body.lite-gfx .side-dock,
     body.lite-gfx .tab-strip-shell,
@@ -6274,7 +6288,89 @@
     body.lite-gfx .hero-search-inner,
     body.lite-gfx .top-url-bar,
     body.lite-gfx .bottom-dock {
-      background-color: rgba(13, 15, 24, 0.94) !important;
+      background-color: rgba(12, 13, 20, 0.94) !important;
+    }
+    /* Minimal Space Aesthetic: remove ambient glows globally and spotlight ONLY the search bar */
+    .astra-logo {
+      filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.72)) !important;
+      animation: none !important;
+    }
+    .side-dock-item,
+    .side-dock-item:hover,
+    .side-dock-item.active,
+    .tab-item,
+    .tab-item:hover,
+    .tab-item.active,
+    .regular-plus-btn,
+    .regular-plus-btn:hover,
+    #switchToSideBtn,
+    #switchToSideBtn:hover,
+    .search-proxy-toggle,
+    .search-proxy-btn.active,
+    .quick-app-tile,
+    .quick-app-tile:hover,
+    .route-card,
+    .route-card:hover,
+    .game-card,
+    .game-card:hover,
+    .settings-card-glow,
+    .footer-glass-pill,
+    .hero-greeting-pill,
+    .wallpaper-tile.active,
+    .chat-role-icon-badge,
+    .chat-role-studio-card,
+    .chat-role-chip.equipped,
+    .chat-profile-card-shell,
+    .chat-gif-tray,
+    .chat-gif-tile:hover,
+    .chat-msg-actions,
+    .chat-bot-embed,
+    .chat-modal-card,
+    .chat-pfp-crop-card,
+    .home-visualizer-wrap,
+    .cmd-palette-modal,
+    .auth-card-inner,
+    .adblock-popover,
+    .ext-btn:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    }
+    .quick-app-tile,
+    .side-dock-item,
+    .footer-glass-pill,
+    .hero-greeting-pill,
+    .settings-card-glow {
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    .side-dock-item.active,
+    .tab-item.active,
+    .wallpaper-tile.active {
+      border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    }
+    .search-wrapper {
+      background: linear-gradient(122deg, rgba(255, 255, 255, 0.44), rgba(200, 222, 255, 0.16) 44%, rgba(255, 255, 255, 0.08)) !important;
+      padding: 1px !important;
+      box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.68),
+        0 0 28px rgba(var(--accent), 0.18),
+        0 0 56px rgba(var(--accent-soft), 0.1) !important;
+    }
+    .search-wrapper:hover,
+    .search-wrapper:focus-within {
+      background: linear-gradient(122deg, rgba(255, 255, 255, 0.68), rgba(var(--accent-soft), 0.36) 48%, rgba(255, 255, 255, 0.18)) !important;
+      box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.74),
+        0 0 38px rgba(var(--accent), 0.3),
+        0 0 76px rgba(var(--accent-soft), 0.18) !important;
+    }
+    .url-bar {
+      background: rgba(255, 255, 255, 0.1) !important;
+      padding: 1px !important;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 18px rgba(var(--accent), 0.14) !important;
+    }
+    .url-bar:hover,
+    .url-bar:focus-within {
+      background: linear-gradient(122deg, rgba(255, 255, 255, 0.48), rgba(var(--accent-soft), 0.3) 52%, rgba(255, 255, 255, 0.14)) !important;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.56), 0 0 26px rgba(var(--accent), 0.28) !important;
     }
     .chat-reply-quote {
       display: flex;
@@ -6665,11 +6761,9 @@
     </div>
   </div>
 
-  <!-- Background Theme Layers -->
+  <!-- Background Interactive Code Theme Layers -->
   <div class="bg-video-wrap" id="bgWallpaperWrap">
-    <video class="bg-video" id="bgVideo" autoplay loop muted playsinline crossorigin="anonymous">
-      <source src="assets/black-silk-waves.mp4" type="video/mp4" />
-    </video>
+    <video class="bg-video" id="bgVideo" muted playsinline preload="none" style="display:none;"></video>
     <img class="bg-custom-img" id="bgCustomImg" crossorigin="anonymous" alt="" />
     <div class="bg-gradient-layer" id="bgGradientLayer"></div>
     <canvas class="bg-canvas" id="bgCanvas"></canvas>
@@ -7629,118 +7723,47 @@
               </div>
             </div>
 
-            <!-- Themes & Atmosphere Customization -->
+            <!-- Interactive Code Space Themes -->
             <div class="settings-card-glow">
               <div class="settings-card-inner">
                 <div class="settings-card-title">
-                  <span>themes &amp; atmosphere</span>
-                  <span class="settings-card-badge" id="activeWallpaperBadge">black silk waves</span>
+                  <span>interactive space themes</span>
+                  <span class="settings-card-badge" id="activeWallpaperBadge">lunar orbit</span>
                 </div>
 
                 <div class="wallpaper-grid" id="wallpaperGrid">
-                  <button class="wallpaper-tile active" data-wallpaper="silk">
-                    <div class="wallpaper-swatch swatch-silk"></div>
-                    <span class="wallpaper-tile-label">black silk waves</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="silver-surfer">
-                    <div class="wallpaper-swatch swatch-silver-surfer"></div>
-                    <span class="wallpaper-tile-label">silver surfer</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="bw-topo-lines">
-                    <div class="wallpaper-swatch swatch-bw-topo-lines"></div>
-                    <span class="wallpaper-tile-label">b&amp;w topo lines</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="grey-3d-topo">
-                    <div class="wallpaper-swatch swatch-grey-3d-topo"></div>
-                    <span class="wallpaper-tile-label">grey 3d topo</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="bw-abstract">
-                    <div class="wallpaper-swatch swatch-bw-abstract"></div>
-                    <span class="wallpaper-tile-label">b&amp;w abstract</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="electric-space">
-                    <div class="wallpaper-swatch swatch-electric-space"></div>
-                    <span class="wallpaper-tile-label">electric space</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="backrooms">
-                    <div class="wallpaper-swatch swatch-backrooms"></div>
-                    <span class="wallpaper-tile-label">backrooms</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="lbp2">
-                    <div class="wallpaper-swatch swatch-lbp2"></div>
-                    <span class="wallpaper-tile-label">littlebigplanet 2</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="dreamy-aquatic">
-                    <div class="wallpaper-swatch swatch-dreamy-aquatic"></div>
-                    <span class="wallpaper-tile-label">dreamy aquatic</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="frutiger-aero">
-                    <div class="wallpaper-swatch swatch-frutiger-aero"></div>
-                    <span class="wallpaper-tile-label">frutiger aero 🐠</span>
+                  <button class="wallpaper-tile active" data-wallpaper="lunar-space">
+                    <div class="wallpaper-swatch swatch-lunar-space"></div>
+                    <span class="wallpaper-tile-label">lunar orbit 🌙</span>
                   </button>
                   <button class="wallpaper-tile" data-wallpaper="starfield">
                     <div class="wallpaper-swatch swatch-starfield"></div>
-                    <span class="wallpaper-tile-label">starfield drift</span>
+                    <span class="wallpaper-tile-label">deep starfield</span>
                   </button>
-                  <button class="wallpaper-tile" data-wallpaper="aurora">
-                    <div class="wallpaper-swatch swatch-aurora"></div>
-                    <span class="wallpaper-tile-label">midnight aurora</span>
+                  <button class="wallpaper-tile" data-wallpaper="solar-eclipse">
+                    <div class="wallpaper-swatch swatch-solar-eclipse"></div>
+                    <span class="wallpaper-tile-label">solar eclipse</span>
+                  </button>
+                  <button class="wallpaper-tile" data-wallpaper="saturn-cosmos">
+                    <div class="wallpaper-swatch swatch-saturn-cosmos"></div>
+                    <span class="wallpaper-tile-label">saturn rings</span>
+                  </button>
+                  <button class="wallpaper-tile" data-wallpaper="black-hole">
+                    <div class="wallpaper-swatch swatch-black-hole"></div>
+                    <span class="wallpaper-tile-label">black hole</span>
+                  </button>
+                  <button class="wallpaper-tile" data-wallpaper="constellation">
+                    <div class="wallpaper-swatch swatch-constellation"></div>
+                    <span class="wallpaper-tile-label">constellations</span>
                   </button>
                   <button class="wallpaper-tile" data-wallpaper="grid">
                     <div class="wallpaper-swatch swatch-grid"></div>
-                    <span class="wallpaper-tile-label">cyber grid</span>
-                  </button>
-                  <button class="wallpaper-tile" data-wallpaper="eclipse">
-                    <div class="wallpaper-swatch swatch-eclipse"></div>
-                    <span class="wallpaper-tile-label">crimson eclipse</span>
+                    <span class="wallpaper-tile-label">orbital grid</span>
                   </button>
                   <button class="wallpaper-tile" data-wallpaper="void">
                     <div class="wallpaper-swatch swatch-void"></div>
                     <span class="wallpaper-tile-label">pure obsidian</span>
                   </button>
-                  <button class="wallpaper-tile" data-wallpaper="custom">
-                    <div class="wallpaper-swatch swatch-custom">+</div>
-                    <span class="wallpaper-tile-label">custom media</span>
-                  </button>
-                </div>
-
-                <div class="settings-toggle-row">
-                  <div>
-                    auto-detect theme colors
-                    <small>adapts all glows, borders &amp; accents from active theme (<span class="color-chip-preview"><span class="color-chip-dot"></span><span id="detectedColorLabel">auto</span></span>)</small>
-                  </div>
-                  <button class="astra-switch on" id="autoColorSwitch"></button>
-                </div>
-
-                <div class="settings-toggle-row">
-                  <div>
-                    seamless 1-minute auto-loop
-                    <small>fades across loop seams &amp; trims long videos to a smooth 60s loop locally</small>
-                  </div>
-                  <button class="astra-switch on" id="seamlessLoopSwitch"></button>
-                </div>
-
-                <div class="settings-field-row" style="padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
-                  <div class="settings-field-label">
-                    <span>youtube converter via amp4.cc (local only — 0 server edits)</span>
-                  </div>
-                  <div class="settings-input-row">
-                    <input type="text" class="settings-input" id="youtubeThemeUrlInput" placeholder="paste youtube link to convert on amp4.cc..." />
-                    <button class="ext-btn" id="openAmp4Btn">open amp4.cc</button>
-                  </div>
-                  <small style="font-size:10.5px;color:rgba(255,255,255,0.48);line-height:1.4;">complete any human verification on amp4.cc directly, download the .mp4, then select it below — astra trims &amp; loops the first 60s locally in your browser without touching the server.</small>
-                </div>
-
-                <div class="settings-field-row">
-                  <div class="settings-field-label">
-                    <span>custom theme url or local .mp4 / image (local browser storage only)</span>
-                  </div>
-                  <div class="settings-input-row">
-                    <input type="text" class="settings-input" id="customWallpaperUrlInput" placeholder="https://... (.jpg, .png, .gif, .mp4)" />
-                    <button class="ext-btn" id="applyWallpaperUrlBtn">set</button>
-                    <label class="ext-btn" for="customWallpaperFileInput" style="display:inline-flex;align-items:center;">upload</label>
-                    <input type="file" id="customWallpaperFileInput" accept="image/*,video/mp4,video/webm" style="display:none;" />
-                  </div>
                 </div>
 
                 <div class="settings-field-row">
@@ -8919,7 +8942,7 @@
       engine: 'scramjet',
       customGatewayUrl: '',
       searchEngine: 'astra',
-      wallpaper: 'silk',
+      wallpaper: 'lunar-space',
       customWallpaperUrl: '',
       customWallpaperIsVideo: false,
       autoColorDetect: true,
@@ -8935,53 +8958,27 @@
     };
 
     const WALLPAPER_NAMES = {
-      silk: 'black silk waves',
-      'silver-surfer': 'silver surfer',
-      'bw-topo-lines': 'b&w topographic lines',
-      'grey-3d-topo': 'grey 3d topographic map',
-      'bw-abstract': 'b&w abstract 4k',
-      'electric-space': 'electric space violet',
-      backrooms: 'backrooms ambience',
-      lbp2: 'littlebigplanet 2',
-      'dreamy-aquatic': 'dreamy aquatic mix',
-      'frutiger-aero': 'frutiger aero (fish)',
-      starfield: 'starfield drift',
-      aurora: 'midnight aurora',
-      grid: 'cyber grid',
-      eclipse: 'crimson eclipse',
-      void: 'pure obsidian',
-      custom: 'custom theme'
+      'lunar-space': 'lunar orbit',
+      starfield: 'deep starfield',
+      'solar-eclipse': 'solar eclipse',
+      'saturn-cosmos': 'saturn rings',
+      'black-hole': 'black hole',
+      constellation: 'constellations',
+      grid: 'orbital grid',
+      void: 'pure obsidian'
     };
 
-    const THEME_VIDEO_SRCS = {
-      silk: 'assets/black-silk-waves.mp4',
-      'silver-surfer': 'assets/themes/silver-surfer.mp4',
-      'bw-topo-lines': 'assets/themes/bw-topo-lines.mp4',
-      'grey-3d-topo': 'assets/themes/grey-3d-topo.mp4',
-      'bw-abstract': 'assets/themes/bw-abstract.mp4',
-      'electric-space': 'assets/themes/electric-space.mp4',
-      backrooms: 'assets/themes/backrooms.mp4',
-      lbp2: 'assets/themes/little-big-planet-2.mp4',
-      'dreamy-aquatic': 'assets/themes/dreamy-aquatic.mp4',
-      'frutiger-aero': 'assets/themes/dreamy-aquatic.mp4'
-    };
+    const THEME_VIDEO_SRCS = {};
 
     const THEME_PRESET_PALETTES = {
-      silk: { accent: [255, 255, 255], soft: [190, 220, 255], name: 'white / silver' },
-      'silver-surfer': { accent: [235, 240, 250], soft: [185, 200, 225], name: 'chrome silver' },
-      'bw-topo-lines': { accent: [255, 255, 255], soft: [215, 215, 220], name: 'crisp white' },
-      'grey-3d-topo': { accent: [212, 218, 228], soft: [156, 163, 175], name: 'slate grey' },
-      'bw-abstract': { accent: [255, 255, 255], soft: [200, 205, 215], name: 'monochrome white' },
-      'electric-space': { accent: [192, 132, 252], soft: [232, 195, 255], name: 'electric violet' },
-      backrooms: { accent: [250, 204, 21], soft: [254, 240, 138], name: 'amber fluorescent' },
-      lbp2: { accent: [251, 146, 60], soft: [253, 186, 116], name: 'craft orange' },
-      'dreamy-aquatic': { accent: [56, 189, 248], soft: [165, 243, 252], name: 'nintendo aqua' },
-      'frutiger-aero': { accent: [56, 189, 248], soft: [163, 230, 53], name: 'frutiger aqua' },
+      'lunar-space': { accent: [215, 228, 255], soft: [165, 195, 245], name: 'moonlight' },
       starfield: { accent: [224, 240, 255], soft: [147, 197, 253], name: 'starlight' },
-      aurora: { accent: [56, 189, 248], soft: [167, 243, 208], name: 'aurora cyan' },
-      grid: { accent: [147, 197, 253], soft: [224, 242, 254], name: 'cyber blue' },
-      eclipse: { accent: [248, 113, 113], soft: [254, 202, 202], name: 'crimson' },
-      void: { accent: [255, 255, 255], soft: [190, 200, 215], name: 'obsidian white' }
+      'solar-eclipse': { accent: [251, 146, 60], soft: [253, 186, 116], name: 'corona' },
+      'saturn-cosmos': { accent: [167, 139, 250], soft: [221, 214, 254], name: 'nebula violet' },
+      'black-hole': { accent: [251, 191, 36], soft: [253, 224, 71], name: 'accretion' },
+      constellation: { accent: [56, 189, 248], soft: [165, 243, 252], name: 'stellar cyan' },
+      grid: { accent: [147, 197, 253], soft: [224, 242, 254], name: 'orbital blue' },
+      void: { accent: [255, 255, 255], soft: [190, 200, 215], name: 'obsidian' }
     };
 
     const autoColorSwitch = document.getElementById('autoColorSwitch');
@@ -9372,11 +9369,25 @@
       return `${proxyOrigin}/scramjet/${encodeURIComponent(cleanUrl)}`;
     }
 
-    // Animated Canvas Wallpaper Loop (Starfield Drift, Cyber Matrix Grid & Frutiger Aero Bubbles)
+    // Interactive Procedural Code Space Themes (Moon, Eclipse, Saturn, Black Hole, Constellations, Starfield, Orbital Grid)
     let bgCanvasAnimId = null;
     let bgStars = [];
-    let bgBubbles = [];
+    let bgShoots = [];
+    let bgNodes = [];
     let bgGridOffset = 0;
+    let bgMouseX = 0;
+    let bgMouseY = 0;
+    let bgMouseTargetX = 0;
+    let bgMouseTargetY = 0;
+
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('pointermove', (e) => {
+        const w = window.innerWidth || 1280;
+        const h = window.innerHeight || 720;
+        bgMouseTargetX = ((e.clientX || w / 2) / w - 0.5) * 2;
+        bgMouseTargetY = ((e.clientY || h / 2) / h - 0.5) * 2;
+      }, { passive: true });
+    }
 
     function stopCanvasWallpaper() {
       if (bgCanvasAnimId && typeof cancelAnimationFrame === 'function') {
@@ -9388,7 +9399,7 @@
 
     function startCanvasWallpaper(mode) {
       stopCanvasWallpaper();
-      if (!bgCanvas || typeof bgCanvas.getContext !== 'function' || typeof requestAnimationFrame !== 'function') {
+      if (mode === 'void' || !bgCanvas || typeof bgCanvas.getContext !== 'function' || typeof requestAnimationFrame !== 'function') {
         return;
       }
       const ctx = bgCanvas.getContext('2d');
@@ -9401,92 +9412,292 @@
       };
       resize();
 
-      if (mode === 'starfield') {
-        bgStars = Array.from({ length: 140 }, () => ({
+      const starCount = mode === 'starfield' ? 120 : (mode === 'constellation' ? 50 : 95);
+      bgStars = Array.from({ length: starCount }, () => ({
+        x: Math.random() * bgCanvas.width,
+        y: Math.random() * bgCanvas.height,
+        r: Math.random() * 1.45 + 0.3,
+        z: Math.random() * 0.8 + 0.2,
+        a: Math.random() * 0.65 + 0.25,
+        tw: Math.random() * Math.PI * 2,
+        twSpeed: Math.random() * 0.04 + 0.015
+      }));
+      bgShoots = [];
+      if (mode === 'constellation') {
+        bgNodes = Array.from({ length: 44 }, () => ({
           x: Math.random() * bgCanvas.width,
           y: Math.random() * bgCanvas.height,
-          r: Math.random() * 1.7 + 0.35,
-          v: Math.random() * 0.32 + 0.08,
-          a: Math.random() * 0.65 + 0.25
-        }));
-      } else if (mode === 'frutiger-aero') {
-        bgBubbles = Array.from({ length: 34 }, () => ({
-          x: Math.random() * bgCanvas.width,
-          y: Math.random() * bgCanvas.height,
-          r: Math.random() * 24 + 8,
-          vy: Math.random() * 0.45 + 0.2,
-          drift: Math.random() * Math.PI * 2,
-          a: Math.random() * 0.22 + 0.1
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          r: Math.random() * 1.8 + 0.9
         }));
       }
 
-      function renderFrame() {
+      const MOON_CRATERS = [
+        { dx: -0.28, dy: -0.18, r: 0.14, a: 0.18 },
+        { dx: 0.16, dy: 0.22, r: 0.19, a: 0.16 },
+        { dx: -0.08, dy: 0.32, r: 0.09, a: 0.14 },
+        { dx: 0.26, dy: -0.24, r: 0.1, a: 0.12 },
+        { dx: -0.34, dy: 0.14, r: 0.07, a: 0.15 }
+      ];
+
+      let lastDrawMs = 0;
+      let tSec = 0;
+
+      function renderFrame(nowMs) {
+        bgCanvasAnimId = requestAnimationFrame(renderFrame);
+        const minStep = (typeof isLiteGraphicsEnabled === 'function' && isLiteGraphicsEnabled()) ? 42 : 30;
+        if (nowMs - lastDrawMs < minStep) return;
+        const dt = Math.min(0.08, lastDrawMs ? (nowMs - lastDrawMs) / 1000 : 0.033);
+        lastDrawMs = nowMs;
+        tSec += dt;
+
         if (bgCanvas.width !== (window.innerWidth || 1280) || bgCanvas.height !== (window.innerHeight || 720)) {
           resize();
         }
         const w = bgCanvas.width;
         const h = bgCanvas.height;
-        ctx.clearRect(0, 0, w, h);
+        bgMouseX += (bgMouseTargetX - bgMouseX) * 0.06;
+        bgMouseY += (bgMouseTargetY - bgMouseY) * 0.06;
 
-        if (mode === 'starfield') {
-          const grad = ctx.createRadialGradient(w * 0.5, h * 0.45, 20, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
-          grad.addColorStop(0, '#0a0f1f');
-          grad.addColorStop(1, '#020205');
-          ctx.fillStyle = grad;
+        ctx.fillStyle = '#030408';
+        ctx.fillRect(0, 0, w, h);
+
+        // Subtle diagonal Milky Way cosmic haze common across space scenes
+        if (mode !== 'grid') {
+          const mw = ctx.createLinearGradient(0, h, w, 0);
+          if (mode === 'saturn-cosmos') {
+            mw.addColorStop(0, 'rgba(30, 27, 75, 0.25)');
+            mw.addColorStop(0.5, 'rgba(88, 28, 135, 0.14)');
+            mw.addColorStop(1, 'rgba(2, 3, 8, 0)');
+          } else if (mode === 'solar-eclipse' || mode === 'black-hole') {
+            mw.addColorStop(0, 'rgba(67, 20, 7, 0.2)');
+            mw.addColorStop(0.5, 'rgba(24, 10, 8, 0.1)');
+            mw.addColorStop(1, 'rgba(2, 3, 8, 0)');
+          } else {
+            mw.addColorStop(0, 'rgba(20, 28, 52, 0.16)');
+            mw.addColorStop(0.45, 'rgba(120, 145, 195, 0.06)');
+            mw.addColorStop(1, 'rgba(3, 4, 8, 0)');
+          }
+          ctx.fillStyle = mw;
           ctx.fillRect(0, 0, w, h);
+        }
 
-          for (const s of bgStars) {
-            s.y -= s.v;
-            if (s.y < -4) {
-              s.y = h + 4;
-              s.x = Math.random() * w;
-            }
+        // Parallax twinkling stars
+        const pxScale = mode === 'black-hole' ? 10 : 18;
+        for (const s of bgStars) {
+          s.tw += s.twSpeed;
+          s.y -= (0.08 + s.z * 0.14);
+          if (s.y < -4) { s.y = h + 4; s.x = Math.random() * w; }
+          const sx = (s.x + bgMouseX * pxScale * s.z + w) % w;
+          const sy = (s.y + bgMouseY * pxScale * s.z + h) % h;
+          const alpha = Math.max(0.15, Math.min(1, s.a + Math.sin(s.tw) * 0.22));
+          ctx.fillStyle = `rgba(232, 240, 255, ${alpha.toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Occasional shooting stars in lunar-space & starfield
+        if (mode === 'lunar-space' || mode === 'starfield') {
+          if (bgShoots.length < 2 && Math.random() < 0.014) {
+            bgShoots.push({
+              x: Math.random() * w * 0.75 + w * 0.15,
+              y: Math.random() * h * 0.45,
+              vx: -(9 + Math.random() * 6),
+              vy: 4 + Math.random() * 3,
+              life: 1
+            });
+          }
+          for (let i = bgShoots.length - 1; i >= 0; i--) {
+            const st = bgShoots[i];
+            st.x += st.vx;
+            st.y += st.vy;
+            st.life -= 0.035;
+            if (st.life <= 0) { bgShoots.splice(i, 1); continue; }
+            const tail = ctx.createLinearGradient(st.x, st.y, st.x - st.vx * 5, st.y - st.vy * 5);
+            tail.addColorStop(0, `rgba(255, 255, 255, ${st.life})`);
+            tail.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.strokeStyle = tail;
+            ctx.lineWidth = 1.6;
             ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(224, 240, 255, ${s.a})`;
+            ctx.moveTo(st.x, st.y);
+            ctx.lineTo(st.x - st.vx * 5, st.y - st.vy * 5);
+            ctx.stroke();
+          }
+        }
+
+        if (mode === 'lunar-space') {
+          const mx = w * 0.78 - bgMouseX * 14;
+          const my = h * 0.24 - bgMouseY * 10 + Math.sin(tSec * 0.4) * 5;
+          const mr = Math.max(36, Math.min(68, w * 0.048));
+          const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3.1);
+          halo.addColorStop(0, 'rgba(215, 228, 255, 0.24)');
+          halo.addColorStop(0.5, 'rgba(147, 197, 253, 0.07)');
+          halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(mx, my, mr * 3.1, 0, Math.PI * 2);
+          ctx.fill();
+
+          const moonGrad = ctx.createRadialGradient(mx - mr * 0.35, my - mr * 0.35, mr * 0.1, mx, my, mr);
+          moonGrad.addColorStop(0, '#f8fafc');
+          moonGrad.addColorStop(0.68, '#cbd5e1');
+          moonGrad.addColorStop(1, '#475569');
+          ctx.fillStyle = moonGrad;
+          ctx.beginPath();
+          ctx.arc(mx, my, mr, 0, Math.PI * 2);
+          ctx.fill();
+
+          for (const c of MOON_CRATERS) {
+            ctx.fillStyle = `rgba(30, 41, 59, ${c.a})`;
+            ctx.beginPath();
+            ctx.arc(mx + c.dx * mr, my + c.dy * mr, c.r * mr, 0, Math.PI * 2);
             ctx.fill();
           }
-        } else if (mode === 'frutiger-aero') {
-          for (const b of bgBubbles) {
-            b.y -= b.vy;
-            b.drift += 0.015;
-            const bx = b.x + Math.sin(b.drift) * 14;
-            if (b.y < -b.r * 2) {
-              b.y = h + b.r * 2;
-              b.x = Math.random() * w;
-            }
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(bx, b.y, b.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(186, 230, 253, ${b.a * 0.55})`;
-            ctx.fill();
-            ctx.lineWidth = 1.2;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${b.a * 1.4})`;
-            ctx.stroke();
 
+          // Orbiting tiny satellite
+          const ang = tSec * 0.65;
+          const ox = mx + Math.cos(ang) * (mr * 1.65);
+          const oy = my + Math.sin(ang) * (mr * 0.55);
+          ctx.fillStyle = '#e0f2fe';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (mode === 'solar-eclipse') {
+          const ex = w * 0.5 - bgMouseX * 12;
+          const ey = h * 0.32 - bgMouseY * 10;
+          const er = Math.max(46, Math.min(82, w * 0.06));
+          const corona = ctx.createRadialGradient(ex, ey, er * 0.9, ex, ey, er * 3.4);
+          corona.addColorStop(0, 'rgba(255, 237, 213, 0.92)');
+          corona.addColorStop(0.18, 'rgba(251, 146, 60, 0.45)');
+          corona.addColorStop(0.55, 'rgba(220, 38, 38, 0.12)');
+          corona.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = corona;
+          ctx.beginPath();
+          ctx.arc(ex, ey, er * 3.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#030306';
+          ctx.beginPath();
+          ctx.arc(ex, ey, er, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Diamond ring flare tracking cursor slightly
+          const flAng = -0.65 + bgMouseX * 0.25;
+          const fx = ex + Math.cos(flAng) * er;
+          const fy = ey + Math.sin(flAng) * er;
+          const flare = ctx.createRadialGradient(fx, fy, 0, fx, fy, er * 0.55);
+          flare.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+          flare.addColorStop(0.35, 'rgba(253, 186, 116, 0.45)');
+          flare.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = flare;
+          ctx.beginPath();
+          ctx.arc(fx, fy, er * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (mode === 'saturn-cosmos') {
+          const px = w * 0.76 - bgMouseX * 16;
+          const py = h * 0.28 - bgMouseY * 12 + Math.sin(tSec * 0.45) * 6;
+          const pr = Math.max(34, Math.min(62, w * 0.044));
+          const tilt = -0.32 + bgMouseY * 0.05;
+
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(tilt);
+          // Back ring half
+          ctx.strokeStyle = 'rgba(196, 181, 253, 0.38)';
+          ctx.lineWidth = pr * 0.28;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, pr * 2.1, pr * 0.52, 0, Math.PI, Math.PI * 2);
+          ctx.stroke();
+
+          // Planet sphere
+          const pg = ctx.createRadialGradient(-pr * 0.35, -pr * 0.3, pr * 0.1, 0, 0, pr);
+          pg.addColorStop(0, '#e0e7ff');
+          pg.addColorStop(0.55, '#818cf8');
+          pg.addColorStop(1, '#1e1b4b');
+          ctx.fillStyle = pg;
+          ctx.beginPath();
+          ctx.arc(0, 0, pr, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Front ring half
+          ctx.strokeStyle = 'rgba(221, 214, 254, 0.55)';
+          ctx.lineWidth = pr * 0.24;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, pr * 2.1, pr * 0.52, 0, 0, Math.PI);
+          ctx.stroke();
+          ctx.restore();
+        } else if (mode === 'black-hole') {
+          const bx = w * 0.5 - bgMouseX * 14;
+          const by = h * 0.36 - bgMouseY * 10;
+          const br = Math.max(36, Math.min(64, w * 0.046));
+          for (let ring = 0; ring < 3; ring++) {
+            const rad = br * (1.55 + ring * 0.48);
+            ctx.save();
+            ctx.translate(bx, by);
+            ctx.rotate(tSec * (0.35 - ring * 0.08) + bgMouseX * 0.15);
+            ctx.strokeStyle = ring === 0 ? 'rgba(251, 191, 36, 0.55)' : 'rgba(249, 115, 22, 0.22)';
+            ctx.lineWidth = 4 - ring;
             ctx.beginPath();
-            ctx.arc(bx - b.r * 0.34, b.y - b.r * 0.34, Math.max(2, b.r * 0.22), 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.65, b.a * 2.2)})`;
-            ctx.fill();
+            ctx.ellipse(0, 0, rad * 1.65, rad * 0.45, -0.25, 0, Math.PI * 2);
+            ctx.stroke();
             ctx.restore();
           }
-        } else if (mode === 'grid') {
-          ctx.fillStyle = '#04050a';
-          ctx.fillRect(0, 0, w, h);
-          const horizon = h * 0.46;
-          bgGridOffset = (bgGridOffset + 0.6) % 44;
+          const bhGlow = ctx.createRadialGradient(bx, by, br * 0.85, bx, by, br * 1.9);
+          bhGlow.addColorStop(0, '#000');
+          bhGlow.addColorStop(0.52, '#000');
+          bhGlow.addColorStop(0.62, 'rgba(251, 191, 36, 0.65)');
+          bhGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = bhGlow;
+          ctx.beginPath();
+          ctx.arc(bx, by, br * 1.9, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (mode === 'constellation') {
+          const mxAbs = (bgMouseX * 0.5 + 0.5) * w;
+          const myAbs = (bgMouseY * 0.5 + 0.5) * h;
+          for (let i = 0; i < bgNodes.length; i++) {
+            const a = bgNodes[i];
+            a.x += a.vx; a.y += a.vy;
+            if (a.x < 0 || a.x > w) a.vx *= -1;
+            if (a.y < 0 || a.y > h) a.vy *= -1;
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.85)';
+            ctx.beginPath();
+            ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+            ctx.fill();
 
+            const mdx = a.x - mxAbs, mdy = a.y - myAbs;
+            const mdist = mdx * mdx + mdy * mdy;
+            if (mdist < 26000) {
+              ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - mdist / 26000) * 0.45})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(mxAbs, myAbs); ctx.stroke();
+            }
+            for (let j = i + 1; j < bgNodes.length; j++) {
+              const b = bgNodes[j];
+              const dx = a.x - b.x, dy = a.y - b.y;
+              const d2 = dx * dx + dy * dy;
+              if (d2 < 17000) {
+                ctx.strokeStyle = `rgba(147, 197, 253, ${(1 - d2 / 17000) * 0.22})`;
+                ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+              }
+            }
+          }
+        } else if (mode === 'grid') {
+          const horizon = h * 0.48;
+          bgGridOffset = (bgGridOffset + 0.65) % 44;
           const glow = ctx.createRadialGradient(w * 0.5, horizon, 10, w * 0.5, horizon, w * 0.52);
-          glow.addColorStop(0, 'rgba(147, 197, 253, 0.22)');
+          glow.addColorStop(0, 'rgba(147, 197, 253, 0.2)');
           glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
           ctx.fillStyle = glow;
-          ctx.fillRect(0, 0, w, h);
+          ctx.fillRect(0, horizon * 0.6, w, h - horizon * 0.6);
 
           ctx.strokeStyle = 'rgba(190, 220, 255, 0.14)';
           ctx.lineWidth = 1;
-          for (let i = -14; i <= 14; i++) {
+          for (let i = -12; i <= 12; i++) {
             ctx.beginPath();
-            ctx.moveTo(w * 0.5 + i * 26, horizon);
+            ctx.moveTo(w * 0.5 + i * 26 - bgMouseX * 10, horizon);
             ctx.lineTo(w * 0.5 + i * 185, h);
             ctx.stroke();
           }
@@ -9499,8 +9710,6 @@
             ctx.stroke();
           }
         }
-
-        bgCanvasAnimId = requestAnimationFrame(renderFrame);
       }
 
       bgCanvasAnimId = requestAnimationFrame(renderFrame);
@@ -9614,27 +9823,23 @@
       return isLowSpecClient();
     }
 
+    function resolveSpaceThemeKey(raw) {
+      if (WALLPAPER_NAMES[raw]) return raw;
+      return 'lunar-space';
+    }
+
     function syncBackgroundMediaPower(homeVisible) {
       if (typeof homeVisible === 'boolean') astraHomeMediaActive = homeVisible;
-      const lite = isLiteGraphicsEnabled();
       const hiddenTab = typeof document !== 'undefined' && !!document.hidden;
-      const shouldAnimate = astraHomeMediaActive && !lite && !hiddenTab;
-      if (!shouldAnimate) {
+      const wp = resolveSpaceThemeKey(astraSettings.wallpaper);
+      if (!astraHomeMediaActive || hiddenTab || wp === 'void') {
         if (bgVideo && typeof bgVideo.pause === 'function' && !bgVideo.paused) {
           try { bgVideo.pause(); } catch {}
         }
         stopCanvasWallpaper();
         return;
       }
-      const wp = astraSettings.wallpaper || 'silk';
-      if (bgVideo && (THEME_VIDEO_SRCS[wp] || (wp === 'custom' && bgVideo.style.display !== 'none'))) {
-        if (bgVideo.paused && typeof bgVideo.play === 'function') {
-          Promise.resolve(bgVideo.play()).catch(() => {});
-        }
-      }
-      if (wp === 'starfield' || wp === 'grid' || wp === 'frutiger-aero') {
-        startCanvasWallpaper(wp);
-      }
+      startCanvasWallpaper(wp);
     }
 
     if (typeof document !== 'undefined' && document.addEventListener) {
@@ -9643,90 +9848,26 @@
 
     function applyWallpaper() {
       const lite = isLiteGraphicsEnabled();
+      const wp = resolveSpaceThemeKey(astraSettings.wallpaper);
+      if (wp !== astraSettings.wallpaper) astraSettings.wallpaper = wp;
       if (document.body && document.body.classList) {
         document.body.classList.toggle('lite-gfx', lite);
-      }
-      if (lite) {
-        if (document.body && document.body.classList) {
-          document.body.classList.toggle('theme-frutiger-aero', false);
-        }
-        stopCanvasWallpaper();
-        if (bgVideo) {
-          try { bgVideo.pause(); } catch {}
-          bgVideo.style.display = 'none';
-        }
-        if (bgCustomImg) bgCustomImg.style.display = 'none';
-        if (bgGradientLayer) bgGradientLayer.className = 'bg-gradient-layer';
-        const pal = THEME_PRESET_PALETTES[astraSettings.wallpaper || 'silk'] || THEME_PRESET_PALETTES.silk;
-        if (pal && typeof setAccentRgb === 'function') setAccentRgb(pal.accent, pal.soft);
-        return;
-      }
-      const wp = astraSettings.wallpaper || 'silk';
-      if (document.body && document.body.classList) {
-        document.body.classList.toggle('theme-frutiger-aero', wp === 'frutiger-aero');
-      }
-      if (bgWallpaperWrap) {
-        const bright = Math.max(30, Math.min(100, Number(astraSettings.brightness) || 90));
-        const userBlur = Math.max(0, Math.min(16, Number(astraSettings.blur) || 0));
-        // Automatically apply smooth aesthetic blur on low-res Backrooms video & subtle contrast boost across themes
-        const blurPx = wp === 'backrooms' ? Math.max(5, userBlur + 5) : userBlur;
-        bgWallpaperWrap.style.filter = wp === 'backrooms'
-          ? `brightness(${bright / 100}) blur(${blurPx}px) contrast(1.06)`
-          : `brightness(${bright / 100}) blur(${blurPx}px)`;
-      }
-      if (bgGradientLayer) {
-        bgGradientLayer.className = 'bg-gradient-layer';
-      }
-      if (bgCustomImg) {
-        bgCustomImg.style.display = 'none';
+        document.body.classList.toggle('theme-frutiger-aero', false);
       }
       if (bgVideo) {
-        bgVideo.style.opacity = '1';
+        try { bgVideo.pause(); } catch {}
+        bgVideo.style.display = 'none';
       }
-      stopCanvasWallpaper();
-
-      if (wp === 'custom' && (astraSettings.customWallpaperUrl || activeLocalObjectUrl)) {
-        const customUrl = activeLocalObjectUrl || astraSettings.customWallpaperUrl;
-        const isVid = !!astraSettings.customWallpaperIsVideo || /\.(mp4|webm|ogg)(\?|$)/i.test(customUrl) || /^data:video\//i.test(customUrl);
-        if (isVid && bgVideo) {
-          bgVideo.style.display = 'block';
-          if (bgVideo.src !== customUrl) {
-            bgVideo.src = customUrl;
-            if (typeof bgVideo.load === 'function') bgVideo.load();
-          }
-          if (typeof bgVideo.play === 'function') Promise.resolve(bgVideo.play()).catch(() => {});
-        } else if (bgCustomImg) {
-          if (bgVideo) bgVideo.style.display = 'none';
-          bgCustomImg.src = customUrl;
-          bgCustomImg.style.display = 'block';
-        }
-      } else if (THEME_VIDEO_SRCS[wp]) {
-        const videoSrc = THEME_VIDEO_SRCS[wp];
-        if (bgVideo) {
-          bgVideo.style.display = 'block';
-          const currentAttr = bgVideo.getAttribute('src') || '';
-          const childSrcEl = typeof bgVideo.querySelector === 'function' ? bgVideo.querySelector('source') : null;
-          const activeSrc = currentAttr || (childSrcEl ? childSrcEl.getAttribute('src') : '');
-          if (activeSrc !== videoSrc) {
-            bgVideo.src = videoSrc;
-            if (typeof bgVideo.load === 'function') bgVideo.load();
-          }
-          if (typeof bgVideo.play === 'function') Promise.resolve(bgVideo.play()).catch(() => {});
-        }
-        if (wp === 'frutiger-aero') {
-          startCanvasWallpaper('frutiger-aero');
-        }
-      } else if (wp === 'starfield' || wp === 'grid') {
-        if (bgVideo) bgVideo.style.display = 'none';
-        startCanvasWallpaper(wp);
-      } else {
-        if (bgVideo) bgVideo.style.display = 'none';
-        if (bgGradientLayer) {
-          bgGradientLayer.classList.add(`theme-${wp === 'aurora' || wp === 'eclipse' || wp === 'void' ? wp : 'void'}`);
-        }
+      if (bgCustomImg) bgCustomImg.style.display = 'none';
+      if (bgGradientLayer) bgGradientLayer.className = 'bg-gradient-layer';
+      if (bgWallpaperWrap) {
+        const bright = Math.max(30, Math.min(100, Number(astraSettings.brightness) || 90));
+        const userBlur = lite ? 0 : Math.max(0, Math.min(16, Number(astraSettings.blur) || 0));
+        bgWallpaperWrap.style.filter = `brightness(${bright / 100}) blur(${userBlur}px)`;
       }
-
-      autoDetectThemePalette();
+      const pal = THEME_PRESET_PALETTES[wp] || THEME_PRESET_PALETTES['lunar-space'];
+      if (pal && typeof setAccentRgb === 'function') setAccentRgb(pal.accent, pal.soft, pal.name);
+      syncBackgroundMediaPower();
     }
 
     function applyTabCloak() {
@@ -9770,7 +9911,7 @@
       const eng = astraSettings.engine === 'ultraviolet' ? 'ultraviolet' : 'scramjet';
       astraSettings.engine = eng;
       const engineName = eng === 'ultraviolet' ? 'ultraviolet (uv)' : 'scramjet';
-      const wpName = WALLPAPER_NAMES[astraSettings.wallpaper] || 'black silk waves';
+      const wpName = WALLPAPER_NAMES[astraSettings.wallpaper] || 'lunar orbit';
 
       if (footerEngineStatusText) {
         footerEngineStatusText.textContent = eng;
