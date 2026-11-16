@@ -2515,39 +2515,43 @@
 
     .swatch-lunar-space {
       background:
-        radial-gradient(circle at 74% 34%, #f8fafc 0%, #cbd5e1 16%, rgba(148,163,184,0.22) 26%, transparent 46%),
-        radial-gradient(1.5px 1.5px at 22% 30%, #fff, transparent),
-        radial-gradient(1.5px 1.5px at 42% 70%, #dbeafe, transparent),
-        radial-gradient(1px 1px at 14% 72%, #fff, transparent),
-        linear-gradient(150deg, #020308, #070b18);
+        url('/assets/themes/lunar-moon.jpg') center/cover no-repeat,
+        #020308;
     }
 
     .swatch-starfield {
-      background: radial-gradient(1.5px 1.5px at 22% 30%, #fff, transparent),
-                  radial-gradient(1.5px 1.5px at 68% 24%, #dbeafe, transparent),
-                  radial-gradient(2px 2px at 45% 65%, #fff, transparent),
-                  radial-gradient(1px 1px at 82% 72%, #93c5fd, transparent),
-                  linear-gradient(160deg, #03040a, #090e1c);
+      background:
+        radial-gradient(1.5px 1.5px at 22% 30%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 68% 24%, #dbeafe, transparent),
+        radial-gradient(2px 2px at 45% 65%, #fff, transparent),
+        url('/assets/themes/milky-way.jpg') center/cover no-repeat,
+        #03040a;
     }
 
     .swatch-solar-eclipse {
-      background: radial-gradient(circle at 50% 50%, #050508 26%, rgba(251,146,60,0.85) 33%, rgba(239,68,68,0.28) 54%, #040408 82%);
+      background:
+        url('/assets/themes/solar-eclipse.jpg') center/cover no-repeat,
+        #040408;
     }
 
     .swatch-saturn-cosmos {
-      background: radial-gradient(ellipse 68% 18% at 50% 52%, transparent 32%, rgba(196,181,253,0.55) 45%, transparent 62%),
-                  radial-gradient(circle at 50% 52%, #e0e7ff 0%, #818cf8 22%, transparent 25%),
-                  linear-gradient(155deg, #050410, #0d0b21);
+      background:
+        url('/assets/themes/saturn-cosmos.jpg') center/cover no-repeat,
+        #050410;
     }
 
     .swatch-black-hole {
-      background: radial-gradient(circle at 50% 50%, #000 22%, rgba(251,191,36,0.85) 30%, rgba(249,115,22,0.28) 50%, #040307 78%);
+      background:
+        url('/assets/themes/black-hole.jpg') center/cover no-repeat,
+        #040307;
     }
 
     .swatch-constellation {
-      background: radial-gradient(circle at 25% 30%, rgba(56,189,248,0.42), transparent 55%),
-                  radial-gradient(circle at 75% 70%, rgba(129,140,248,0.38), transparent 55%),
-                  #040712;
+      background:
+        radial-gradient(circle at 25% 30%, rgba(56,189,248,0.38), transparent 55%),
+        radial-gradient(circle at 75% 70%, rgba(129,140,248,0.34), transparent 55%),
+        url('/assets/themes/milky-way.jpg') center/cover no-repeat,
+        #040712;
     }
 
     .swatch-grid {
@@ -9536,16 +9540,38 @@
       return `${proxyOrigin}/scramjet/${encodeURIComponent(cleanUrl)}`;
     }
 
-    // Interactive Procedural Code Space Themes (Moon, Eclipse, Saturn, Black Hole, Constellations, Starfield, Orbital Grid)
+    // Interactive Textured Space Themes (Photorealistic Moon, Solar Eclipse, Saturn, Black Hole, Milky Way Starfield, Constellations, Orbital Grid)
     let bgCanvasAnimId = null;
     let bgStars = [];
     let bgShoots = [];
     let bgNodes = [];
+    let bgEmbers = [];
     let bgGridOffset = 0;
     let bgMouseX = 0;
     let bgMouseY = 0;
     let bgMouseTargetX = 0;
     let bgMouseTargetY = 0;
+
+    const ASTRA_SPACE_TEXTURE_URLS = {
+      moon: '/assets/themes/lunar-moon.jpg',
+      milky: '/assets/themes/milky-way.jpg',
+      saturn: '/assets/themes/saturn-cosmos.jpg',
+      eclipse: '/assets/themes/solar-eclipse.jpg',
+      blackhole: '/assets/themes/black-hole.jpg'
+    };
+    const astraSpaceImgCache = {};
+    function getSpaceTexture(key) {
+      const url = ASTRA_SPACE_TEXTURE_URLS[key];
+      if (!url || typeof Image === 'undefined') return null;
+      if (!astraSpaceImgCache[key]) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = url;
+        astraSpaceImgCache[key] = img;
+      }
+      const entry = astraSpaceImgCache[key];
+      return (entry && entry.complete && entry.naturalWidth > 0) ? entry : null;
+    }
 
     if (typeof window !== 'undefined' && window.addEventListener) {
       window.addEventListener('pointermove', (e) => {
@@ -9573,47 +9599,69 @@
       if (!ctx) return;
       bgCanvas.style.display = 'block';
 
+      // Preload actual space textures needed for the active theme
+      if (mode !== 'grid') getSpaceTexture('milky');
+      if (mode === 'lunar-space') getSpaceTexture('moon');
+      else if (mode === 'saturn-cosmos') getSpaceTexture('saturn');
+      else if (mode === 'solar-eclipse') getSpaceTexture('eclipse');
+      else if (mode === 'black-hole') getSpaceTexture('blackhole');
+
       const resize = () => {
         bgCanvas.width = window.innerWidth || 1280;
         bgCanvas.height = window.innerHeight || 720;
       };
       resize();
 
-      const starCount = mode === 'starfield' ? 120 : (mode === 'constellation' ? 50 : 95);
-      bgStars = Array.from({ length: starCount }, () => ({
-        x: Math.random() * bgCanvas.width,
-        y: Math.random() * bgCanvas.height,
-        r: Math.random() * 1.45 + 0.3,
-        z: Math.random() * 0.8 + 0.2,
-        a: Math.random() * 0.65 + 0.25,
-        tw: Math.random() * Math.PI * 2,
-        twSpeed: Math.random() * 0.04 + 0.015
-      }));
-      bgShoots = [];
-      if (mode === 'constellation') {
-        bgNodes = Array.from({ length: 44 }, () => ({
+      const lite = (typeof isLiteGraphicsEnabled === 'function' && isLiteGraphicsEnabled());
+      const starCount = mode === 'starfield'
+        ? (lite ? 240 : 580)
+        : (mode === 'constellation' ? (lite ? 150 : 320) : (mode === 'grid' ? (lite ? 80 : 180) : (lite ? 210 : 440)));
+
+      bgStars = Array.from({ length: starCount }, () => {
+        const roll = Math.random();
+        const isHero = roll > 0.945;
+        const isMid = !isHero && roll > 0.68;
+        const tintRoll = Math.random();
+        const tint = tintRoll < 0.76 ? '236, 243, 255' : (tintRoll < 0.91 ? '176, 214, 255' : '255, 228, 196');
+        return {
           x: Math.random() * bgCanvas.width,
           y: Math.random() * bgCanvas.height,
-          vx: (Math.random() - 0.5) * 0.35,
-          vy: (Math.random() - 0.5) * 0.35,
+          r: isHero ? (Math.random() * 0.75 + 1.45) : (isMid ? (Math.random() * 0.65 + 0.85) : (Math.random() * 0.5 + 0.32)),
+          z: isHero ? (Math.random() * 0.4 + 0.7) : (Math.random() * 0.8 + 0.15),
+          a: isHero ? (Math.random() * 0.25 + 0.72) : (isMid ? (Math.random() * 0.4 + 0.4) : (Math.random() * 0.4 + 0.16)),
+          tw: Math.random() * Math.PI * 2,
+          twSpeed: Math.random() * 0.055 + 0.014,
+          spike: isHero,
+          tint
+        };
+      });
+      bgShoots = [];
+      bgEmbers = mode === 'black-hole'
+        ? Array.from({ length: lite ? 14 : 30 }, () => ({
+            ang: Math.random() * Math.PI * 2,
+            dist: 1.05 + Math.random() * 0.95,
+            speed: 0.35 + Math.random() * 0.55,
+            r: 0.8 + Math.random() * 1.4,
+            a: 0.35 + Math.random() * 0.55
+          }))
+        : [];
+      if (mode === 'constellation') {
+        bgNodes = Array.from({ length: 48 }, () => ({
+          x: Math.random() * bgCanvas.width,
+          y: Math.random() * bgCanvas.height,
+          vx: (Math.random() - 0.5) * 0.34,
+          vy: (Math.random() - 0.5) * 0.34,
           r: Math.random() * 1.8 + 0.9
         }));
       }
-
-      const MOON_CRATERS = [
-        { dx: -0.28, dy: -0.18, r: 0.14, a: 0.18 },
-        { dx: 0.16, dy: 0.22, r: 0.19, a: 0.16 },
-        { dx: -0.08, dy: 0.32, r: 0.09, a: 0.14 },
-        { dx: 0.26, dy: -0.24, r: 0.1, a: 0.12 },
-        { dx: -0.34, dy: 0.14, r: 0.07, a: 0.15 }
-      ];
 
       let lastDrawMs = 0;
       let tSec = 0;
 
       function renderFrame(nowMs) {
         bgCanvasAnimId = requestAnimationFrame(renderFrame);
-        const minStep = (typeof isLiteGraphicsEnabled === 'function' && isLiteGraphicsEnabled()) ? 42 : 30;
+        const isLite = (typeof isLiteGraphicsEnabled === 'function' && isLiteGraphicsEnabled());
+        const minStep = isLite ? 42 : 30;
         if (nowMs - lastDrawMs < minStep) return;
         const dt = Math.min(0.08, lastDrawMs ? (nowMs - lastDrawMs) / 1000 : 0.033);
         lastDrawMs = nowMs;
@@ -9627,52 +9675,68 @@
         bgMouseX += (bgMouseTargetX - bgMouseX) * 0.06;
         bgMouseY += (bgMouseTargetY - bgMouseY) * 0.06;
 
-        ctx.fillStyle = '#030408';
+        ctx.fillStyle = '#020307';
         ctx.fillRect(0, 0, w, h);
 
-        // Subtle diagonal Milky Way cosmic haze common across space scenes
+        // Actual deep-space Milky Way dust texture across cosmos themes (additive screen blend on #020307)
         if (mode !== 'grid') {
-          const mw = ctx.createLinearGradient(0, h, w, 0);
-          if (mode === 'saturn-cosmos') {
-            mw.addColorStop(0, 'rgba(30, 27, 75, 0.25)');
-            mw.addColorStop(0.5, 'rgba(88, 28, 135, 0.14)');
-            mw.addColorStop(1, 'rgba(2, 3, 8, 0)');
-          } else if (mode === 'solar-eclipse' || mode === 'black-hole') {
-            mw.addColorStop(0, 'rgba(67, 20, 7, 0.2)');
-            mw.addColorStop(0.5, 'rgba(24, 10, 8, 0.1)');
-            mw.addColorStop(1, 'rgba(2, 3, 8, 0)');
+          const milkyImg = getSpaceTexture('milky');
+          if (milkyImg) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = mode === 'starfield' ? 0.68 : (mode === 'solar-eclipse' || mode === 'black-hole' ? 0.32 : 0.46);
+            const padW = w * 1.08;
+            const padH = h * 1.08;
+            const ox = -w * 0.04 - bgMouseX * 8;
+            const oy = -h * 0.04 - bgMouseY * 6;
+            ctx.drawImage(milkyImg, ox, oy, padW, padH);
+            ctx.restore();
           } else {
+            const mw = ctx.createLinearGradient(0, h, w, 0);
             mw.addColorStop(0, 'rgba(20, 28, 52, 0.16)');
-            mw.addColorStop(0.45, 'rgba(120, 145, 195, 0.06)');
-            mw.addColorStop(1, 'rgba(3, 4, 8, 0)');
+            mw.addColorStop(0.5, 'rgba(100, 125, 175, 0.06)');
+            mw.addColorStop(1, 'rgba(2, 3, 7, 0)');
+            ctx.fillStyle = mw;
+            ctx.fillRect(0, 0, w, h);
           }
-          ctx.fillStyle = mw;
-          ctx.fillRect(0, 0, w, h);
         }
 
-        // Parallax twinkling stars
-        const pxScale = mode === 'black-hole' ? 10 : 18;
+        // Multi-scale parallax twinkling starfield + 4-point diffraction hero stars
+        const pxScale = mode === 'black-hole' ? 12 : 22;
+        const starCeiling = mode === 'grid' ? h * 0.48 : h + 4;
         for (const s of bgStars) {
           s.tw += s.twSpeed;
-          s.y -= (0.08 + s.z * 0.14);
-          if (s.y < -4) { s.y = h + 4; s.x = Math.random() * w; }
+          s.y -= (0.06 + s.z * 0.15);
+          if (s.y < -4) { s.y = starCeiling; s.x = Math.random() * w; }
+          if (mode === 'grid' && s.y > h * 0.48) s.y = Math.random() * h * 0.47;
           const sx = (s.x + bgMouseX * pxScale * s.z + w) % w;
-          const sy = (s.y + bgMouseY * pxScale * s.z + h) % h;
-          const alpha = Math.max(0.15, Math.min(1, s.a + Math.sin(s.tw) * 0.22));
-          ctx.fillStyle = `rgba(232, 240, 255, ${alpha.toFixed(2)})`;
+          const sy = mode === 'grid' ? s.y : (s.y + bgMouseY * pxScale * s.z + h) % h;
+          const alpha = Math.max(0.12, Math.min(1, s.a + Math.sin(s.tw) * 0.24));
+          ctx.fillStyle = `rgba(${s.tint}, ${alpha.toFixed(2)})`;
           ctx.beginPath();
           ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
           ctx.fill();
+          if (s.spike && alpha > 0.58) {
+            const spLen = s.r * 3.1;
+            ctx.strokeStyle = `rgba(${s.tint}, ${(alpha * 0.42).toFixed(2)})`;
+            ctx.lineWidth = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(sx - spLen, sy); ctx.lineTo(sx + spLen, sy);
+            ctx.moveTo(sx, sy - spLen); ctx.lineTo(sx, sy + spLen);
+            ctx.stroke();
+          }
         }
 
-        // Occasional shooting stars in lunar-space & starfield
-        if (mode === 'lunar-space' || mode === 'starfield') {
-          if (bgShoots.length < 2 && Math.random() < 0.014) {
+        // Crisp meteor / shooting star streaks across deep space scenes
+        if (mode === 'lunar-space' || mode === 'starfield' || mode === 'saturn-cosmos' || mode === 'constellation') {
+          const shootChance = mode === 'starfield' ? 0.03 : 0.02;
+          const maxShoots = mode === 'starfield' ? 3 : 2;
+          if (bgShoots.length < maxShoots && Math.random() < shootChance) {
             bgShoots.push({
-              x: Math.random() * w * 0.75 + w * 0.15,
-              y: Math.random() * h * 0.45,
-              vx: -(9 + Math.random() * 6),
-              vy: 4 + Math.random() * 3,
+              x: Math.random() * w * 0.78 + w * 0.18,
+              y: Math.random() * h * 0.42,
+              vx: -(9 + Math.random() * 7),
+              vy: 3.5 + Math.random() * 3.5,
               life: 1
             });
           }
@@ -9680,146 +9744,147 @@
             const st = bgShoots[i];
             st.x += st.vx;
             st.y += st.vy;
-            st.life -= 0.035;
+            st.life -= 0.032;
             if (st.life <= 0) { bgShoots.splice(i, 1); continue; }
-            const tail = ctx.createLinearGradient(st.x, st.y, st.x - st.vx * 5, st.y - st.vy * 5);
+            const tail = ctx.createLinearGradient(st.x, st.y, st.x - st.vx * 6, st.y - st.vy * 6);
             tail.addColorStop(0, `rgba(255, 255, 255, ${st.life})`);
-            tail.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            tail.addColorStop(1, 'rgba(200, 224, 255, 0)');
             ctx.strokeStyle = tail;
-            ctx.lineWidth = 1.6;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(st.x, st.y);
-            ctx.lineTo(st.x - st.vx * 5, st.y - st.vy * 5);
+            ctx.lineTo(st.x - st.vx * 6, st.y - st.vy * 6);
             ctx.stroke();
           }
         }
 
         if (mode === 'lunar-space') {
-          const mx = w * 0.85 - bgMouseX * 14;
-          const my = h * 0.19 - bgMouseY * 10 + Math.sin(tSec * 0.4) * 5;
-          const mr = Math.max(36, Math.min(68, w * 0.048));
-          const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3.1);
-          halo.addColorStop(0, 'rgba(215, 228, 255, 0.24)');
-          halo.addColorStop(0.5, 'rgba(147, 197, 253, 0.07)');
-          halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = halo;
+          const drawSize = Math.max(170, Math.min(260, w * 0.19));
+          const mr = drawSize * 0.312;
+          const mx = w * 0.86 - bgMouseX * 14;
+          const my = h * 0.21 - bgMouseY * 10 + Math.sin(tSec * 0.38) * 4;
+
+          // Subtle orbital path + micro satellite around the textured Moon
+          ctx.save();
+          ctx.strokeStyle = 'rgba(200, 220, 255, 0.08)';
+          ctx.lineWidth = 0.8;
           ctx.beginPath();
-          ctx.arc(mx, my, mr * 3.1, 0, Math.PI * 2);
+          ctx.ellipse(mx, my, mr * 1.55, mr * 0.46, -0.22, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // Opaque dark lunar backing disc so background stars do not bleed through the Moon surface
+          ctx.fillStyle = '#020307';
+          ctx.beginPath();
+          ctx.arc(mx, my, mr * 0.99, 0, Math.PI * 2);
           ctx.fill();
 
-          const moonGrad = ctx.createRadialGradient(mx - mr * 0.35, my - mr * 0.35, mr * 0.1, mx, my, mr);
-          moonGrad.addColorStop(0, '#f8fafc');
-          moonGrad.addColorStop(0.68, '#cbd5e1');
-          moonGrad.addColorStop(1, '#475569');
-          ctx.fillStyle = moonGrad;
-          ctx.beginPath();
-          ctx.arc(mx, my, mr, 0, Math.PI * 2);
-          ctx.fill();
-
-          for (const c of MOON_CRATERS) {
-            ctx.fillStyle = `rgba(30, 41, 59, ${c.a})`;
+          const moonImg = getSpaceTexture('moon');
+          if (moonImg) {
+            ctx.save();
             ctx.beginPath();
-            ctx.arc(mx + c.dx * mr, my + c.dy * mr, c.r * mr, 0, Math.PI * 2);
+            ctx.arc(mx, my, mr * 1.02, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(moonImg, mx - drawSize * 0.5, my - drawSize * 0.5, drawSize, drawSize);
+            ctx.restore();
+          } else {
+            const moonGrad = ctx.createRadialGradient(mx - mr * 0.35, my - mr * 0.35, mr * 0.1, mx, my, mr);
+            moonGrad.addColorStop(0, '#f8fafc');
+            moonGrad.addColorStop(0.68, '#cbd5e1');
+            moonGrad.addColorStop(1, '#334155');
+            ctx.fillStyle = moonGrad;
+            ctx.beginPath();
+            ctx.arc(mx, my, mr, 0, Math.PI * 2);
             ctx.fill();
           }
 
-          // Orbiting tiny satellite
+          // Gliding satellite along orbital ellipse
           const ang = tSec * 0.65;
-          const ox = mx + Math.cos(ang) * (mr * 1.65);
-          const oy = my + Math.sin(ang) * (mr * 0.55);
-          ctx.fillStyle = '#e0f2fe';
-          ctx.beginPath();
-          ctx.arc(ox, oy, 2.2, 0, Math.PI * 2);
-          ctx.fill();
+          const satTilt = -0.22;
+          const lx = Math.cos(ang) * (mr * 1.55);
+          const ly = Math.sin(ang) * (mr * 0.46);
+          const ox = mx + lx * Math.cos(satTilt) - ly * Math.sin(satTilt);
+          const oy = my + lx * Math.sin(satTilt) + ly * Math.cos(satTilt);
+          if (Math.sin(ang) > 0 || (ox - mx) * (ox - mx) + (oy - my) * (oy - my) > mr * mr) {
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.arc(ox, oy, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
         } else if (mode === 'solar-eclipse') {
-          const ex = w * 0.5 - bgMouseX * 12;
-          const ey = h * 0.32 - bgMouseY * 10;
-          const er = Math.max(46, Math.min(82, w * 0.06));
-          const corona = ctx.createRadialGradient(ex, ey, er * 0.9, ex, ey, er * 3.4);
-          corona.addColorStop(0, 'rgba(255, 237, 213, 0.92)');
-          corona.addColorStop(0.18, 'rgba(251, 146, 60, 0.45)');
-          corona.addColorStop(0.55, 'rgba(220, 38, 38, 0.12)');
-          corona.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = corona;
-          ctx.beginPath();
-          ctx.arc(ex, ey, er * 3.4, 0, Math.PI * 2);
-          ctx.fill();
+          const drawSize = Math.max(200, Math.min(300, w * 0.22));
+          const er = drawSize * 0.165;
+          const ex = w * 0.85 - bgMouseX * 12;
+          const ey = h * 0.22 - bgMouseY * 10;
 
-          ctx.fillStyle = '#030306';
+          // Pitch-black inner silhouette behind eclipsed core without covering the bright diamond-ring flare
+          ctx.fillStyle = '#020307';
           ctx.beginPath();
           ctx.arc(ex, ey, er, 0, Math.PI * 2);
           ctx.fill();
 
-          // Diamond ring flare tracking cursor slightly
-          const flAng = -0.65 + bgMouseX * 0.25;
-          const fx = ex + Math.cos(flAng) * er;
-          const fy = ey + Math.sin(flAng) * er;
-          const flare = ctx.createRadialGradient(fx, fy, 0, fx, fy, er * 0.55);
-          flare.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-          flare.addColorStop(0.35, 'rgba(253, 186, 116, 0.45)');
-          flare.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = flare;
-          ctx.beginPath();
-          ctx.arc(fx, fy, er * 0.55, 0, Math.PI * 2);
-          ctx.fill();
+          const eclipseImg = getSpaceTexture('eclipse');
+          if (eclipseImg) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            ctx.drawImage(eclipseImg, ex - drawSize * 0.5, ey - drawSize * 0.5, drawSize, drawSize);
+            ctx.restore();
+          }
         } else if (mode === 'saturn-cosmos') {
-          const px = w * 0.76 - bgMouseX * 16;
-          const py = h * 0.28 - bgMouseY * 12 + Math.sin(tSec * 0.45) * 6;
-          const pr = Math.max(34, Math.min(62, w * 0.044));
-          const tilt = -0.32 + bgMouseY * 0.05;
+          const drawSize = Math.max(200, Math.min(295, w * 0.22));
+          const px = w * 0.85 - bgMouseX * 16;
+          const py = h * 0.22 - bgMouseY * 12 + Math.sin(tSec * 0.42) * 5;
+          const rot = -0.14 + bgMouseY * 0.04;
 
           ctx.save();
           ctx.translate(px, py);
-          ctx.rotate(tilt);
-          // Back ring half
-          ctx.strokeStyle = 'rgba(196, 181, 253, 0.38)';
-          ctx.lineWidth = pr * 0.28;
+          ctx.rotate(rot);
+          // Opaque globe backing disc so stars don't shine through Saturn's cloud bands
+          ctx.fillStyle = '#020307';
           ctx.beginPath();
-          ctx.ellipse(0, 0, pr * 2.1, pr * 0.52, 0, Math.PI, Math.PI * 2);
-          ctx.stroke();
-
-          // Planet sphere
-          const pg = ctx.createRadialGradient(-pr * 0.35, -pr * 0.3, pr * 0.1, 0, 0, pr);
-          pg.addColorStop(0, '#e0e7ff');
-          pg.addColorStop(0.55, '#818cf8');
-          pg.addColorStop(1, '#1e1b4b');
-          ctx.fillStyle = pg;
-          ctx.beginPath();
-          ctx.arc(0, 0, pr, 0, Math.PI * 2);
+          ctx.arc(0, 0, drawSize * 0.185, 0, Math.PI * 2);
           ctx.fill();
-
-          // Front ring half
-          ctx.strokeStyle = 'rgba(221, 214, 254, 0.55)';
-          ctx.lineWidth = pr * 0.24;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, pr * 2.1, pr * 0.52, 0, 0, Math.PI);
-          ctx.stroke();
+          const satImg = getSpaceTexture('saturn');
+          if (satImg) {
+            ctx.globalCompositeOperation = 'screen';
+            ctx.drawImage(satImg, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
+          }
           ctx.restore();
         } else if (mode === 'black-hole') {
-          const bx = w * 0.5 - bgMouseX * 14;
-          const by = h * 0.36 - bgMouseY * 10;
-          const br = Math.max(36, Math.min(64, w * 0.046));
-          for (let ring = 0; ring < 3; ring++) {
-            const rad = br * (1.55 + ring * 0.48);
+          const drawSize = Math.max(210, Math.min(310, w * 0.23));
+          const bx = w * 0.85 - bgMouseX * 14;
+          const by = h * 0.23 - bgMouseY * 10;
+          const br = drawSize * 0.115;
+
+          // Event horizon core occlusion behind screen-blended photon ring
+          ctx.fillStyle = '#010104';
+          ctx.beginPath();
+          ctx.arc(bx, by, br, 0, Math.PI * 2);
+          ctx.fill();
+
+          const bhImg = getSpaceTexture('blackhole');
+          if (bhImg) {
             ctx.save();
-            ctx.translate(bx, by);
-            ctx.rotate(tSec * (0.35 - ring * 0.08) + bgMouseX * 0.15);
-            ctx.strokeStyle = ring === 0 ? 'rgba(251, 191, 36, 0.55)' : 'rgba(249, 115, 22, 0.22)';
-            ctx.lineWidth = 4 - ring;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, rad * 1.65, rad * 0.45, -0.25, 0, Math.PI * 2);
-            ctx.stroke();
+            ctx.globalCompositeOperation = 'screen';
+            ctx.drawImage(bhImg, bx - drawSize * 0.5, by - drawSize * 0.5, drawSize, drawSize);
             ctx.restore();
           }
-          const bhGlow = ctx.createRadialGradient(bx, by, br * 0.85, bx, by, br * 1.9);
-          bhGlow.addColorStop(0, '#000');
-          bhGlow.addColorStop(0.52, '#000');
-          bhGlow.addColorStop(0.62, 'rgba(251, 191, 36, 0.65)');
-          bhGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = bhGlow;
-          ctx.beginPath();
-          ctx.arc(bx, by, br * 1.9, 0, Math.PI * 2);
-          ctx.fill();
+
+          // Orbiting relativistic sparks around the accretion plane
+          for (const em of bgEmbers) {
+            em.ang += em.speed * dt;
+            const exOff = Math.cos(em.ang) * (br * em.dist * 2.1);
+            const eyOff = Math.sin(em.ang) * (br * em.dist * 0.56);
+            const tilt = -0.22;
+            const px = bx + exOff * Math.cos(tilt) - eyOff * Math.sin(tilt);
+            const py = by + exOff * Math.sin(tilt) + eyOff * Math.cos(tilt);
+            if (Math.sin(em.ang) > 0 || (px - bx) * (px - bx) + (py - by) * (py - by) > br * br) {
+              ctx.fillStyle = `rgba(253, 210, 140, ${em.a})`;
+              ctx.beginPath();
+              ctx.arc(px, py, em.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
         } else if (mode === 'constellation') {
           const mxAbs = (bgMouseX * 0.5 + 0.5) * w;
           const myAbs = (bgMouseY * 0.5 + 0.5) * h;
@@ -9835,8 +9900,8 @@
 
             const mdx = a.x - mxAbs, mdy = a.y - myAbs;
             const mdist = mdx * mdx + mdy * mdy;
-            if (mdist < 26000) {
-              ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - mdist / 26000) * 0.45})`;
+            if (mdist < 28000) {
+              ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - mdist / 28000) * 0.45})`;
               ctx.lineWidth = 1;
               ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(mxAbs, myAbs); ctx.stroke();
             }
@@ -9844,8 +9909,8 @@
               const b = bgNodes[j];
               const dx = a.x - b.x, dy = a.y - b.y;
               const d2 = dx * dx + dy * dy;
-              if (d2 < 17000) {
-                ctx.strokeStyle = `rgba(147, 197, 253, ${(1 - d2 / 17000) * 0.22})`;
+              if (d2 < 17500) {
+                ctx.strokeStyle = `rgba(147, 197, 253, ${(1 - d2 / 17500) * 0.22})`;
                 ctx.lineWidth = 0.8;
                 ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
               }
