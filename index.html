@@ -6414,13 +6414,16 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span class="settings-card-badge" id="tourStepBadge">step 1 of 6</span>
           <div class="astra-tour-dots" id="tourDots"></div>
-          <button class="ext-btn" id="tourSkipBtn">skip tour</button>
+          <button class="ext-btn" id="tourSkipBtn" title="Close for now — shows again next visit">close</button>
         </div>
         <div class="astra-tour-title" id="tourStepTitle">welcome to astra.</div>
         <div class="astra-tour-body" id="tourStepBody">let's take a quick interactive look around astra!</div>
         <div class="astra-tour-hint" id="tourStepHint">tip: click the glowing area directly or press next</div>
         <div class="astra-tour-foot">
-          <button class="ext-btn" id="tourBackBtn">← back</button>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="ext-btn" id="tourBackBtn">← back</button>
+            <button class="ext-btn" id="tourNeverShowBtn" title="Save preference so this tutorial doesn't show on startup">never show again</button>
+          </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <button class="ext-btn" id="tourTryBtn" style="display:none;">try it</button>
             <button class="auth-submit-btn" id="tourNextBtn" style="width:auto;padding:8px 18px;">next →</button>
@@ -10916,6 +10919,7 @@
     const tourBackBtn = document.getElementById('tourBackBtn');
     const tourNextBtn = document.getElementById('tourNextBtn');
     const tourSkipBtn = document.getElementById('tourSkipBtn');
+    const tourNeverShowBtn = document.getElementById('tourNeverShowBtn');
 
     const adminUptimeBadge = document.getElementById('adminUptimeBadge');
     const adminMotdInput = document.getElementById('adminMotdInput');
@@ -11216,18 +11220,22 @@
       renderTourStep();
     }
 
-    async function completeKingsleyTour() {
+    async function completeKingsleyTour(neverShowAgain = false) {
       if (astraTourOverlay) astraTourOverlay.classList.remove('visible');
       const pop = document.getElementById('adBlockPopover');
       if (pop) pop.classList.remove('open');
       if (currentUser) currentUser.needsTour = false;
-      if (typeof fetch === 'function') {
+      if (neverShowAgain && typeof fetch === 'function') {
         try {
-          await fetch(`${proxyOrigin}/api/auth/tour-done`, {
+          const resp = await fetch(`${proxyOrigin}/api/auth/tour-done`, {
             method: 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ neverShowAgain: true })
           });
+          if (resp.ok && typeof showToast === 'function') {
+            showToast("saved — interactive tutorial won't show again");
+          }
         } catch {}
       }
     }
@@ -11274,13 +11282,18 @@
           tourStepIdx++;
           renderTourStep();
         } else {
-          completeKingsleyTour();
+          completeKingsleyTour(false);
         }
       });
     }
     if (tourSkipBtn) {
       tourSkipBtn.addEventListener('click', () => {
-        completeKingsleyTour();
+        completeKingsleyTour(false);
+      });
+    }
+    if (tourNeverShowBtn) {
+      tourNeverShowBtn.addEventListener('click', () => {
+        completeKingsleyTour(true);
       });
     }
 
@@ -11414,7 +11427,8 @@
             row.className = 'admin-user-row';
 
             const info = document.createElement('div');
-            info.innerHTML = `<div style="font-size:12.5px;color:#fff;font-weight:500;">${escapeHtml(u.username)} <span class="settings-card-badge">${escapeHtml(u.role)}</span></div><div style="font-size:10.5px;color:rgba(255,255,255,0.5);">name: ${escapeHtml(u.displayName || u.username)} • tour: ${u.tourCompleted ? 'done' : 'pending'}</div>`;
+            const tourLabel = u.username === 'coolbacon' ? 'exempt (coolbacon)' : (u.tourNeverShowAgain || u.tourCompleted ? 'never show' : 'shows at start');
+            info.innerHTML = `<div style="font-size:12.5px;color:#fff;font-weight:500;">${escapeHtml(u.username)} <span class="settings-card-badge">${escapeHtml(u.role)}</span></div><div style="font-size:10.5px;color:rgba(255,255,255,0.5);">name: ${escapeHtml(u.displayName || u.username)} • tour: ${tourLabel}</div>`;
 
             const actions = document.createElement('div');
             actions.style.display = 'flex';

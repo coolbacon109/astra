@@ -391,6 +391,34 @@ function saveAuthStore() {
   } catch {}
 }
 
+const TOUR_PREFS_FILE = path.join(DATA_DIR, 'tour-prefs.json');
+
+function loadTourPrefs() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(TOUR_PREFS_FILE, 'utf8'));
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+let tourPrefs = loadTourPrefs();
+
+function saveTourPrefs() {
+  try {
+    fs.writeFileSync(TOUR_PREFS_FILE, JSON.stringify(tourPrefs, null, 2), 'utf8');
+  } catch {}
+}
+
+function shouldShowUserTour(record) {
+  if (!record || !record.username) return false;
+  const uname = String(record.username).toLowerCase();
+  if (uname === 'coolbacon') return false;
+  const pref = tourPrefs[uname];
+  if (pref && pref.neverShowAgain === true) return false;
+  return record.tourNeverShowAgain !== true;
+}
+
 function signSessionToken(username) {
   const payload = Buffer.from(
     JSON.stringify({ u: username, boot: SERVER_BOOT_ID, exp: Date.now() + 1000 * 60 * 60 * 24 * 7 })
@@ -3168,8 +3196,9 @@ const server = http.createServer(async (req, res) => {
             username: record.username,
             displayName: record.displayName || record.username,
             role: record.role,
-            tourCompleted: !!record.tourCompleted,
-            needsTour: record.role !== 'admin' && !record.tourCompleted
+            tourCompleted: !shouldShowUserTour(record),
+            tourNeverShowAgain: !shouldShowUserTour(record),
+            needsTour: shouldShowUserTour(record)
           },
           serverConfig: getPublicServerConfig()
         },
@@ -3204,8 +3233,9 @@ const server = http.createServer(async (req, res) => {
         username: sessionUser.username,
         displayName: sessionUser.displayName || sessionUser.username,
         role: sessionUser.role,
-        tourCompleted: !!sessionUser.tourCompleted,
-        needsTour: sessionUser.role !== 'admin' && !sessionUser.tourCompleted
+        tourCompleted: !shouldShowUserTour(sessionUser),
+        tourNeverShowAgain: !shouldShowUserTour(sessionUser),
+        needsTour: shouldShowUserTour(sessionUser)
       },
       serverConfig: getPublicServerConfig()
     });
@@ -3215,9 +3245,17 @@ const server = http.createServer(async (req, res) => {
     if (!sessionUser) {
       return sendJson(res, 401, { ok: false, error: 'unauthorized' });
     }
-    sessionUser.tourCompleted = true;
-    saveAuthStore();
-    return sendJson(res, 200, { ok: true });
+    const body = await readJsonBody(req).catch(() => ({}));
+    const neverShowAgain = !!(body && body.neverShowAgain === true);
+    const uname = String(sessionUser.username || '').toLowerCase();
+    if (neverShowAgain && uname) {
+      tourPrefs[uname] = { neverShowAgain: true, updatedAt: Date.now() };
+      saveTourPrefs();
+      sessionUser.tourNeverShowAgain = true;
+      sessionUser.tourCompleted = true;
+      saveAuthStore();
+    }
+    return sendJson(res, 200, { ok: true, neverShowAgain, needsTour: shouldShowUserTour(sessionUser) });
   }
 
   if (pathname === '/api/roblox/status') {
@@ -3296,7 +3334,8 @@ const server = http.createServer(async (req, res) => {
         username: u.username,
         displayName: u.displayName || u.username,
         role: u.role,
-        tourCompleted: !!u.tourCompleted
+        tourCompleted: !shouldShowUserTour(u),
+        tourNeverShowAgain: !shouldShowUserTour(u)
       }));
       const uptimeSeconds = Math.floor((Date.now() - SERVER_START_MS) / 1000);
       return sendJson(res, 200, {
@@ -3345,12 +3384,17 @@ const server = http.createServer(async (req, res) => {
         if (action === 'delete') {
           if (uname === 'coolbacon') return sendJson(res, 400, { ok: false, error: 'cannot delete primary admin' });
           delete authStore.users[uname];
+          delete tourPrefs[uname];
+          saveTourPrefs();
           saveAuthStore();
           return sendJson(res, 200, { ok: true });
         }
 
         if (action === 'resetTour' || body.resetTour === true) {
           if (!authStore.users[uname]) return sendJson(res, 404, { ok: false, error: 'user not found' });
+          delete tourPrefs[uname];
+          saveTourPrefs();
+          authStore.users[uname].tourNeverShowAgain = false;
           authStore.users[uname].tourCompleted = false;
           saveAuthStore();
           return sendJson(res, 200, { ok: true });
@@ -3370,6 +3414,7 @@ const server = http.createServer(async (req, res) => {
           hash: nextCreds.hash,
           ...(existing && Array.isArray(existing.extraHashes) ? { extraHashes: existing.extraHashes } : {}),
           customPasswordSet: true,
+          tourNeverShowAgain: existing ? !!existing.tourNeverShowAgain : false,
           tourCompleted: existing ? !!existing.tourCompleted : false
         };
         saveAuthStore();
