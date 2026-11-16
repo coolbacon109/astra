@@ -598,7 +598,68 @@ const AD_HOSTS = [
   'ouo.io',
   'ouo.press',
   'adf.ly',
-  'linkvertise.com'
+  'linkvertise.com',
+  'highperformanceformat.com',
+  'profitableratecpm.com',
+  'effectivegatecpm.com',
+  'topcreativeformat.com',
+  'displayvertising.com',
+  'realsrv.com',
+  'tsyndicate.com',
+  'tsyndicate.net',
+  'mnaspm.com',
+  'rmhfrtnd.com',
+  'strpjmp.com',
+  'xlviiirdr.com',
+  'bmplv.com',
+  'alwingulla.com',
+  'nap5k.com',
+  'glizauua.net',
+  'gloaphoo.net',
+  'tzegilo.com',
+  'ouphouch.com',
+  'steepto.com',
+  'intorter.com',
+  'in-page-push.com',
+  'pemsrv.com',
+  's3xified.com',
+  'reklamstore.com',
+  'clickaine.com',
+  'trafficstars.com',
+  'traffichunt.com',
+  'plugrush.com',
+  'zeropark.com',
+  'zeroredirect1.com',
+  'adskeeper.com',
+  'adskeeper.co.uk',
+  'bidgear.com',
+  'vdo.ai',
+  'brid.tv',
+  'aniview.com',
+  'exelator.com',
+  'innovid.com',
+  'fwmrm.net',
+  'freewheel.tv',
+  'tremorhub.com',
+  'lkqd.net',
+  'beachfront.com',
+  'unrulyx.com',
+  'smartclip.net',
+  'pubnative.net',
+  'whos.amung.us',
+  'histats.com',
+  'statcounter.com',
+  'liveinternet.ru',
+  'yandexadexchange.net',
+  '1xbet.com',
+  '1win.pro',
+  'melbet.com',
+  'betwinner.com',
+  'chaturbate.com',
+  'stripchat.com',
+  'bongacams.com',
+  'livejasmin.com',
+  'camsoda.com'
 ];
 
 function loadServerConfig() {
@@ -915,7 +976,7 @@ function isBlockedAdHost(targetUrl) {
         /(?:^\/pagead\/|^\/ptracking|^\/api\/stats\/(?:ads|atr)|^\/youtubei\/v1\/player\/ad_break|^\/get_midroll_info)/i.test(u.pathname)) {
       return true;
     }
-    if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast\.xml|\/vpaid|\/adserver\/)/i.test(u.pathname)) {
+    if (/(?:\/gpt\/pubads_impl|\/pagead\/js\/adsbygoogle|\/pagead\/show_ads|\/prebid(?:[.-][^/]*)?\.js|\/popunder(?:[.-][^/]*)?\.js|\/vast(?:\d)?\.xml|\/vmap(?:\.xml)?|\/ima3(?:\.js)?|\/vpaid|\/preroll|\/ad[-_]?tag|\/adserver\/|\/onclick\.js)/i.test(u.pathname)) {
       return true;
     }
     return false;
@@ -2808,9 +2869,9 @@ const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
     '<script data-astra-frame-fix="1">(function(){try{Object.defineProperty(window,"outerWidth",{get:function(){return window.innerWidth||1280;},configurable:true});Object.defineProperty(window,"outerHeight",{get:function(){return window.innerHeight||800;},configurable:true});Object.defineProperty(window,"frameElement",{get:function(){return null;},configurable:true});}catch(e){}})();</script>'
   )};
 const ASTRA_COSMETIC_ADBLOCK_SNIPPET = ${JSON.stringify(
-    '<style id="astraAdCosmetic">ins.adsbygoogle,[id^="google_ads_iframe"],[id^="div-gpt-ad"],[data-google-query-id],iframe[src*="doubleclick"],iframe[src*="googlesyndication"],iframe[src*="adsterra"],iframe[src*="exoclick"],iframe[src*="propeller"],iframe[src*="monetag"],[id^="taboola-"],.taboola_wrap,.OUTBRAIN,[data-widget-id*="taboola"],.mgbox,[id^="M"][id*="Composite"],.ad-banner,.ad-slot,.advertisement-banner,.adsbox{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;pointer-events:none!important;}</style><script data-astra-cosmetic-adblock="1">(function(){if(window.__astraCosmeticShield)return;window.__astraCosmeticShield=true;var hosts=' +
+    '<style id="astraAdCosmetic">ins.adsbygoogle,[id^="google_ads_iframe"],[id^="div-gpt-ad"],[data-google-query-id],iframe[src*="doubleclick"],iframe[src*="googlesyndication"],iframe[src*="adsterra"],iframe[src*="highperformanceformat"],iframe[src*="profitableratecpm"],iframe[src*="effectivegatecpm"],iframe[src*="exoclick"],iframe[src*="propeller"],iframe[src*="monetag"],[id^="taboola-"],.taboola_wrap,.OUTBRAIN,[data-widget-id*="taboola"],.mgbox,[id^="M"][id*="Composite"],[id*="floating_ad"],.sticky-ad,.vast-blocker,.vast-skip-button,.ad-overlay,.ad-banner,.ad-slot,.advertisement-banner,.adsbox,a[href*="highperformanceformat"],a[href*="profitableratecpm"],a[href*="effectivegatecpm"],a[href*="adsterra"],a[href*="1win"],a[href*="1xbet"]{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;pointer-events:none!important;}</style><script data-astra-cosmetic-adblock="1">(function(){if(window.__astraCosmeticShield)return;window.__astraCosmeticShield=true;var hosts=' +
       JSON.stringify(getMergedAdHosts()) +
-      ';function isAdHref(u){if(!u||typeof u!=="string")return false;try{var x=new URL(u,location.href);if((x.pathname.indexOf("/scramjet/")===0||x.pathname.indexOf("/uv/service/")===0)&&x.href){/* handled by SW */}var h=x.hostname.toLowerCase();return hosts.some(function(d){return h===d||h.endsWith("."+d);})||/(?:popunder|pagead|adserver|clickadu|adsterra|exoclick|monetag|propeller)/i.test(u);}catch(e){return false;}}try{var ow=window.open;window.open=function(u,t,f){if(!u||isAdHref(String(u)))return null;if(t==="_blank"||!t){try{location.assign(u);}catch(e){}return null;}return ow?ow.apply(this,arguments):null;};}catch(e){}document.addEventListener("click",function(ev){try{var tgt=ev.target;if(tgt&&tgt.tagName==="DIV"||tgt&&tgt.tagName==="A"){var cs=getComputedStyle(tgt);var r=tgt.getBoundingClientRect();if(cs.position==="fixed"&&r.width>=window.innerWidth*0.85&&r.height>=window.innerHeight*0.85&&(!tgt.innerText||tgt.innerText.trim().length===0)&&(parseFloat(cs.opacity||"1")<=0.05||parseInt(cs.zIndex||"0",10)>=9999)){ev.preventDefault();ev.stopPropagation();tgt.remove();return;}}var a=tgt&&tgt.closest?tgt.closest("a[href]"):null;if(a&&isAdHref(a.getAttribute("href"))){ev.preventDefault();ev.stopPropagation();a.remove();}}catch(e){}},true);})();</script>'
+      ';function isAdHref(u){if(!u||typeof u!=="string")return false;try{var x=new URL(u,location.href);var h=x.hostname.toLowerCase();return hosts.some(function(d){return h===d||h.endsWith("."+d);})||/(?:popunder|pagead|adserver|clickadu|adsterra|highperformanceformat|profitableratecpm|effectivegatecpm|exoclick|monetag|propeller|vast|vpaid|1xbet|1win|betwinner|chaturbate|stripchat)/i.test(u);}catch(e){return false;}}try{if(window.Notification){Notification.requestPermission=function(){return Promise.resolve("denied");};}}catch(e){}try{var ow=window.open;window.open=function(u,t,f){if(!u||isAdHref(String(u)))return null;if(window.self!==window.top&&(t==="_blank"||!t))return null;if(t==="_blank"||!t){try{location.assign(u);}catch(e){}return null;}return ow?ow.apply(this,arguments):null;};}catch(e){}try{var origAClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){var h=this.getAttribute("href")||this.href||"";if(isAdHref(h)||(this.target==="_blank"&&window.self!==window.top))return;return origAClick.apply(this,arguments);};}catch(e){}function isTrapOverlay(el){if(!el||el.nodeType!==1)return false;var tag=el.tagName;if(tag!=="DIV"&&tag!=="A"&&tag!=="SPAN"&&tag!=="SECTION")return false;if(el.querySelector&&el.querySelector("video,audio,button,input,select,textarea,canvas"))return false;var cs=getComputedStyle(el);if(cs.pointerEvents==="none")return false;if(cs.position!=="fixed"&&cs.position!=="absolute")return false;var r=el.getBoundingClientRect();if(r.width<200||r.height<110)return false;var z=parseInt(cs.zIndex||"0",10);var op=parseFloat(cs.opacity||"1");var bg=cs.backgroundColor||"";var isClear=(op<=0.15||bg==="transparent"||bg==="rgba(0, 0, 0, 0)");var noTxt=!el.innerText||el.innerText.trim().length===0;var coverView=(r.width>=window.innerWidth*0.7&&r.height>=window.innerHeight*0.7);return (noTxt&&isClear&&(z>=50||coverView||(tag==="A"&&el.target==="_blank")));}["pointerdown","mousedown","click","auxclick","touchend"].forEach(function(evtName){document.addEventListener(evtName,function(ev){try{var t=ev.target;if(isTrapOverlay(t)){ev.preventDefault();ev.stopPropagation();t.remove();return;}var a=t&&t.closest?t.closest("a[href]"):null;if(a){var hr=a.getAttribute("href")||"";if(isAdHref(hr)||(window.self!==window.top&&a.target==="_blank"&&rIsEmpty(a))){ev.preventDefault();ev.stopPropagation();a.remove();}}}catch(e){}},true);});function rIsEmpty(a){return !a.innerText||a.innerText.trim().length===0;}setInterval(function(){try{if(!document.body)return;var els=document.querySelectorAll("div,a");for(var i=0;i<els.length&&i<160;i++){if(isTrapOverlay(els[i]))els[i].remove();}}catch(e){}},1400);})();</script>'
   )};
 const ASTRA_YT_ADBLOCK_SNIPPET = ${JSON.stringify(
     '<style id="astraYtAdShield">.ytp-ad-overlay-container,.ytp-ad-module,.ytp-ad-player-overlay,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-display-ad-renderer,ytd-statement-banner-renderer,ytd-promoted-sparkles-web-renderer,.ytd-banner-promo-renderer,#masthead-ad,#player-ads,ytd-companion-slot-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important;}</style><script data-astra-yt-adblock="1">(function(){if(window.__astraYtAdShield)return;window.__astraYtAdShield=true;var wasAd=false;setInterval(function(){try{var p=document.querySelector(".html5-video-player");var v=document.querySelector("video");var sk=document.querySelector(".ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-slot button");if(sk)sk.click();var adOn=!!(p&&p.classList.contains("ad-showing"));if(adOn&&v){wasAd=true;v.muted=true;try{v.playbackRate=16;}catch(e){}if(isFinite(v.duration)&&v.duration>0){v.currentTime=Math.max(0,v.duration-0.1);}}else if(wasAd&&!adOn&&v){wasAd=false;v.muted=false;try{v.playbackRate=1;}catch(e){}}}catch(e){}},250);})();</script>'
@@ -2925,12 +2986,16 @@ function notifyAstraAdBlocked(urlStr) {
   } catch {}
 }
 
-function createBlockedAdResponse(urlStr, isBare) {
+function createBlockedAdResponse(urlStr, isBare, dest) {
   let body = '';
   let status = 204;
   let ct = 'text/plain; charset=utf-8';
   const low = String(urlStr || '').toLowerCase();
-  if (/\\.m?js(?:$|\\?)|\\/prebid|\\/adsbygoogle|\\/pubads|\\/popunder/i.test(low)) {
+  if (dest === 'iframe') {
+    body = '<!doctype html><html><body style="margin:0;background:transparent"></body></html>';
+    status = 200;
+    ct = 'text/html; charset=utf-8';
+  } else if (/\\.m?js(?:$|\\?)|\\/prebid|\\/adsbygoogle|\\/pubads|\\/popunder|\\/ima3|\\/onclick/i.test(low)) {
     body = '/* blocked by astra adblock */';
     status = 200;
     ct = 'application/javascript; charset=utf-8';
@@ -2938,6 +3003,10 @@ function createBlockedAdResponse(urlStr, isBare) {
     body = '/* blocked by astra adblock */';
     status = 200;
     ct = 'text/css; charset=utf-8';
+  } else if (/\\/vast|\\/vmap|vast\\.xml|vmap\\.xml/i.test(low)) {
+    body = '<VAST version="3.0"/>';
+    status = 200;
+    ct = 'application/xml; charset=utf-8';
   } else if (/\\.json(?:$|\\?)|\\/api\\/stats\\/|\\/player\\/ad_break|\\/get_midroll/i.test(low)) {
     body = '{}';
     status = 200;
@@ -3154,7 +3223,7 @@ function isAdBlockedTarget(urlStr) {
         /(?:^\\/pagead\\/|^\\/ptracking|^\\/api\\/stats\\/(?:ads|atr)|^\\/youtubei\\/v1\\/player\\/ad_break|^\\/get_midroll_info)/i.test(p)) {
       return true;
     }
-    if (/(?:\\/gpt\\/pubads_impl|\\/pagead\\/js\\/adsbygoogle|\\/pagead\\/show_ads|\\/prebid(?:[.-][^/]*)?\\.js|\\/popunder(?:[.-][^/]*)?\\.js|\\/vast\\.xml|\\/vpaid|\\/adserver\\/)/i.test(p)) {
+    if (/(?:\\/gpt\\/pubads_impl|\\/pagead\\/js\\/adsbygoogle|\\/pagead\\/show_ads|\\/prebid(?:[.-][^/]*)?\\.js|\\/popunder(?:[.-][^/]*)?\\.js|\\/vast(?:\\d)?\\.xml|\\/vmap(?:\\.xml)?|\\/ima3(?:\\.js)?|\\/vpaid|\\/preroll|\\/ad[-_]?tag|\\/adserver\\/|\\/onclick\\.js)/i.test(p)) {
       return true;
     }
     return false;
@@ -3375,9 +3444,11 @@ async function handleRequest(event) {
                 }
               } catch {}
             }
-            if (event.request.mode !== 'navigate' && isAdBlockedTarget(d)) {
+            if (isAdBlockedTarget(d)) {
               notifyAstraAdBlocked(d);
-              return createBlockedAdResponse(d, false);
+              return event.request.mode === 'navigate'
+                ? new Response(null, { status: 204 })
+                : createBlockedAdResponse(d, false, event.request.destination);
             }
           }
         } catch {}
@@ -3409,9 +3480,11 @@ async function handleRequest(event) {
                 }
               } catch {}
             }
-            if (event.request.mode !== 'navigate' && isAdBlockedTarget(d)) {
+            if (isAdBlockedTarget(d)) {
               notifyAstraAdBlocked(d);
-              return createBlockedAdResponse(d, false);
+              return event.request.mode === 'navigate'
+                ? new Response(null, { status: 204 })
+                : createBlockedAdResponse(d, false, event.request.destination);
             }
           }
         } catch {}
