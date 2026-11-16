@@ -3668,10 +3668,10 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 14px 16px;
+      padding: 10px 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 0;
     }
     .chat-msg-row { display: flex; gap: 11px; align-items: flex-start; }
     .chat-msg-avatar {
@@ -3690,7 +3690,7 @@
       text-transform: uppercase;
     }
     .chat-msg-body { min-width: 0; flex: 1; }
-    .chat-msg-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+    .chat-msg-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 1px; }
     .chat-msg-author { font-size: 13px; font-weight: 600; color: #fff; }
     .chat-admin-tag {
       font-size: 9px;
@@ -3702,8 +3702,19 @@
       color: #fff;
       letter-spacing: 0.04em;
     }
+    .chat-bot-tag {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(88, 101, 242, 0.85);
+      color: #fff;
+      letter-spacing: 0.04em;
+      box-shadow: 0 0 10px rgba(88, 101, 242, 0.45);
+    }
     .chat-msg-time { font-size: 11px; color: rgba(255, 255, 255, 0.38); }
-    .chat-msg-text { font-size: 13.5px; color: rgba(255, 255, 255, 0.88); line-height: 1.45; word-break: break-word; }
+    .chat-msg-text { font-size: 13.5px; color: rgba(255, 255, 255, 0.88); line-height: 1.32; word-break: break-word; }
     .chat-composer-wrap { padding: 10px 16px 14px; }
     .chat-composer-form {
       display: flex;
@@ -5854,7 +5865,41 @@
       position: relative;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
+      border-radius: 8px;
+      transition: background 0.12s ease;
+    }
+    .chat-ch-row.dragging {
+      opacity: 0.45;
+    }
+    .chat-ch-row.drag-over-top {
+      box-shadow: inset 0 2px 0 rgb(var(--accent-soft));
+    }
+    .chat-ch-row.drag-over-bottom {
+      box-shadow: inset 0 -2px 0 rgb(var(--accent-soft));
+    }
+    .chat-ch-move-btn {
+      opacity: 0;
+      width: 18px;
+      height: 20px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 11px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      padding: 0;
+      transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
+    }
+    .chat-ch-row:hover .chat-ch-move-btn {
+      opacity: 1;
+    }
+    .chat-ch-move-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
     }
     .chat-ch-btn {
       flex: 1;
@@ -5919,17 +5964,46 @@
     }
     .chat-msg-row {
       position: relative;
-      padding: 6px 10px;
-      border-radius: 10px;
+      margin-top: 11px;
+      padding: 3px 10px;
+      border-radius: 8px;
       transition: background 0.14s ease;
     }
     .chat-msg-row:hover {
       background: rgba(255, 255, 255, 0.04);
     }
     .chat-msg-row.compact {
-      padding-top: 2px;
-      padding-bottom: 2px;
+      margin-top: 0;
+      padding-top: 1px;
+      padding-bottom: 1px;
       gap: 11px;
+    }
+    .chat-bot-embed {
+      margin-top: 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border-left: 3px solid rgb(var(--accent-soft));
+      background: rgba(255, 255, 255, 0.045);
+      max-width: 540px;
+    }
+    .chat-bot-embed-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-bot-embed-list {
+      margin: 4px 0 0 16px;
+      padding: 0;
+      font-size: 12.2px;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.42;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     .chat-msg-compact-time {
       width: 34px;
@@ -6178,6 +6252,15 @@
       height: 100%;
       display: block;
       overflow: visible;
+    }
+    .chat-deco-discord-img {
+      position: absolute;
+      inset: -18%;
+      width: 136%;
+      height: 136%;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 4;
     }
     .chat-deco-spin {
       animation: astraOutlineSpin 5s linear infinite, chatDecoRotate 7s linear infinite;
@@ -6987,6 +7070,7 @@
                   <div class="chat-main-topic" id="chatChannelTopic">main server chat</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                  <button type="button" class="ext-btn" id="chatBotUpdatesBtn" style="padding:4px 10px;font-size:11px;" title="Ask Astra Bot for latest updates">bot updates</button>
                   <button type="button" class="ext-btn" id="chatToggleMembersBtn" style="padding:4px 10px;font-size:11px;">members</button>
                 </div>
               </div>
@@ -7083,11 +7167,11 @@
           </div>
         </div>
 
-        <!-- Discord Profile Decoration & Custom Status Modal -->
+        <!-- Discord Profile Edit, Genuine Decorations & Custom Status Modal -->
         <div class="chat-modal-backdrop" id="chatDecorationModal">
-          <div class="chat-modal-card">
+          <div class="chat-modal-card" style="width:min(510px,100%);">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-size:16px;font-weight:700;color:#fff;">Profile Decoration</div>
+              <div style="font-size:16px;font-weight:700;color:#fff;">Edit Profile &amp; Decorations</div>
               <button type="button" class="chat-msg-act-btn" id="chatCloseDecoModalBtn">✕</button>
             </div>
             <div class="chat-deco-preview-box">
@@ -7097,10 +7181,21 @@
                 <div style="font-size:12px;color:rgba(255,255,255,0.58);" id="chatDecoPreviewLabel">None</div>
               </div>
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Display Name</div>
+                <input type="text" id="chatProfileDisplayInput" class="settings-input" placeholder="Your name in chat" maxlength="32" autocomplete="off" />
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Username (@handle)</div>
+                <input type="text" id="chatProfileUsernameInput" class="settings-input" placeholder="username" maxlength="24" autocomplete="off" />
+              </div>
+            </div>
             <div>
               <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.72);margin-bottom:5px;text-transform:uppercase;">Custom Status</div>
               <input type="text" id="chatDecoStatusInput" class="settings-input" placeholder="e.g. vibing on astra / playing roblox" maxlength="48" autocomplete="off" />
             </div>
+            <div id="chatProfileErrorMsg" style="display:none;font-size:12px;color:#fca5a5;"></div>
             <div class="chat-deco-grid" id="chatDecoGrid"></div>
             <div style="display:flex;justify-content:flex-end;gap:8px;">
               <button type="button" class="roblox-secondary-btn" id="chatDecoCancelBtn">Cancel</button>
@@ -12553,7 +12648,7 @@
       const meAdmin = !!(currentUser && currentUser.role === 'admin');
       const meUser = currentUser ? currentUser.username : '';
 
-      const renderRow = (c) => {
+      const renderRow = (c, idx, arr) => {
         const isVoice = c.type === 'voice';
         const isActive = isVoice ? (chatVoiceConnected && chatActiveVoiceChannel === c.id) : (c.id === chatActiveChannel);
         const canDel = !c.locked && (meAdmin || (c.createdBy && c.createdBy === meUser));
@@ -12563,18 +12658,22 @@
               ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h1l2 4h3l-1-4h5a3 3 0 0 0 3-3V8z"/><line x1="22" y1="8" x2="22" y2="12"/></svg>'
               : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>');
         const unreadDot = !isVoice && chatUnreadChannels.has(c.id) ? '<span class="chat-ch-unread-dot"></span>' : '';
+        const upBtn = idx > 0 ? `<button type="button" class="chat-ch-move-btn" data-move-ch="${escapeMusicHtml(c.id)}" data-dir="-1" title="Move channel up">↑</button>` : '';
+        const dnBtn = idx < arr.length - 1 ? `<button type="button" class="chat-ch-move-btn" data-move-ch="${escapeMusicHtml(c.id)}" data-dir="1" title="Move channel down">↓</button>` : '';
         const delBtn = canDel ? `<button type="button" class="chat-ch-del-btn" data-del-channel="${escapeMusicHtml(c.id)}" title="Delete channel">✕</button>` : '';
         const peersInRoom = isVoice ? (chatLatestVoicePeers || []).filter((p) => (p.voiceChannel || 'voice-lounge') === c.id) : [];
         const peersHtml = isVoice && peersInRoom.length
           ? `<div class="chat-voice-peers">${peersInRoom.map((p) => `<div class="chat-voice-peer"><span class="chat-voice-dot" style="background:${p.muted ? '#f87171' : '#4ade80'}"></span><span>${escapeMusicHtml(p.displayName || p.username)}${p.muted ? ' (muted)' : ''}</span></div>`).join('')}</div>`
           : '';
         return `
-          <div class="chat-ch-row">
+          <div class="chat-ch-row" draggable="true" data-drag-ch="${escapeMusicHtml(c.id)}" data-drag-type="${isVoice ? 'voice' : 'text'}">
             <button type="button" class="chat-ch-btn ${isActive ? 'active' : ''}" data-chat-channel="${escapeMusicHtml(c.id)}" data-chat-type="${isVoice ? 'voice' : 'text'}">
               ${iconSvg}
               <span class="chat-ch-name-text">${escapeMusicHtml(c.name)}</span>
               ${unreadDot}
             </button>
+            ${upBtn}
+            ${dnBtn}
             ${delBtn}
           </div>
           ${peersHtml}
@@ -12586,13 +12685,101 @@
           <div class="chat-cat-label">Text Channels</div>
           <button type="button" class="chat-cat-add-btn" id="chatAddTextChannelBtn" title="Create Text Channel">+</button>
         </div>
-        ${textChs.map(renderRow).join('')}
+        ${textChs.map((c, idx) => renderRow(c, idx, textChs)).join('')}
         <div class="chat-cat-row" style="margin-top:8px;">
           <div class="chat-cat-label">Voice Channels</div>
           <button type="button" class="chat-cat-add-btn" id="chatAddVoiceChannelBtn" title="Create Voice Channel">+</button>
         </div>
-        ${voiceChs.map(renderRow).join('')}
+        ${voiceChs.map((c, idx) => renderRow(c, idx, voiceChs)).join('')}
       `;
+
+      async function persistChannelOrder(nextTextIds, nextVoiceIds) {
+        const order = [...nextTextIds, ...nextVoiceIds];
+        const byId = new Map(chatChannelsList.map((c) => [c.id, c]));
+        const reordered = [];
+        for (const id of order) { if (byId.has(id)) reordered.push(byId.get(id)); }
+        for (const c of chatChannelsList) { if (!order.includes(c.id)) reordered.push(c); }
+        chatChannelsList = reordered;
+        renderChatChannels();
+        try {
+          await proxyHealthPromise;
+          const r = await fetch(`${proxyOrigin}/api/chat/channels/reorder`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order })
+          });
+          const j = await r.json();
+          if (r.ok && j && j.ok && Array.isArray(j.channels)) {
+            chatChannelsList = j.channels;
+            renderChatChannels();
+          }
+        } catch {}
+      }
+
+      chatChannelScroll.querySelectorAll('[data-move-ch]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.moveCh;
+          const dir = Number(btn.dataset.dir || 0);
+          const tIds = chatChannelsList.filter((c) => c.type !== 'voice').map((c) => c.id);
+          const vIds = chatChannelsList.filter((c) => c.type === 'voice').map((c) => c.id);
+          const arr = tIds.includes(id) ? tIds : (vIds.includes(id) ? vIds : null);
+          if (!arr) return;
+          const i = arr.indexOf(id);
+          const j = i + dir;
+          if (i < 0 || j < 0 || j >= arr.length) return;
+          const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+          persistChannelOrder(tIds, vIds);
+        });
+      });
+
+      let dragSrcChId = '';
+      let dragSrcType = '';
+      chatChannelScroll.querySelectorAll('[data-drag-ch]').forEach((rowEl) => {
+        rowEl.addEventListener('dragstart', (e) => {
+          dragSrcChId = rowEl.dataset.dragCh || '';
+          dragSrcType = rowEl.dataset.dragType || 'text';
+          rowEl.classList.add('dragging');
+          try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragSrcChId); } catch {}
+        });
+        rowEl.addEventListener('dragend', () => {
+          dragSrcChId = '';
+          rowEl.classList.remove('dragging');
+          chatChannelScroll.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach((n) => n.classList.remove('drag-over-top', 'drag-over-bottom'));
+        });
+        rowEl.addEventListener('dragover', (e) => {
+          if (!dragSrcChId || rowEl.dataset.dragCh === dragSrcChId || rowEl.dataset.dragType !== dragSrcType) return;
+          e.preventDefault();
+          const rect = rowEl.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+          rowEl.classList.toggle('drag-over-top', before);
+          rowEl.classList.toggle('drag-over-bottom', !before);
+        });
+        rowEl.addEventListener('dragleave', () => {
+          rowEl.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+        rowEl.addEventListener('drop', (e) => {
+          const targetId = rowEl.dataset.dragCh || '';
+          const targetType = rowEl.dataset.dragType || 'text';
+          if (!dragSrcChId || !targetId || dragSrcChId === targetId || dragSrcType !== targetType) return;
+          e.preventDefault();
+          const rect = rowEl.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+          rowEl.classList.remove('drag-over-top', 'drag-over-bottom');
+          const tIds = chatChannelsList.filter((c) => c.type !== 'voice').map((c) => c.id);
+          const vIds = chatChannelsList.filter((c) => c.type === 'voice').map((c) => c.id);
+          const arr = targetType === 'voice' ? vIds : tIds;
+          const srcIdx = arr.indexOf(dragSrcChId);
+          if (srcIdx < 0) return;
+          arr.splice(srcIdx, 1);
+          let dstIdx = arr.indexOf(targetId);
+          if (dstIdx < 0) return;
+          if (!before) dstIdx++;
+          arr.splice(dstIdx, 0, dragSrcChId);
+          persistChannelOrder(tIds, vIds);
+        });
+      });
 
       const addTxtBtn = document.getElementById('chatAddTextChannelBtn');
       const addVoiBtn = document.getElementById('chatAddVoiceChannelBtn');
@@ -12736,14 +12923,29 @@
 
       const rowsHtml = list.map((m, idx) => {
         const prev = idx > 0 ? list[idx - 1] : null;
-        const grouped = !m.replyTo && prev && prev.username === m.username && m.ts && prev.ts && (m.ts - prev.ts < 300000);
+        const grouped = !m.replyTo && !m.embed && (!prev || !prev.embed) && prev && prev.username === m.username && m.ts && prev.ts && (m.ts - prev.ts < 300000);
         const dt = m.ts ? new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         const initial = String(m.displayName || m.username || '?').slice(0, 1);
-        const adminBadge = m.role === 'admin' ? '<span class="chat-admin-tag">admin</span>' : '';
+        const isBotMsg = !!(m.isBot || m.role === 'bot' || m.username === 'astra-bot');
+        const roleBadge = isBotMsg
+          ? '<span class="chat-bot-tag">✓ BOT</span>'
+          : (m.role === 'admin' ? '<span class="chat-admin-tag">admin</span>' : '');
         const avatarHtml = m.avatar
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : escapeMusicHtml(initial);
         const canDelMsg = meAdmin || (meUser && m.username === meUser);
+
+        const embedHtml = m.embed && typeof m.embed === 'object'
+          ? `<div class="chat-bot-embed">
+              <div class="chat-bot-embed-title">
+                <span>${escapeMusicHtml(m.embed.title || 'Astra Update')}</span>
+                ${m.embed.badge ? `<span class="settings-card-badge">${escapeMusicHtml(m.embed.badge)}</span>` : ''}
+              </div>
+              ${Array.isArray(m.embed.highlights) && m.embed.highlights.length
+                ? `<ul class="chat-bot-embed-list">${m.embed.highlights.map((h) => `<li>${escapeMusicHtml(h)}</li>`).join('')}</ul>`
+                : ''}
+            </div>`
+          : '';
 
         const replyHtml = m.replyTo
           ? `<div class="chat-reply-quote">↳ <strong>@${escapeMusicHtml(m.replyTo.displayName || m.replyTo.username)}</strong> ${escapeMusicHtml(m.replyTo.text || '')}</div>`
@@ -12790,10 +12992,11 @@
               ${replyHtml}
               <div class="chat-msg-meta">
                 <span class="chat-msg-author">${escapeMusicHtml(m.displayName || m.username)}</span>
-                ${adminBadge}
+                ${roleBadge}
                 <span class="chat-msg-time">${escapeMusicHtml(dt)}</span>
               </div>
               <div class="chat-msg-text">${formatChatBodyText(m.text)}</div>
+              ${embedHtml}
               ${reactHtml}
             </div>
           </div>
@@ -12820,8 +13023,33 @@
       chatMessagesFeed.scrollTop = chatMessagesFeed.scrollHeight;
     }
 
+    const dcDeco = (id, label, asset) => ({
+      id,
+      label,
+      render: () => `<img class="chat-deco-discord-img" src="https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=240&amp;passthrough=true" alt="" />`
+    });
     const CHAT_DECORATIONS = [
       { id: '', label: 'None', render: () => '' },
+      dcDeco('dc-phoenix', 'Phoenix', 'a_0e839cd79500e7b68e2bbbed54790c28'),
+      dcDeco('dc-flaming-sword', 'Flaming Sword', 'a_0f5d6c4dd8ae74662ee9c40722a56cbd'),
+      dcDeco('dc-akuma', 'Akuma', 'a_1e8cb6070b13f775a41384c84c5a53e1'),
+      dcDeco('dc-black-hole', 'Black Hole', 'a_6d16b27d9415cafe3b289053644337c4'),
+      dcDeco('dc-sakura-warrior', 'Sakura Warrior', 'a_7cf09c7e78d6eb35ae354acc1d5cc676'),
+      dcDeco('dc-cat-ears', 'Cat Ears', 'a_1acbe609daec21fa5b866df9e5a42cb7'),
+      dcDeco('dc-straw-hat', 'Straw Hat', 'a_3d1e6078b2e4c8865e0ad0f429d651b1'),
+      dcDeco('dc-potion', 'Magical Potion', 'a_1dbc603c181999b9815cb426dfec71a6'),
+      dcDeco('dc-ramen', 'Ramen Bowl', 'a_001e956faa73bd0410c455234c62818f'),
+      dcDeco('dc-butterflies', 'Butterflies', 'a_4cd9ae5a8d103c219eacd3674d7730cd'),
+      dcDeco('dc-bubble-tea', 'Bubble Tea', 'a_5b1319abfc9f928479b68a73635f591d'),
+      dcDeco('dc-witch-hat', 'Witch Hat', 'a_5e8abacc7a7454d6b08b5cc84cac1d80'),
+      dcDeco('dc-ufo', 'UFO', 'a_6fdbddb6229453eac3bbb212edf5cd1c'),
+      dcDeco('dc-snowglobe', 'Snowglobe', 'a_2ca5fb1ecf0dac410b38d76cb4aae7f9'),
+      dcDeco('dc-rainbow', 'Hugh Rainbow', 'a_0c0eeb351ae2cf48c6e1eee2cae49d40'),
+      dcDeco('dc-candlelight', 'Candlelight', 'a_3f29e6edfe1cff43736f644cf1d01278'),
+      dcDeco('dc-heartbloom', 'Heartbloom', 'a_3e1fc3c7ee2e34e8176f4737427e8f4f'),
+      dcDeco('dc-mirage', 'Mirage', 'a_6d99f670de3fcee669660fe262e896ea'),
+      dcDeco('dc-firecrackers', 'Firecrackers', 'a_0f4f1b40921ce680b60007e94427d1f2'),
+      dcDeco('dc-owlbear', 'Owlbear Cub', 'a_3c5743cedcb72131c58278278a97c143'),
       {
         id: 'astra-halo',
         label: 'Astra Halo',
@@ -12909,7 +13137,9 @@
         const av = m.avatar
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : `<span>${escapeMusicHtml(initial)}</span>`;
-        const crown = m.role === 'admin' ? ' <span title="Admin" style="color:#fbbf24;">★</span>' : '';
+        const crown = m.role === 'bot' || m.isBot
+          ? ' <span class="chat-bot-tag" style="margin-left:4px;">BOT</span>'
+          : (m.role === 'admin' ? ' <span title="Admin" style="color:#fbbf24;">★</span>' : '');
         const subText = m.customStatus ? escapeMusicHtml(m.customStatus) : (m.online ? 'online' : 'offline');
         return `
           <div class="chat-member-row" style="opacity:${m.online ? '1' : '0.48'};">
@@ -13546,17 +13776,43 @@
     const chatDecoPreviewName = document.getElementById('chatDecoPreviewName');
     const chatDecoPreviewLabel = document.getElementById('chatDecoPreviewLabel');
     const chatDecoStatusInput = document.getElementById('chatDecoStatusInput');
+    const chatProfileDisplayInput = document.getElementById('chatProfileDisplayInput');
+    const chatProfileUsernameInput = document.getElementById('chatProfileUsernameInput');
+    const chatProfileErrorMsg = document.getElementById('chatProfileErrorMsg');
+    const chatBotUpdatesBtn = document.getElementById('chatBotUpdatesBtn');
     let selectedChatDecoration = '';
 
+    if (chatBotUpdatesBtn) {
+      chatBotUpdatesBtn.addEventListener('click', async () => {
+        try {
+          await proxyHealthPromise;
+          const chObj = chatChannelsList.find((c) => c.id === chatActiveChannel);
+          const targetCh = (chObj && chObj.adminOnly && (!currentUser || currentUser.role !== 'admin')) ? 'general' : chatActiveChannel;
+          if (targetCh !== chatActiveChannel) await loadChatChannel(targetCh);
+          const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: targetCh, text: '!updates' })
+          });
+          if (r.ok) {
+            loadChatChannel(targetCh);
+          }
+        } catch {}
+      });
+    }
+
     function renderDecorationModalUI() {
-      const initial = String((currentUser && (currentUser.displayName || currentUser.username)) || 'A').slice(0, 1).toUpperCase();
+      const dispVal = (chatProfileDisplayInput && chatProfileDisplayInput.value.trim()) || (currentUser && (currentUser.displayName || currentUser.username)) || 'user';
+      const initial = String(dispVal || 'A').slice(0, 1).toUpperCase();
       const myAv = (currentUser && currentUser.avatar) || '';
       const avInner = myAv ? `<img src="${escapeMusicHtml(myAv)}" class="chat-avatar-img" alt="" />` : `<span>${escapeMusicHtml(initial)}</span>`;
       if (chatDecoPreviewAvatar) {
         chatDecoPreviewAvatar.innerHTML = renderAvatarBoxInner(avInner, selectedChatDecoration);
       }
-      if (chatDecoPreviewName && currentUser) {
-        chatDecoPreviewName.textContent = currentUser.displayName || currentUser.username || 'user';
+      if (chatDecoPreviewName) {
+        const uHandle = (chatProfileUsernameInput && chatProfileUsernameInput.value.trim()) || (currentUser && currentUser.username) || '';
+        chatDecoPreviewName.textContent = uHandle && dispVal !== uHandle ? `${dispVal} (@${uHandle})` : dispVal;
       }
       const preset = CHAT_DECORATIONS.find((d) => d.id === selectedChatDecoration) || CHAT_DECORATIONS[0];
       if (chatDecoPreviewLabel) chatDecoPreviewLabel.textContent = `Effect: ${preset.label}`;
@@ -13581,10 +13837,22 @@
     function openChatDecorationModal() {
       selectedChatDecoration = (currentUser && currentUser.decoration) || '';
       if (chatDecoStatusInput) chatDecoStatusInput.value = (currentUser && currentUser.customStatus) || '';
+      if (chatProfileDisplayInput && currentUser) chatProfileDisplayInput.value = currentUser.displayName || currentUser.username || '';
+      if (chatProfileUsernameInput && currentUser) {
+        chatProfileUsernameInput.value = currentUser.username || '';
+        chatProfileUsernameInput.disabled = currentUser.username === 'coolbacon';
+        chatProfileUsernameInput.title = currentUser.username === 'coolbacon' ? 'Primary admin handle stays coolbacon (you can edit Display Name)' : 'Change login username (@handle)';
+      }
+      if (chatProfileErrorMsg) {
+        chatProfileErrorMsg.textContent = '';
+        chatProfileErrorMsg.style.display = 'none';
+      }
       renderDecorationModalUI();
       if (chatDecorationModal) chatDecorationModal.classList.add('open');
     }
 
+    if (chatProfileDisplayInput) chatProfileDisplayInput.addEventListener('input', renderDecorationModalUI);
+    if (chatProfileUsernameInput) chatProfileUsernameInput.addEventListener('input', renderDecorationModalUI);
     if (chatOpenDecoBtn) chatOpenDecoBtn.addEventListener('click', openChatDecorationModal);
     if (chatCloseDecoModalBtn) chatCloseDecoModalBtn.addEventListener('click', () => chatDecorationModal && chatDecorationModal.classList.remove('open'));
     if (chatDecoCancelBtn) chatDecoCancelBtn.addEventListener('click', () => chatDecorationModal && chatDecorationModal.classList.remove('open'));
@@ -13595,29 +13863,48 @@
     }
     if (chatDecoSaveBtn) {
       chatDecoSaveBtn.addEventListener('click', async () => {
+        if (chatProfileErrorMsg) {
+          chatProfileErrorMsg.textContent = '';
+          chatProfileErrorMsg.style.display = 'none';
+        }
         chatDecoSaveBtn.disabled = true;
         chatDecoSaveBtn.textContent = 'Saving...';
         try {
           await proxyHealthPromise;
           const customStatus = chatDecoStatusInput ? chatDecoStatusInput.value.trim() : '';
+          const displayName = chatProfileDisplayInput ? chatProfileDisplayInput.value.trim() : undefined;
+          const nextUsername = (chatProfileUsernameInput && !chatProfileUsernameInput.disabled) ? chatProfileUsernameInput.value.trim() : undefined;
           const r = await fetch(`${proxyOrigin}/api/chat/decoration`, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ decoration: selectedChatDecoration, customStatus })
+            body: JSON.stringify({
+              decoration: selectedChatDecoration,
+              customStatus,
+              displayName,
+              username: nextUsername
+            })
           });
           const j = await r.json();
           if (r.ok && j && j.ok) {
             if (currentUser) {
+              if (j.username) currentUser.username = j.username;
+              if (j.displayName) currentUser.displayName = j.displayName;
               currentUser.decoration = j.decoration || '';
               currentUser.customStatus = j.customStatus || '';
+              if (sideUserBadge) sideUserBadge.textContent = `out: ${currentUser.username}`;
+              if (typeof updateHeroGreetingBanner === 'function') updateHeroGreetingBanner();
             }
             if (j.members) renderChatMembers(j.members);
             loadChatChannel(chatActiveChannel);
             if (chatDecorationModal) chatDecorationModal.classList.remove('open');
-            if (typeof showToast === 'function') showToast('profile decoration applied!');
-          } else if (typeof showToast === 'function') {
-            showToast((j && j.error) || 'Failed to save decoration');
+            if (typeof showToast === 'function') showToast(`saved profile @${(currentUser && currentUser.username) || ''}!`);
+          } else {
+            const errTxt = (j && j.error) || 'Could not update profile';
+            if (chatProfileErrorMsg) {
+              chatProfileErrorMsg.textContent = errTxt;
+              chatProfileErrorMsg.style.display = 'block';
+            }
           }
         } catch {}
         chatDecoSaveBtn.disabled = false;

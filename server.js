@@ -101,7 +101,7 @@ function getChatMembersList() {
     if (p.username) onlineNames.add(p.username);
   }
   const users = (typeof authStore !== 'undefined' && authStore && authStore.users) ? authStore.users : {};
-  return Object.values(users).map((u) => ({
+  const list = Object.values(users).map((u) => ({
     username: u.username,
     displayName: u.displayName || u.username,
     role: u.role || 'user',
@@ -109,7 +109,18 @@ function getChatMembersList() {
     decoration: u.decoration || '',
     customStatus: u.customStatus || '',
     online: onlineNames.has(u.username)
-  })).sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
+  }));
+  list.push({
+    username: 'astra-bot',
+    displayName: 'Astra Bot',
+    role: 'bot',
+    isBot: true,
+    avatar: '/assets/astra-logo.png',
+    decoration: 'astra-halo',
+    customStatus: 'type !updates anytime',
+    online: true
+  });
+  return list.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
 }
 
 chatWss.on('connection', (ws, req, sessionUser) => {
@@ -4054,7 +4065,27 @@ const server = http.createServer(async (req, res) => {
       'starlight-orbit',
       'royal-crown',
       'void-prism',
-      'cherry-bloom'
+      'cherry-bloom',
+      'dc-phoenix',
+      'dc-flaming-sword',
+      'dc-akuma',
+      'dc-black-hole',
+      'dc-sakura-warrior',
+      'dc-cat-ears',
+      'dc-straw-hat',
+      'dc-potion',
+      'dc-ramen',
+      'dc-butterflies',
+      'dc-bubble-tea',
+      'dc-witch-hat',
+      'dc-ufo',
+      'dc-snowglobe',
+      'dc-rainbow',
+      'dc-candlelight',
+      'dc-heartbloom',
+      'dc-mirage',
+      'dc-firecrackers',
+      'dc-owlbear'
     ]);
     try {
       const body = await readJsonBody(req);
@@ -4065,19 +4096,99 @@ const server = http.createServer(async (req, res) => {
       const customStatus = body && typeof body.customStatus === 'string'
         ? body.customStatus.trim().slice(0, 48)
         : undefined;
-      if (authStore && authStore.users && authStore.users[sessionUser.username]) {
-        authStore.users[sessionUser.username].decoration = decoration;
-        if (customStatus !== undefined) authStore.users[sessionUser.username].customStatus = customStatus;
+      const newDisplayNameRaw = body && typeof body.displayName === 'string'
+        ? body.displayName.replace(/[<>]/g, '').trim().slice(0, 32)
+        : undefined;
+      const rawNextUsername = body && typeof body.username === 'string'
+        ? body.username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 24)
+        : undefined;
+
+      let activeUsername = sessionUser.username;
+      let extraHeaders = {};
+      if (rawNextUsername !== undefined && rawNextUsername !== activeUsername) {
+        if (rawNextUsername.length < 2) {
+          return sendJson(res, 400, { ok: false, error: 'Username must be at least 2 characters (letters, numbers, _ . -)' });
+        }
+        if (rawNextUsername === 'astra-bot' || rawNextUsername === 'system') {
+          return sendJson(res, 400, { ok: false, error: 'That username is reserved' });
+        }
+        if (authStore.users[rawNextUsername]) {
+          return sendJson(res, 409, { ok: false, error: `@${rawNextUsername} is already taken` });
+        }
+        if (activeUsername === 'coolbacon') {
+          return sendJson(res, 400, { ok: false, error: 'Primary admin handle coolbacon stays locked (you can still change Display Name)' });
+        }
+        const rec = authStore.users[activeUsername];
+        if (!rec) return sendJson(res, 404, { ok: false, error: 'Account not found' });
+        delete authStore.users[activeUsername];
+        rec.username = rawNextUsername;
+        authStore.users[rawNextUsername] = rec;
+
+        if (tourPrefs[activeUsername]) {
+          tourPrefs[rawNextUsername] = tourPrefs[activeUsername];
+          delete tourPrefs[activeUsername];
+          saveTourPrefs();
+        }
+        if (userCookieJars[activeUsername]) {
+          userCookieJars[rawNextUsername] = userCookieJars[activeUsername];
+          delete userCookieJars[activeUsername];
+          scheduleSaveUserCookies();
+        }
+        for (const c of chatClients) {
+          if (c.astraSession && c.astraSession.username === activeUsername) {
+            c.astraSession.username = rawNextUsername;
+          }
+        }
+        for (const p of voicePeers.values()) {
+          if (p.username === activeUsername) p.username = rawNextUsername;
+        }
+        try {
+          const chatData = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
+          if (chatData && typeof chatData === 'object') {
+            for (const [k, arr] of Object.entries(chatData)) {
+              if (k === '_channels' || !Array.isArray(arr)) continue;
+              for (const m of arr) {
+                if (m && m.username === activeUsername) m.username = rawNextUsername;
+              }
+            }
+            fs.writeFileSync(CHAT_FILE, JSON.stringify(chatData, null, 2), 'utf8');
+          }
+        } catch {}
+
+        activeUsername = rawNextUsername;
+        const nextToken = signSessionToken(activeUsername);
+        const isHttps = req.headers['x-forwarded-proto'] === 'https' || !!(req.socket && req.socket.encrypted);
+        const sameSitePart = isHttps ? 'SameSite=None; Secure' : 'SameSite=Lax';
+        extraHeaders['Set-Cookie'] = `astra_session=${encodeURIComponent(nextToken)}; HttpOnly; Path=/; ${sameSitePart}; Max-Age=604800`;
+      }
+
+      if (authStore && authStore.users && authStore.users[activeUsername]) {
+        authStore.users[activeUsername].decoration = decoration;
+        if (customStatus !== undefined) authStore.users[activeUsername].customStatus = customStatus;
+        if (newDisplayNameRaw !== undefined && newDisplayNameRaw.length >= 1) {
+          authStore.users[activeUsername].displayName = newDisplayNameRaw;
+          for (const c of chatClients) {
+            if (c.astraSession && c.astraSession.username === activeUsername) {
+              c.astraSession.displayName = newDisplayNameRaw;
+            }
+          }
+          for (const p of voicePeers.values()) {
+            if (p.username === activeUsername) p.displayName = newDisplayNameRaw;
+          }
+        }
         saveAuthStore();
       }
+      const savedUser = authStore.users[activeUsername] || {};
       const members = getChatMembersList();
       broadcastChatWs({ type: 'members-update', members });
       return sendJson(res, 200, {
         ok: true,
+        username: activeUsername,
+        displayName: savedUser.displayName || activeUsername,
         decoration,
-        customStatus: (authStore.users[sessionUser.username] && authStore.users[sessionUser.username].customStatus) || '',
+        customStatus: savedUser.customStatus || '',
         members
-      });
+      }, extraHeaders);
     } catch (e) {
       return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
     }
@@ -4090,6 +4201,26 @@ const server = http.createServer(async (req, res) => {
     { id: 'roblox-squads', name: 'roblox-squads', topic: 'share place IDs & party up for roblox', type: 'text', category: 'Text Channels' },
     { id: 'voice-lounge', name: 'Voice Lounge', topic: 'chill voice hangout', type: 'voice', category: 'Voice Channels', locked: true }
   ];
+
+  const ASTRA_BOT_LATEST_ID = 'seed-astra-bot-updates-v2';
+  const buildAstraBotMessage = (channel, title, bodyText, highlights = []) => ({
+    id: `${ASTRA_BOT_LATEST_ID}-${crypto.randomBytes(4).toString('hex')}`,
+    channel,
+    username: 'astra-bot',
+    displayName: 'Astra Bot',
+    role: 'bot',
+    isBot: true,
+    avatar: '/assets/astra-logo.png',
+    decoration: 'astra-halo',
+    text: bodyText,
+    embed: {
+      title,
+      badge: 'NEW UPDATES',
+      highlights
+    },
+    reactions: { '🚀': ['astra-bot'], '🔥': ['astra-bot'] },
+    ts: Date.now()
+  });
 
   const readChatStore = () => {
     let data = null;
@@ -4106,8 +4237,8 @@ const server = http.createServer(async (req, res) => {
             username: 'coolbacon',
             displayName: 'Luis (coolbacon)',
             role: 'admin',
-            text: 'Welcome to Astra Chat! Create new text or voice channels anytime, react or reply to messages, and crop your custom PFP!',
-            ts: Date.now()
+            text: 'Welcome to Astra Chat! Create or reorder channels anytime, react/reply, crop your PFP, and equip genuine Discord decorations!',
+            ts: Date.now() - 60000
           }
         ],
         general: [],
@@ -4129,11 +4260,62 @@ const server = http.createServer(async (req, res) => {
         data[ch.id] = [];
       }
     }
+    if (!Array.isArray(data.announcements)) data.announcements = [];
+    if (!data.announcements.some((m) => m && String(m.id || '').startsWith(ASTRA_BOT_LATEST_ID))) {
+      data.announcements.push({
+        ...buildAstraBotMessage(
+          'announcements',
+          'Astra v2.4 Update Drop',
+          'Here is everything new live on Astra right now:',
+          [
+            'Roblox + LucideBlox Node API Proxy (fast catalog & charts + new-tab Play launcher)',
+            'Premade robloxcookie= quick-connect URLs & copyable launch links',
+            '20 Genuine Animated Discord Avatar Decorations + Username / Display Name editor',
+            'Drag-and-drop Channel Reordering + tighter Discord message spacing',
+            'Type !updates in any channel anytime for live Astra Bot release notes!'
+          ]
+        ),
+        id: ASTRA_BOT_LATEST_ID
+      });
+      try { fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch {}
+    }
     return data;
   };
   const writeChatStore = (data) => {
     fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8');
   };
+
+  if (pathname === '/api/chat/channels/reorder' && req.method === 'POST') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    try {
+      const body = await readJsonBody(req);
+      const order = Array.isArray(body && body.order) ? body.order.map((x) => String(x)) : [];
+      if (!order.length) {
+        return sendJson(res, 400, { ok: false, error: 'order array required' });
+      }
+      const data = readChatStore();
+      const byId = new Map(data._channels.map((c) => [c.id, c]));
+      const next = [];
+      const used = new Set();
+      for (const cid of order) {
+        if (byId.has(cid) && !used.has(cid)) {
+          next.push(byId.get(cid));
+          used.add(cid);
+        }
+      }
+      for (const c of data._channels) {
+        if (!used.has(c.id)) next.push(c);
+      }
+      data._channels = next;
+      writeChatStore(data);
+      broadcastChatWs({ type: 'channels-update', channels: data._channels });
+      return sendJson(res, 200, { ok: true, channels: data._channels });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+    }
+  }
 
   if (pathname === '/api/chat/channels') {
     if (!sessionUser) {
@@ -4231,6 +4413,7 @@ const server = http.createServer(async (req, res) => {
       writeChatStore(data);
       const hydrated = {
         ...msg,
+        displayName: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].displayName) || msg.displayName || msg.username,
         avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || '',
         decoration: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].decoration) || msg.decoration || ''
       };
@@ -4253,6 +4436,7 @@ const server = http.createServer(async (req, res) => {
       const rawMessages = Array.isArray(data[channel]) ? data[channel] : [];
       const messages = rawMessages.map((m) => ({
         ...m,
+        displayName: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].displayName) || m.displayName || m.username,
         avatar: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].avatar) || m.avatar || '',
         decoration: (authStore && authStore.users && authStore.users[m.username] && authStore.users[m.username].decoration) || m.decoration || ''
       }));
@@ -4297,6 +4481,21 @@ const server = http.createServer(async (req, res) => {
             };
           }
         }
+        const isBotAnnounce = sessionUser.role === 'admin' && /^\/botupdate\s+(.+)/i.test(text);
+        if (isBotAnnounce) {
+          const customNote = text.replace(/^\/botupdate\s+/i, '').trim();
+          const botEntry = buildAstraBotMessage(
+            channel,
+            'Astra Bot — Update Broadcast',
+            customNote,
+            []
+          );
+          data[channel].push(botEntry);
+          if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
+          writeChatStore(data);
+          broadcastChatWs({ type: 'chat-message', channel, message: botEntry });
+          return sendJson(res, 200, { ok: true, message: botEntry, messages: data[channel] });
+        }
         const userRec = authStore && authStore.users && authStore.users[sessionUser.username];
         const userAvatar = (userRec && userRec.avatar) || '';
         const userDecoration = (userRec && userRec.decoration) || '';
@@ -4304,7 +4503,7 @@ const server = http.createServer(async (req, res) => {
           id: crypto.randomBytes(8).toString('hex'),
           channel,
           username: sessionUser.username,
-          displayName: sessionUser.displayName || sessionUser.username,
+          displayName: (userRec && userRec.displayName) || sessionUser.displayName || sessionUser.username,
           role: sessionUser.role || 'user',
           avatar: userAvatar,
           decoration: userDecoration,
@@ -4314,6 +4513,28 @@ const server = http.createServer(async (req, res) => {
           ts: Date.now()
         };
         data[channel].push(entry);
+
+        if (/^!(?:updates|whatsnew|bot)$/i.test(text) || /@astra\s*bot/i.test(text)) {
+          const botReply = buildAstraBotMessage(
+            channel,
+            'Astra Bot — Latest Updates',
+            'Here is what was just added to Astra:',
+            [
+              'LucideBlox Node API Proxy + New Tab Game Launch (no Wisp relay failure)',
+              'Premade robloxcookie= launch links in Astra URL / Search Bar',
+              '20 Genuine Animated Discord Avatar Decorations + Username / Display Name editing',
+              'Drag-and-drop Channel Reordering & compact Discord message spacing',
+              'Admin command: type /botupdate <your message> to post as Astra Bot'
+            ]
+          );
+          data[channel].push(botReply);
+          if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
+          writeChatStore(data);
+          broadcastChatWs({ type: 'chat-message', channel, message: entry });
+          broadcastChatWs({ type: 'chat-message', channel, message: botReply });
+          return sendJson(res, 200, { ok: true, message: entry, botMessage: botReply, messages: data[channel] });
+        }
+
         if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
         writeChatStore(data);
         broadcastChatWs({ type: 'chat-message', channel, message: entry });
