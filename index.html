@@ -7493,7 +7493,7 @@
             </button>
           </div>
 
-          <!-- ai (/ai -> Gemini) -->
+          <!-- ai (/ai -> Ivy AI) -->
           <div class="side-dock-item" data-bottom-action="ai" title="ai">
             <button class="side-dock-inner">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -8798,7 +8798,7 @@
           </div>
         </div>
 
-        <iframe class="browser-frame" id="browserFrame" allowfullscreen></iframe>
+        <iframe class="browser-frame" id="browserFrame" allow="display-capture *; camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *; autoplay *" allowfullscreen></iframe>
       </div>
 
       <!-- Quick return floating pill shown if user went to roblox.com during Step 2 -->
@@ -9036,7 +9036,7 @@
       },
       '/ai': {
         name: 'ai',
-        url: 'https://gemini.google.com'
+        url: 'https://ivy.rest/a'
       },
       '/s': {
         name: 'settings',
@@ -9980,8 +9980,19 @@
       }
     }
 
+    function isIvyUrl(rawUrl) {
+      try {
+        const u = new URL(String(rawUrl || '').trim());
+        const h = (u.hostname || '').toLowerCase();
+        return h === 'ivy.rest' || h.endsWith('.ivy.rest');
+      } catch {
+        return /(?:^|\/\/|\.)ivy\.rest(?:[/:?#]|$)/i.test(String(rawUrl || ''));
+      }
+    }
+
     function resolveEngineForUrl(cleanUrl) {
       if (isTikTokUrl(cleanUrl)) return 'ultraviolet';
+      if (isIvyUrl(cleanUrl)) return 'scramjet';
       return astraSettings.engine === 'ultraviolet' ? 'ultraviolet' : 'scramjet';
     }
 
@@ -17432,7 +17443,7 @@
       });
     }
     if (aiOpenGeminiWebBtn) {
-      aiOpenGeminiWebBtn.addEventListener('click', () => triggerSearch('https://gemini.google.com'));
+      aiOpenGeminiWebBtn.addEventListener('click', () => triggerSearch('https://ivy.rest/a'));
     }
 
     function captureScreenFrameFromVideo() {
