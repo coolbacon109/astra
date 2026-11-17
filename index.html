@@ -6557,6 +6557,352 @@
     .quick-app-tile:hover span {
       color: rgba(255, 255, 255, 0.92) !important;
     }
+
+    /* Full-Width Top Chrome Browsing Mode (Hides Left Sidebar & Mirrors Reference Screenshot) */
+    body.browsing-active .side-tabs-panel,
+    body.browsing-active #sideTabsPanel,
+    body.browsing-active #footerBar {
+      display: none !important;
+    }
+    body.browsing-active .main-area {
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 1 1 100% !important;
+    }
+    body.browsing-active .regular-tabs-bar {
+      display: flex !important;
+      align-items: flex-end !important;
+      justify-content: flex-start !important;
+      height: 36px !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      padding: 4px 8px 0 !important;
+      background: #06070b !important;
+      border-bottom: none !important;
+      gap: 4px !important;
+    }
+    body.browsing-active #switchToSideBtn {
+      display: none !important;
+    }
+    body.browsing-active .regular-tabs-scroll {
+      flex: 0 1 auto !important;
+      gap: 4px !important;
+    }
+    body.browsing-active .regular-tabs-bar .tab-item {
+      height: 31px !important;
+      min-width: 120px !important;
+      max-width: 195px !important;
+      padding: 0 10px 0 12px !important;
+      border-radius: 10px 10px 0 0 !important;
+      background: rgba(16, 18, 26, 0.45) !important;
+      border: 1px solid transparent !important;
+      border-bottom: none !important;
+      color: rgba(255, 255, 255, 0.6) !important;
+      box-shadow: none !important;
+    }
+    body.browsing-active .regular-tabs-bar .tab-item.active {
+      background: #0d0f16 !important;
+      border-color: rgba(255, 255, 255, 0.22) !important;
+      border-bottom: none !important;
+      color: #ffffff !important;
+    }
+    body.browsing-active .regular-plus-btn {
+      width: 26px !important;
+      height: 26px !important;
+      margin-bottom: 3px !important;
+      border-radius: 8px !important;
+      background: transparent !important;
+      border: none !important;
+      color: rgba(255, 255, 255, 0.65) !important;
+    }
+    body.browsing-active .regular-plus-btn:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #fff !important;
+    }
+    body.browsing-active .browser-toolbar {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      height: 44px !important;
+      padding: 0 10px !important;
+      background: #0d0f16 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    }
+    body.browsing-active .toolbar-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+    }
+    body.browsing-active .chrome-btn {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 7px !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: rgba(255, 255, 255, 0.72) !important;
+    }
+    body.browsing-active .chrome-btn:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #ffffff !important;
+    }
+    body.browsing-active .url-bar {
+      flex: 1 1 auto !important;
+      max-width: none !important;
+      height: 30px !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.09) !important;
+      border-radius: 999px !important;
+      padding: 0 !important;
+    }
+    body.browsing-active .url-bar-inner {
+      height: 100% !important;
+      padding: 0 12px !important;
+      background: transparent !important;
+      border-radius: 999px !important;
+      gap: 8px !important;
+    }
+    body.browsing-active .search-proxy-toggle {
+      display: none !important;
+    }
+    body.browsing-active .url-bar:focus-within .search-proxy-toggle {
+      display: inline-flex !important;
+    }
+    .url-lock-icon {
+      color: rgba(255, 255, 255, 0.56);
+      display: none;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.browsing-active .url-lock-icon {
+      display: inline-flex;
+    }
+    body.browsing-active .url-search-magnifier {
+      display: none !important;
+    }
+    .url-bookmark-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.52);
+      cursor: pointer;
+      padding: 2px 4px;
+      display: none;
+      align-items: center;
+      border-radius: 6px;
+    }
+    .url-bookmark-btn:hover,
+    .url-bookmark-btn.saved {
+      color: #fde047;
+    }
+    body.browsing-active .url-bookmark-btn {
+      display: inline-flex;
+    }
+    .browse-right-actions {
+      display: none;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    body.browsing-active .browse-right-actions {
+      display: flex;
+    }
+    body.browsing-active.chrome-compact-bar .regular-tabs-bar {
+      display: none !important;
+    }
+    .chrome-show-tabs-float {
+      display: none;
+    }
+
+    /* Music Exit Button + Chat Edits/Pins/Uploads + Anime Provider Hub */
+    .music-exit-btn {
+      background: rgba(248, 113, 113, 0.14);
+      border: 1px solid rgba(248, 113, 113, 0.34);
+      color: #fecaca;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: inherit;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .music-exit-btn:hover {
+      background: rgba(248, 113, 113, 0.28);
+      border-color: rgba(248, 113, 113, 0.65);
+      color: #fff;
+    }
+    .chat-pinned-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 14px;
+      background: rgba(var(--accent), 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.86);
+    }
+    .chat-pinned-bar.visible { display: flex; }
+    .chat-storage-warn {
+      display: none;
+      padding: 6px 14px;
+      background: rgba(245, 158, 11, 0.14);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.32);
+      color: #fde68a;
+      font-size: 11.5px;
+    }
+    .chat-storage-warn.visible { display: block; }
+    .chat-load-older-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .chat-msg-edited-tag {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.42);
+      margin-left: 5px;
+      font-style: italic;
+    }
+    .chat-pin-pill {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(251, 191, 36, 0.16);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      margin-left: 6px;
+    }
+    .chat-msg-edit-form {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      align-items: center;
+    }
+    .chat-msg-edit-input {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .chat-attachments-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .chat-attach-img {
+      max-width: 280px;
+      max-height: 220px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      object-fit: contain;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .chat-attach-file {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e0f2fe;
+      font-size: 12px;
+      text-decoration: none;
+    }
+    .chat-pending-attach-bar,
+    .chat-failed-send-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .chat-pending-attach-bar.visible,
+    .chat-failed-send-bar.visible { display: flex; }
+    .chat-failed-send-bar {
+      background: rgba(239, 68, 68, 0.14);
+      color: #fecaca;
+    }
+    .chat-unread-badge {
+      margin-left: auto;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(var(--accent), 0.3);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .anime-provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .anime-provider-card {
+      background: rgba(14, 16, 24, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+    .anime-provider-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(20, 23, 35, 0.94);
+    }
+    .anime-provider-card.preferred {
+      border-color: rgba(var(--accent), 0.65);
+    }
+    .anime-provider-head {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .anime-provider-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+    .anime-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.65);
+      align-self: flex-start;
+    }
+    .anime-status-pill.ok {
+      background: rgba(52, 211, 153, 0.14);
+      color: #6ee7b7;
+    }
+    .anime-status-pill.down {
+      background: rgba(248, 113, 113, 0.14);
+      color: #fca5a5;
+    }
     .chat-reply-quote {
       display: flex;
       align-items: center;
@@ -6893,6 +7239,7 @@
       <button type="button" class="home-vis-mini-btn" id="pillPlayBtn" title="Play / Pause">⏯</button>
       <button type="button" class="home-vis-mini-btn" id="pillNextBtn" title="Next track">›</button>
       <button type="button" class="home-vis-mini-btn" id="pillRotateBtn" title="Rotate pill (normal / sideways)">⟳</button>
+      <button type="button" class="home-vis-mini-btn" id="pillExitBtn" title="Stop &amp; exit music" style="color:#fca5a5;">✕</button>
     </div>
   </div>
 
@@ -7273,7 +7620,13 @@
 
         <form class="url-bar" id="topUrlForm">
           <div class="url-bar-inner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <span class="url-lock-icon" title="Secure proxy connection">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <svg class="url-search-magnifier" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
@@ -7282,8 +7635,44 @@
               <button type="button" class="search-proxy-btn active" data-proxy-switch="scramjet">scramjet</button>
               <button type="button" class="search-proxy-btn" data-proxy-switch="ultraviolet">uv</button>
             </div>
+            <button type="button" class="url-bookmark-btn" id="urlBookmarkBtn" title="Bookmark page">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </button>
           </div>
         </form>
+
+        <div class="browse-right-actions" id="browseRightActions">
+          <button type="button" class="chrome-btn" id="browseSidebarToggleBtn" title="Show Astra Sidebar / Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+          <button type="button" class="chrome-btn" id="browsePopoutBtn" title="Open in new blank window">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </button>
+          <button type="button" class="chrome-btn" id="browseFullscreenBtn" title="Toggle Fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+          </button>
+          <button type="button" class="chrome-btn" id="browseCompactToggleBtn" title="Toggle Tab Strip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"/>
+            </svg>
+          </button>
+          <button type="button" class="chrome-btn" id="browseHomeBtn" title="Return to Astra Home (/h)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </button>
+        </div>
       </header>
 
       <!-- Embedded Browser / Live Search Viewport -->
@@ -7527,6 +7916,7 @@
               <button type="button" class="ext-btn" id="musicCinemaBarBtn" title="Cinematic View (C)">cinematic</button>
               <button type="button" class="ext-btn" id="musicVideoToggleBtn">bigger video</button>
               <input type="range" id="musicVolumeRange" min="0" max="100" value="85" title="Volume" />
+              <button type="button" class="music-exit-btn" id="musicStopExitBtn" title="Stop playback &amp; unload track">✕ Exit</button>
             </div>
           </footer>
         </div>
@@ -7574,16 +7964,35 @@
                     <span id="chatChannelTitle">general</span>
                   </div>
                   <div class="chat-main-topic" id="chatChannelTopic">main server chat</div>
+                  <button type="button" class="chat-msg-act-btn" id="chatEditTopicBtn" title="Edit channel description" style="font-size:11px;display:none;">✎</button>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                   <button type="button" class="ext-btn" id="chatBotUpdatesBtn" style="padding:4px 10px;font-size:11px;" title="Ask Astra Bot for latest updates">bot updates</button>
                   <button type="button" class="ext-btn" id="chatToggleMembersBtn" style="padding:4px 10px;font-size:11px;">members</button>
                 </div>
               </div>
+              <div class="chat-storage-warn" id="chatStorageWarnBanner">
+                Warning: hosted container running without a Persistent Volume (attach a volume at /data or set ASTRA_DATA_DIR so messages survive redeploys).
+              </div>
+              <div class="chat-pinned-bar" id="chatPinnedBar">
+                <span id="chatPinnedBarText" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📌 Pinned message</span>
+                <button type="button" class="ext-btn" id="chatCyclePinnedBtn" style="padding:2px 8px;font-size:10.5px;">pins (0)</button>
+              </div>
               <div class="chat-messages-feed" id="chatMessagesFeed"></div>
               <div class="chat-reply-banner" id="chatReplyBanner">
                 <span id="chatReplyBannerText">Replying to user</span>
                 <button type="button" class="chat-msg-act-btn" id="chatCancelReplyBtn">✕</button>
+              </div>
+              <div class="chat-pending-attach-bar" id="chatPendingAttachBar">
+                <span id="chatPendingAttachLabel">Attachment ready</span>
+                <button type="button" class="chat-msg-act-btn" id="chatClearAttachBtn">✕</button>
+              </div>
+              <div class="chat-failed-send-bar" id="chatFailedSendBar">
+                <span id="chatFailedSendText">Message failed to save to database.</span>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="ext-btn" id="chatRetrySendBtn" style="padding:2px 9px;font-size:11px;">retry</button>
+                  <button type="button" class="chat-msg-act-btn" id="chatDismissFailedBtn">✕</button>
+                </div>
               </div>
               <div class="chat-emoji-tray" id="chatEmojiTray">
                 <button type="button" class="chat-emoji-pick">😀</button>
@@ -7611,6 +8020,8 @@
               <div class="chat-typing-bar" id="chatTypingBar"></div>
               <div class="chat-composer-wrap">
                 <form class="chat-composer-form" id="chatComposerForm">
+                  <button type="button" class="chat-msg-act-btn" id="chatAttachFileBtn" title="Upload image, video, or file attachment" style="font-size:14px;font-weight:700;">+</button>
+                  <input type="file" id="chatAttachFileInput" accept="image/*,video/mp4,video/webm,.pdf,.txt" style="display:none;" />
                   <button type="button" class="chat-msg-act-btn" id="chatEmojiToggleBtn" title="Insert emoji">☺</button>
                   <button type="button" class="chat-msg-act-btn" id="chatGifToggleBtn" title="Send GIF" style="font-size:11px;font-weight:800;">GIF</button>
                   <button type="button" class="chat-msg-act-btn" id="chatStickerToggleBtn" title="Send Sticker">🏷️</button>
@@ -8087,6 +8498,50 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Anime Provider Selector Hub (/a) -->
+        <div class="settings-hub-container" id="animeHubView">
+          <div class="settings-header">
+            <div>
+              <div class="settings-header-title">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                <span>anime providers</span>
+                <span class="settings-card-badge" id="animePreferredBadge">no default set</span>
+              </div>
+              <div class="settings-header-sub">choose a configured destination to open — external platforms respect their own auth &amp; terms</div>
+            </div>
+            <div class="settings-action-row">
+              <button class="ext-btn" id="animeCheckStatusBtn">check availability</button>
+              <button class="ext-btn" id="animeToggleAddProviderBtn">+ add provider</button>
+              <button class="ext-btn" id="animeBackHomeBtn">back to /h</button>
+            </div>
+          </div>
+
+          <div class="settings-card-inner" style="padding:14px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.09);display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;text-align:left;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#fff;">Remember my preferred anime provider</div>
+              <div style="font-size:11.5px;color:rgba(255,255,255,0.56);">When enabled, clicking Anime opens your saved provider right away (saved to your Astra account).</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <button type="button" class="ext-btn" id="animeClearPrefBtn" style="font-size:11px;padding:4px 10px;display:none;">clear default</button>
+              <button type="button" class="astra-switch" id="animeRememberSwitch" role="switch" aria-checked="false" title="Remember preferred anime provider"></button>
+            </div>
+          </div>
+
+          <div class="settings-card-inner" id="animeAddProviderFormWrap" style="display:none;padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:10px;">Add Additional HTTP / HTTPS Provider</div>
+            <form id="animeAddProviderForm" style="display:grid;grid-template-columns:1fr 1.5fr 1fr auto;gap:8px;align-items:center;">
+              <input type="text" id="animeNewProvName" class="settings-input" placeholder="Name (e.g. HiAnime)" required maxlength="40" />
+              <input type="url" id="animeNewProvUrl" class="settings-input" placeholder="https://example.com" required maxlength="260" />
+              <input type="text" id="animeNewProvDesc" class="settings-input" placeholder="Short description" maxlength="120" />
+              <button type="submit" class="roblox-primary-btn" style="padding:8px 14px;font-size:12px;">save</button>
+            </form>
+          </div>
+
+          <div class="anime-provider-grid" id="animeProviderGrid"></div>
         </div>
 
         <!-- Admin Panel (/admin -> coolbacon only!) -->
@@ -8566,7 +9021,8 @@
       },
       '/a': {
         name: 'anime',
-        url: 'https://animekai.be'
+        url: null,
+        isAnimeHub: true
       },
       '/music': {
         name: 'music',
@@ -9721,29 +10177,29 @@
 
             void main() {
               vec2 uv = v_uv;
-              float t = u_time * 0.85;
-              vec2 p = vec2(uv.x * 2.6 + u_mouse.x * 0.14, uv.y * 1.9 + u_mouse.y * 0.08);
+              float t = u_time * 1.12;
+              vec2 p = vec2(uv.x * 2.3 + u_mouse.x * 0.16, uv.y * 1.7 + u_mouse.y * 0.09);
               float n1 = waveFold(p, t);
-              float n2 = waveFold(p * 1.35 + vec2(1.7, -0.8), t * 1.15);
-              float ribbon = smoothstep(0.24, 0.92, n1 * 0.65 + n2 * 0.35);
-              float ridge = pow(clamp(1.0 - abs(n1 - n2) * 3.1, 0.0, 1.0), 1.8);
+              float n2 = waveFold(p * 1.32 + vec2(1.9, -0.6), t * 1.18);
+              float ribbon = smoothstep(0.18, 0.94, n1 * 0.62 + n2 * 0.38);
+              float ridge = pow(clamp(1.0 - abs(n1 - n2) * 2.8, 0.0, 1.0), 1.6);
 
-              // Horizon vertical envelope: pure black sky top, billowing liquid aurora below middle
-              float waveEdge = 0.52 + 0.11 * sin(uv.x * 3.8 + t * 0.5) + 0.07 * cos(uv.x * 6.2 - t * 0.4);
-              float mask = smoothstep(waveEdge + 0.18, waveEdge - 0.34, uv.y);
-              float shadowPocket = smoothstep(0.18, 0.72, n1);
+              // Bold billowing Achroma-style horizon: deep black space above, vivid fluid silk below
+              float waveEdge = 0.56 + 0.13 * sin(uv.x * 3.4 + t * 0.55) + 0.08 * cos(uv.x * 5.8 - t * 0.42);
+              float mask = smoothstep(waveEdge + 0.16, waveEdge - 0.36, uv.y);
+              float shadowPocket = pow(smoothstep(0.14, 0.78, n1), 1.35);
 
-              vec3 deepIndigo = vec3(0.20, 0.18, 0.68);
-              vec3 violet     = vec3(0.58, 0.22, 0.96);
-              vec3 orchid     = vec3(0.76, 0.34, 0.98);
-              vec3 cyan       = vec3(0.16, 0.78, 0.98);
+              vec3 deepIndigo = vec3(0.24, 0.22, 0.85);
+              vec3 violet     = vec3(0.60, 0.26, 1.00);
+              vec3 orchid     = vec3(0.76, 0.38, 1.00);
+              vec3 cyan       = vec3(0.18, 0.84, 1.00);
 
-              vec3 col = mix(deepIndigo, violet, smoothstep(0.2, 0.78, n1));
-              col = mix(col, orchid, smoothstep(0.55, 0.95, n2) * 0.55);
-              col = mix(col, cyan, clamp(ridge * 0.82 + smoothstep(0.62, 0.95, uv.x * 0.45 + n2 * 0.65) * 0.35, 0.0, 1.0));
+              vec3 col = mix(deepIndigo, violet, smoothstep(0.18, 0.76, n1));
+              col = mix(col, orchid, smoothstep(0.50, 0.95, n2) * 0.48);
+              col = mix(col, cyan, clamp(ridge * 0.88 + smoothstep(0.54, 0.92, uv.x * 0.35 + n2 * 0.72) * 0.42, 0.0, 1.0));
 
-              float lum = mask * shadowPocket * (0.48 + 0.52 * ribbon + 0.38 * ridge);
-              vec3 finalCol = col * lum * 0.92;
+              float lum = mask * shadowPocket * (0.58 + 0.56 * ribbon + 0.46 * ridge);
+              vec3 finalCol = clamp(col * lum * 1.14, 0.0, 1.0);
               gl_FragColor = vec4(finalCol, 1.0);
             }
           `;
@@ -10784,9 +11240,13 @@
       const showMusicHub = current.route === '/music' && !current.url && !current.query;
       const showChatHub = current.route === '/chat' && !current.url && !current.query;
       const showAiHub = current.route === '/ai' && !current.url && !current.query;
+      const showAnimeHub = current.route === '/a' && !current.url && !current.query;
       const showSettingsHub = current.route === '/s' && !current.url && !current.query;
       const showAdminHub = current.route === '/admin' && !current.url && !current.query && !!(currentUser && currentUser.role === 'admin');
       const showSearch = !!current.query;
+      const isBrowsingWeb = !!(current.url || current.query || current.isHtmlGame) && !showGamesHub && !showRobloxHub && !showMusicHub && !showChatHub && !showAiHub && !showAnimeHub && !showSettingsHub && !showAdminHub;
+      document.body.classList.toggle('browsing-active', isBrowsingWeb);
+      if (!isBrowsingWeb) document.body.classList.remove('chrome-compact-bar');
       const isImmersiveMedia =
         (['/m', '/g', '/roblox', '/a', '/music', '/chat', '/ai', '/s', '/admin'].includes(current.route) && !current.query) ||
         (!!current.url && !current.query && /nowgg\.fun|gn-math/i.test(current.url));
@@ -10798,19 +11258,22 @@
       }
 
       if (typeof syncRobloxReturnBanner === 'function') syncRobloxReturnBanner(current);
+      if (typeof syncBrowseBookmarkIcon === 'function') syncBrowseBookmarkIcon(current.url || '');
 
+      const animeHubEl = document.getElementById('animeHubView');
       browserViewport.classList.toggle(
         'settings-transparent',
-        showGamesHub || showRobloxHub || showMusicHub || showChatHub || showAiHub || showSettingsHub || showAdminHub || showSearch
+        showGamesHub || showRobloxHub || showMusicHub || showChatHub || showAiHub || showAnimeHub || showSettingsHub || showAdminHub || showSearch
       );
 
-      if (!current.url && !current.query && !showGamesHub && !showRobloxHub && !showMusicHub && !showChatHub && !showAiHub && !showSettingsHub && !showAdminHub) {
+      if (!current.url && !current.query && !showGamesHub && !showRobloxHub && !showMusicHub && !showChatHub && !showAiHub && !showAnimeHub && !showSettingsHub && !showAdminHub) {
         stopConnectingScreen();
         updateProxyCornerIndicator(false);
         browserViewport.classList.remove('active');
         browserFrame.classList.remove('active-frame', 'loaded');
         stopFrameMediaAndUnload();
         if (gamesHubView) gamesHubView.classList.remove('visible');
+        if (animeHubEl) animeHubEl.classList.remove('visible');
         if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
         if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
         if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
@@ -10832,6 +11295,7 @@
         browserViewport.classList.add('active');
         syncBackgroundMediaPower(false);
 
+        if (animeHubEl && !showAnimeHub) animeHubEl.classList.remove('visible');
         if (showAdminHub) {
           stopConnectingScreen();
           updateProxyCornerIndicator(false);
@@ -10921,6 +11385,21 @@
           if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.add('visible');
           topUrlInput.value = '/roblox';
           if (typeof ensureRobloxHubReady === 'function') ensureRobloxHubReady();
+        } else if (showAnimeHub) {
+          stopConnectingScreen();
+          updateProxyCornerIndicator(false);
+          searchResultsContainer.classList.remove('visible');
+          browserFrame.classList.remove('active-frame', 'loaded');
+          stopFrameMediaAndUnload();
+          if (gamesHubView) gamesHubView.classList.remove('visible');
+          if (typeof robloxHubView !== 'undefined' && robloxHubView) robloxHubView.classList.remove('visible');
+          if (typeof musicHubView !== 'undefined' && musicHubView) musicHubView.classList.remove('visible');
+          if (typeof chatHubView !== 'undefined' && chatHubView) chatHubView.classList.remove('visible');
+          if (typeof aiHubView !== 'undefined' && aiHubView) aiHubView.classList.remove('visible');
+          if (settingsHubView) settingsHubView.classList.remove('visible');
+          if (adminHubView) adminHubView.classList.remove('visible');
+          topUrlInput.value = '/a';
+          if (typeof handleAnimeRouteEntry === 'function') handleAnimeRouteEntry();
         } else if (showGamesHub) {
           stopConnectingScreen();
           updateProxyCornerIndicator(false);
@@ -10983,6 +11462,316 @@
       syncActiveTabView();
     }
 
+    // Full-Width Browsing Chrome Right Actions + Bookmarks
+    const ANIME_PREFS_LS_KEY = 'astra_anime_prefs_v1';
+    const ASTRA_BOOKMARKS_KEY = 'astra_saved_bookmarks_v1';
+    function getSavedBookmarks() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(ASTRA_BOOKMARKS_KEY) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function syncBrowseBookmarkIcon(url) {
+      const btn = document.getElementById('urlBookmarkBtn');
+      if (!btn) return;
+      const list = getSavedBookmarks();
+      btn.classList.toggle('saved', !!(url && list.includes(url)));
+    }
+    const urlBookmarkBtn = document.getElementById('urlBookmarkBtn');
+    if (urlBookmarkBtn) {
+      urlBookmarkBtn.addEventListener('click', () => {
+        const cur = tabs.find((t) => t.id === activeTabId);
+        const u = cur && cur.url ? cur.url : '';
+        if (!u) return;
+        const list = getSavedBookmarks();
+        const idx = list.indexOf(u);
+        if (idx >= 0) {
+          list.splice(idx, 1);
+          if (typeof showToast === 'function') showToast('Removed bookmark');
+        } else {
+          list.unshift(u);
+          if (typeof showToast === 'function') showToast('Bookmarked ' + u.replace(/^https?:\/\//i, '').slice(0, 28));
+        }
+        try { localStorage.setItem(ASTRA_BOOKMARKS_KEY, JSON.stringify(list.slice(0, 40))); } catch {}
+        syncBrowseBookmarkIcon(u);
+      });
+    }
+    const browseHomeBtn = document.getElementById('browseHomeBtn');
+    if (browseHomeBtn) browseHomeBtn.addEventListener('click', () => navigateRoute('/h'));
+    const browseCompactToggleBtn = document.getElementById('browseCompactToggleBtn');
+    if (browseCompactToggleBtn) browseCompactToggleBtn.addEventListener('click', () => document.body.classList.toggle('chrome-compact-bar'));
+    const browseFullscreenBtn = document.getElementById('browseFullscreenBtn');
+    if (browseFullscreenBtn) {
+      browseFullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen && document.exitFullscreen().catch(() => {});
+        }
+      });
+    }
+    const browsePopoutBtn = document.getElementById('browsePopoutBtn');
+    if (browsePopoutBtn) {
+      browsePopoutBtn.addEventListener('click', () => {
+        const cur = tabs.find((t) => t.id === activeTabId);
+        if (cur && cur.url && typeof openTabBlank === 'function') {
+          openTabBlank();
+        } else if (cur && cur.url) {
+          window.open(buildProxyTargetUrl(cur.url), '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
+    const browseSidebarToggleBtn = document.getElementById('browseSidebarToggleBtn');
+    if (browseSidebarToggleBtn) {
+      browseSidebarToggleBtn.addEventListener('click', () => {
+        document.body.classList.remove('browsing-active');
+        navigateRoute('/h');
+      });
+    }
+
+    // Centralized Anime Provider Selection System (/a)
+    const DEFAULT_ANIME_PROVIDERS = [
+      { id: 'animekai-1', name: 'AnimeKai 1', url: 'https://animekai.be', description: 'Current AnimeKai destination.', icon: '⚡', enabled: true, order: 1 },
+      { id: 'animekai-2', name: 'AnimeKai 2', url: 'https://animekai.com.ro', description: 'Alternative AnimeKai destination.', icon: '🌀', enabled: true, order: 2 },
+      { id: 'crunchyroll', name: 'Crunchyroll', url: 'https://www.crunchyroll.com', description: 'Official anime streaming platform.', icon: '🟠', enabled: true, order: 3 },
+      { id: 'netflix', name: 'Netflix', url: 'https://www.netflix.com', description: 'Anime and other entertainment.', icon: '🎬', enabled: true, order: 4 }
+    ];
+    let animePrefState = (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(ANIME_PREFS_LS_KEY) || 'null');
+        if (raw && typeof raw === 'object') {
+          return {
+            rememberAnimeProvider: !!raw.rememberAnimeProvider,
+            preferredAnimeProvider: String(raw.preferredAnimeProvider || ''),
+            customAnimeProviders: Array.isArray(raw.customAnimeProviders) ? raw.customAnimeProviders : []
+          };
+        }
+      } catch {}
+      return { rememberAnimeProvider: false, preferredAnimeProvider: '', customAnimeProviders: [] };
+    })();
+    let animePrefHydratedFromServer = false;
+    let animeForcePickerOnce = false;
+    const animeAvailabilityMap = new Map();
+
+    function isValidHttpProviderUrl(raw) {
+      try {
+        const u = new URL(String(raw || '').trim());
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }
+    function getAllConfiguredAnimeProviders() {
+      const merged = [
+        ...DEFAULT_ANIME_PROVIDERS,
+        ...(Array.isArray(animePrefState.customAnimeProviders) ? animePrefState.customAnimeProviders : [])
+      ]
+        .filter((p) => p && p.enabled !== false && isValidHttpProviderUrl(p.url))
+        .sort((a, b) => (Number(a.order || 99) - Number(b.order || 99)));
+      return merged;
+    }
+    function saveAnimePrefsLocal() {
+      try { localStorage.setItem(ANIME_PREFS_LS_KEY, JSON.stringify(animePrefState)); } catch {}
+    }
+    async function loadAnimePrefsFromServer() {
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/user/preferences`, { credentials: 'same-origin' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.ok && j.preferences) {
+            animePrefState.rememberAnimeProvider = !!j.preferences.rememberAnimeProvider;
+            animePrefState.preferredAnimeProvider = String(j.preferences.preferredAnimeProvider || '');
+            if (Array.isArray(j.preferences.customAnimeProviders)) {
+              animePrefState.customAnimeProviders = j.preferences.customAnimeProviders;
+            }
+            animePrefHydratedFromServer = true;
+            saveAnimePrefsLocal();
+            renderAnimeProviderPicker();
+          }
+        }
+      } catch {}
+    }
+    async function persistAnimePrefsToServer() {
+      saveAnimePrefsLocal();
+      try {
+        await proxyHealthPromise;
+        await fetch(`${proxyOrigin}/api/user/preferences`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(animePrefState)
+        });
+      } catch {}
+    }
+    function openAnimeProviderDestination(provider, mode = 'astra') {
+      if (!provider || !isValidHttpProviderUrl(provider.url)) return;
+      if (animePrefState.rememberAnimeProvider) {
+        animePrefState.preferredAnimeProvider = provider.id;
+        persistAnimePrefsToServer();
+      }
+      if (mode === 'external') {
+        window.open(provider.url, '_blank', 'noopener,noreferrer');
+      } else {
+        openUrlInActiveTab(provider.url, provider.name);
+      }
+    }
+    function renderAnimeProviderPicker() {
+      const grid = document.getElementById('animeProviderGrid');
+      const remSw = document.getElementById('animeRememberSwitch');
+      const badge = document.getElementById('animePreferredBadge');
+      const clearBtn = document.getElementById('animeClearPrefBtn');
+      const providers = getAllConfiguredAnimeProviders();
+      const prefObj = providers.find((p) => p.id === animePrefState.preferredAnimeProvider);
+      if (remSw) {
+        remSw.classList.toggle('on', !!animePrefState.rememberAnimeProvider);
+        remSw.setAttribute('aria-checked', animePrefState.rememberAnimeProvider ? 'true' : 'false');
+      }
+      if (badge) {
+        badge.textContent = (animePrefState.rememberAnimeProvider && prefObj) ? `default: ${prefObj.name}` : 'no default set';
+      }
+      if (clearBtn) {
+        clearBtn.style.display = (animePrefState.rememberAnimeProvider || prefObj) ? 'inline-flex' : 'none';
+      }
+      if (!grid) return;
+      grid.innerHTML = providers.map((p) => {
+        const isPref = animePrefState.preferredAnimeProvider === p.id;
+        const avail = animeAvailabilityMap.get(p.id);
+        let statusCls = '';
+        let statusLabel = 'unverified external destination';
+        if (avail === true) { statusCls = 'ok'; statusLabel = 'reachable'; }
+        else if (avail === false) { statusCls = 'down'; statusLabel = 'unreachable / blocked'; }
+        else if (avail === 'checking') { statusLabel = 'checking...'; }
+        const domain = p.url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+        return `
+          <div class="anime-provider-card ${isPref ? 'preferred' : ''}">
+            <div class="anime-provider-head">
+              <div class="anime-provider-logo">${escapeMusicHtml(p.icon || '📺')}</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:14px;font-weight:700;color:#fff;">${escapeMusicHtml(p.name)}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.48);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeMusicHtml(domain)}</div>
+              </div>
+              ${isPref ? '<span class="settings-card-badge">PREFERRED</span>' : ''}
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.72);line-height:1.4;">${escapeMusicHtml(p.description || '')}</div>
+            <span class="anime-status-pill ${statusCls}">${escapeMusicHtml(statusLabel)}</span>
+            <div style="display:flex;gap:8px;margin-top:auto;padding-top:4px;">
+              <button type="button" class="roblox-primary-btn" data-open-anime="${escapeMusicHtml(p.id)}" style="flex:1;padding:7px 12px;font-size:12px;">Open</button>
+              <button type="button" class="ext-btn" data-open-anime-ext="${escapeMusicHtml(p.id)}" title="Open directly in new browser tab ↗" style="padding:7px 10px;font-size:12px;">↗</button>
+              <button type="button" class="ext-btn" data-set-anime-pref="${escapeMusicHtml(p.id)}" title="Set as default provider" style="padding:7px 10px;font-size:11px;">★</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      grid.querySelectorAll('[data-open-anime]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = providers.find((x) => x.id === btn.dataset.openAnime);
+          if (p) openAnimeProviderDestination(p, 'astra');
+        });
+      });
+      grid.querySelectorAll('[data-open-anime-ext]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = providers.find((x) => x.id === btn.dataset.openAnimeExt);
+          if (p) openAnimeProviderDestination(p, 'external');
+        });
+      });
+      grid.querySelectorAll('[data-set-anime-pref]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          animePrefState.rememberAnimeProvider = true;
+          animePrefState.preferredAnimeProvider = btn.dataset.setAnimePref;
+          persistAnimePrefsToServer();
+          renderAnimeProviderPicker();
+          if (typeof showToast === 'function') showToast('Saved preferred anime provider');
+        });
+      });
+    }
+    async function checkAllAnimeProvidersAvailability() {
+      const providers = getAllConfiguredAnimeProviders();
+      for (const p of providers) animeAvailabilityMap.set(p.id, 'checking');
+      renderAnimeProviderPicker();
+      await Promise.all(providers.map(async (p) => {
+        try {
+          await proxyHealthPromise;
+          const r = await fetch(`${proxyOrigin}/api/anime/check?url=${encodeURIComponent(p.url)}`, { credentials: 'same-origin' });
+          const j = await r.json();
+          animeAvailabilityMap.set(p.id, !!(r.ok && j && j.reachable));
+        } catch {
+          animeAvailabilityMap.set(p.id, false);
+        }
+      }));
+      renderAnimeProviderPicker();
+    }
+    async function handleAnimeRouteEntry() {
+      const animeHubEl = document.getElementById('animeHubView');
+      if (!animePrefHydratedFromServer) await loadAnimePrefsFromServer();
+      const providers = getAllConfiguredAnimeProviders();
+      const pref = animePrefState.rememberAnimeProvider && providers.find((p) => p.id === animePrefState.preferredAnimeProvider);
+      if (pref && !animeForcePickerOnce) {
+        openUrlInActiveTab(pref.url, pref.name);
+        return;
+      }
+      animeForcePickerOnce = false;
+      if (animeHubEl) animeHubEl.classList.add('visible');
+      renderAnimeProviderPicker();
+    }
+    const animeRememberSwitch = document.getElementById('animeRememberSwitch');
+    if (animeRememberSwitch) {
+      animeRememberSwitch.addEventListener('click', () => {
+        animePrefState.rememberAnimeProvider = !animePrefState.rememberAnimeProvider;
+        if (!animePrefState.rememberAnimeProvider) animePrefState.preferredAnimeProvider = '';
+        persistAnimePrefsToServer();
+        renderAnimeProviderPicker();
+      });
+    }
+    const animeClearPrefBtn = document.getElementById('animeClearPrefBtn');
+    if (animeClearPrefBtn) {
+      animeClearPrefBtn.addEventListener('click', () => {
+        animePrefState.rememberAnimeProvider = false;
+        animePrefState.preferredAnimeProvider = '';
+        persistAnimePrefsToServer();
+        renderAnimeProviderPicker();
+      });
+    }
+    const animeBackHomeBtn = document.getElementById('animeBackHomeBtn');
+    if (animeBackHomeBtn) animeBackHomeBtn.addEventListener('click', () => navigateRoute('/h'));
+    const animeCheckStatusBtn = document.getElementById('animeCheckStatusBtn');
+    if (animeCheckStatusBtn) animeCheckStatusBtn.addEventListener('click', checkAllAnimeProvidersAvailability);
+    const animeToggleAddProviderBtn = document.getElementById('animeToggleAddProviderBtn');
+    const animeAddProviderFormWrap = document.getElementById('animeAddProviderFormWrap');
+    if (animeToggleAddProviderBtn && animeAddProviderFormWrap) {
+      animeToggleAddProviderBtn.addEventListener('click', () => {
+        animeAddProviderFormWrap.style.display = animeAddProviderFormWrap.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+    const animeAddProviderForm = document.getElementById('animeAddProviderForm');
+    if (animeAddProviderForm) {
+      animeAddProviderForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = (document.getElementById('animeNewProvName')?.value || '').trim();
+        const url = (document.getElementById('animeNewProvUrl')?.value || '').trim();
+        const desc = (document.getElementById('animeNewProvDesc')?.value || '').trim();
+        if (!name || !isValidHttpProviderUrl(url)) {
+          if (typeof showToast === 'function') showToast('Enter a valid http:// or https:// URL');
+          return;
+        }
+        const custom = Array.isArray(animePrefState.customAnimeProviders) ? animePrefState.customAnimeProviders : [];
+        custom.push({
+          id: 'custom-' + Date.now(),
+          name,
+          url,
+          description: desc || 'User-configured HTTP/HTTPS provider.',
+          icon: '🌐',
+          enabled: true,
+          order: 100 + custom.length
+        });
+        animePrefState.customAnimeProviders = custom;
+        persistAnimePrefsToServer();
+        animeAddProviderForm.reset();
+        if (animeAddProviderFormWrap) animeAddProviderFormWrap.style.display = 'none';
+        renderAnimeProviderPicker();
+      });
+    }
+
     function openUrlInActiveTab(url, titleOverride) {
       const current = tabs.find(t => t.id === activeTabId);
       if (!current) return;
@@ -10996,6 +11785,7 @@
       renderTabs();
       syncActiveTabView();
     }
+
 
     // Bottom-left Quick Hub actions (all open inside Astra browser viewport)
     document.querySelectorAll('[data-bottom-action]').forEach(pill => {
@@ -11014,6 +11804,7 @@
       syncActiveTabView();
     }
 
+
     function createNewTab(route = '/h') {
       const pageInfo = routePages[route] || routePages['/h'];
       const newTab = { id: nextTabId++, route, title: pageInfo.name, query: null, url: null };
@@ -11022,6 +11813,7 @@
       renderTabs();
       syncActiveTabView();
     }
+
 
     function closeTab(id) {
       if (tabs.length === 1) {
@@ -11037,6 +11829,7 @@
       renderTabs();
       syncActiveTabView();
     }
+
 
     newSideTabBtn.addEventListener('click', () => createNewTab('/h'));
     newRegularTabBtn.addEventListener('click', () => createNewTab('/h'));
@@ -11482,6 +12275,7 @@
       syncActiveTabView();
     }
 
+
     function renderGamesGrid() {
       if (!gamesGrid) return;
       const filtered = getFilteredGames();
@@ -11901,6 +12695,7 @@
       renderTabs();
       syncActiveTabView();
     }
+
 
     document.getElementById('mainSearchForm').addEventListener('submit', e => {
       e.preventDefault();
@@ -12851,10 +13646,16 @@
     const SVG_HEART_OUTLINE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
     const SVG_HEART_FILLED = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
-    function formatMusicTime(sec) {
-      if (!isFinite(sec) || sec < 0) return '0:00';
-      const s = Math.floor(sec);
-      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    function formatMusicTime(sec, fallback = '0:00') {
+      if (typeof sec !== 'number' || !Number.isFinite(sec) || sec < 0) return fallback;
+      const total = Math.floor(sec);
+      const hrs = Math.floor(total / 3600);
+      const mins = Math.floor((total % 3600) / 60);
+      const secs = total % 60;
+      if (hrs > 0) {
+        return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+      return `${mins}:${String(secs).padStart(2, '0')}`;
     }
 
     function escapeMusicHtml(str) {
@@ -13297,54 +14098,120 @@
     }
 
     let musicUserPaused = false;
+    let isSeekingMusicBar = false;
+    let pendingMusicSeekPct = null;
+
+    function syncMusicPlayerTimes() {
+      const v = getMusicVideoEl();
+      if (!v || !musicCurrentTrack) {
+        if (musicCurTime) musicCurTime.textContent = '0:00';
+        if (musicDurTime) musicDurTime.textContent = '0:00';
+        if (musicProgressBar) {
+          musicProgressBar.value = '0';
+          if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') {
+            musicProgressBar.style.setProperty('--rprog', '0%');
+          }
+        }
+        return;
+      }
+      try {
+        const dur = Number(v.duration);
+        const hasDur = Number.isFinite(dur) && dur > 0;
+        const cur = Number(v.currentTime);
+        const safeCur = (Number.isFinite(cur) && cur >= 0) ? (hasDur ? Math.min(cur, dur) : cur) : 0;
+
+        if (!isSeekingMusicBar) {
+          if (musicCurTime) musicCurTime.textContent = formatMusicTime(safeCur, '0:00');
+          if (musicDurTime) musicDurTime.textContent = hasDur ? formatMusicTime(dur, '0:00') : '--:--';
+          if (musicProgressBar) {
+            const pct = hasDur ? Math.max(0, Math.min(100, (safeCur / dur) * 100)) : 0;
+            musicProgressBar.value = String(Math.round(pct * 10) / 10);
+            if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') {
+              musicProgressBar.style.setProperty('--rprog', `${pct.toFixed(1)}%`);
+            }
+          }
+        }
+        if (musicVolumeRange) v.volume = Number(musicVolumeRange.value || 85) / 100;
+        if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
+        const ab = document.getElementById('spicyAsidePlayBtn');
+        if (ab) ab.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
+        const gp = document.getElementById('globalLyricsPlayBtn');
+        if (gp) gp.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
+        if (typeof updateHomeMusicDance === 'function') {
+          updateHomeMusicDance(!v.paused && !!musicCurrentTrack, musicCurrentTrack);
+        }
+      } catch {}
+    }
+
+    function stopAndExitMusicPlayer({ clearQueue = false } = {}) {
+      clearInterval(musicSyncTimer);
+      musicSyncTimer = null;
+      musicUserPaused = true;
+      isSeekingMusicBar = false;
+      pendingMusicSeekPct = null;
+      stopMusicYtFallback();
+      if (musicAudioPlayer) {
+        try { musicAudioPlayer.pause(); } catch {}
+        try { musicAudioPlayer.currentTime = 0; } catch {}
+        try {
+          musicAudioPlayer.removeAttribute('src');
+          musicAudioPlayer.load();
+        } catch {}
+      }
+      musicCurrentTrack = null;
+      if (clearQueue) musicQueue = [];
+      if (musicNpThumb) musicNpThumb.src = '';
+      if (musicNpTitle) musicNpTitle.textContent = 'Not playing';
+      if (musicNpArtist) musicNpArtist.textContent = 'Select a song';
+      if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = SVG_PLAY;
+      const ab = document.getElementById('spicyAsidePlayBtn');
+      if (ab) ab.innerHTML = SVG_PLAY;
+      const gp = document.getElementById('globalLyricsPlayBtn');
+      if (gp) gp.innerHTML = SVG_PLAY;
+      if (spicyLyricsOverlay) spicyLyricsOverlay.classList.remove('open');
+      if (musicHubView) musicHubView.classList.remove('lyrics-open');
+      if (typeof updateHomeMusicDance === 'function') updateHomeMusicDance(false, null);
+      syncMusicPlayerTimes();
+      if (typeof renderMusicTracks === 'function') renderMusicTracks();
+      if (typeof updateSpicyUpNextList === 'function') updateSpicyUpNextList();
+      if (typeof scheduleSaveUserProfileState === 'function') scheduleSaveUserProfileState();
+    }
+
     if (musicAudioPlayer) {
-      musicAudioPlayer.addEventListener('ended', () => playNextMusicTrack(1));
+      musicAudioPlayer.addEventListener('loadedmetadata', () => {
+        if (pendingMusicSeekPct !== null && Number.isFinite(musicAudioPlayer.duration) && musicAudioPlayer.duration > 0) {
+          musicAudioPlayer.currentTime = Math.max(0, Math.min(musicAudioPlayer.duration, (pendingMusicSeekPct / 100) * musicAudioPlayer.duration));
+          pendingMusicSeekPct = null;
+        }
+        syncMusicPlayerTimes();
+      });
+      musicAudioPlayer.addEventListener('durationchange', syncMusicPlayerTimes);
+      musicAudioPlayer.addEventListener('timeupdate', syncMusicPlayerTimes);
+      musicAudioPlayer.addEventListener('seeking', syncMusicPlayerTimes);
+      musicAudioPlayer.addEventListener('seeked', syncMusicPlayerTimes);
+      musicAudioPlayer.addEventListener('ended', () => {
+        if (musicCurrentTrack) playNextMusicTrack(1);
+      });
       musicAudioPlayer.addEventListener('error', () => {
-        if (musicCurrentTrack && !musicUserPaused && !musicYtFallbackActive) {
+        if (musicCurrentTrack && !musicUserPaused && !musicYtFallbackActive && musicAudioPlayer.getAttribute('src')) {
           activateMusicYtFallback(musicCurrentTrack);
         }
       });
-      musicAudioPlayer.addEventListener('play', () => {
-        if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = SVG_PAUSE;
-        const ab = document.getElementById('spicyAsidePlayBtn');
-        if (ab) ab.innerHTML = SVG_PAUSE;
-        const gp = document.getElementById('globalLyricsPlayBtn');
-        if (gp) gp.innerHTML = SVG_PAUSE;
-        if (typeof updateHomeMusicDance === 'function') updateHomeMusicDance(true, musicCurrentTrack);
-      });
-      musicAudioPlayer.addEventListener('pause', () => {
-        if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = SVG_PLAY;
-        const ab = document.getElementById('spicyAsidePlayBtn');
-        if (ab) ab.innerHTML = SVG_PLAY;
-        const gp = document.getElementById('globalLyricsPlayBtn');
-        if (gp) gp.innerHTML = SVG_PLAY;
-        if (typeof updateHomeMusicDance === 'function') updateHomeMusicDance(false, musicCurrentTrack);
-      });
+      musicAudioPlayer.addEventListener('play', syncMusicPlayerTimes);
+      musicAudioPlayer.addEventListener('pause', syncMusicPlayerTimes);
     }
 
     function startMusicPlayerSyncLoop() {
       clearInterval(musicSyncTimer);
       musicSyncTimer = setInterval(() => {
-        const v = getMusicVideoEl();
-        if (!v) return;
-        try {
-          if (musicVolumeRange) v.volume = Number(musicVolumeRange.value || 85) / 100;
-          if (musicPlayPauseBtn) musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
-          if (musicCurTime) musicCurTime.textContent = formatMusicTime(v.currentTime);
-          if (musicDurTime) musicDurTime.textContent = formatMusicTime(v.duration);
-          if (musicProgressBar && isFinite(v.duration) && v.duration > 0) {
-            const pct = Math.round((v.currentTime / v.duration) * 100);
-            musicProgressBar.value = String(pct);
-            if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${pct}%`);
-          }
-          if (musicVolumeRange && musicVolumeRange.style && typeof musicVolumeRange.style.setProperty === 'function') {
-            musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
-          }
-          if (typeof updateHomeMusicDance === 'function') {
-            updateHomeMusicDance(!v.paused && !!musicCurrentTrack, musicCurrentTrack);
-          }
-        } catch {}
-      }, 250);
+        // Primary playback uses native HTMLAudioElement events; interval keeps YouTube iframe fallback & volume in sync
+        if (!musicCurrentTrack) {
+          clearInterval(musicSyncTimer);
+          musicSyncTimer = null;
+          return;
+        }
+        if (musicYtFallbackActive) syncMusicPlayerTimes();
+      }, 350);
     }
 
     function updateSpicyUpNextList() {
@@ -13376,10 +14243,23 @@
 
     async function playMusicTrack(song, queueList) {
       if (!song || !song.id) return;
+      // Guarantee single active audio stream: stop prior playback & reset timestamps cleanly
+      stopMusicYtFallback();
+      isSeekingMusicBar = false;
+      pendingMusicSeekPct = null;
+      if (musicAudioPlayer) {
+        try { musicAudioPlayer.pause(); } catch {}
+        try { musicAudioPlayer.currentTime = 0; } catch {}
+      }
       musicCurrentTrack = song;
       musicUserPaused = false;
-      stopMusicYtFallback();
       if (Array.isArray(queueList) && queueList.length) musicQueue = queueList.slice();
+      if (musicCurTime) musicCurTime.textContent = '0:00';
+      if (musicDurTime) musicDurTime.textContent = '--:--';
+      if (musicProgressBar) {
+        musicProgressBar.value = '0';
+        if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', '0%');
+      }
       // Start native Achroma-style HTTP 206 audio stream synchronously inside click gesture!
       if (musicAudioPlayer) {
         const metaQs = `?title=${encodeURIComponent(song.title || '')}&artist=${encodeURIComponent(song.artist || '')}`;
@@ -13576,8 +14456,8 @@
     if (musicPlayPauseBtn) {
       musicPlayPauseBtn.addEventListener('click', () => {
         const v = getMusicVideoEl();
-        if (!v) {
-          const list = musicActiveTab === 'liked' ? musicLikedSongs : (musicHomeSections.quickPicks || []);
+        if (!v || !musicCurrentTrack) {
+          const list = musicQueue.length ? musicQueue : (musicActiveTab === 'liked' ? musicLikedSongs : (musicHomeSections.quickPicks || []));
           if (list.length) playMusicTrack(list[0], list);
           return;
         }
@@ -13590,6 +14470,10 @@
         }
         musicPlayPauseBtn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
       });
+    }
+    const musicStopExitBtn = document.getElementById('musicStopExitBtn');
+    if (musicStopExitBtn) {
+      musicStopExitBtn.addEventListener('click', () => stopAndExitMusicPlayer({ clearQueue: false }));
     }
     if (musicNextBtn) musicNextBtn.addEventListener('click', () => playNextMusicTrack(1));
     if (musicPrevBtn) musicPrevBtn.addEventListener('click', () => playNextMusicTrack(-1));
@@ -13605,13 +14489,34 @@
     }
     if (musicProgressBar) {
       if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
-      musicProgressBar.addEventListener('input', () => {
-        if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${musicProgressBar.value || 0}%`);
+      const applySeekFromSlider = (commit) => {
+        const pct = Math.max(0, Math.min(100, Number(musicProgressBar.value || 0)));
+        if (musicProgressBar.style && typeof musicProgressBar.style.setProperty === 'function') musicProgressBar.style.setProperty('--rprog', `${pct}%`);
         const v = getMusicVideoEl();
-        if (v && isFinite(v.duration) && v.duration > 0) {
-          v.currentTime = (Number(musicProgressBar.value) / 100) * v.duration;
+        if (v && Number.isFinite(v.duration) && v.duration > 0) {
+          const targetSec = (pct / 100) * v.duration;
+          if (musicCurTime) musicCurTime.textContent = formatMusicTime(targetSec, '0:00');
+          if (commit) v.currentTime = targetSec;
+        } else if (commit && musicCurrentTrack) {
+          pendingMusicSeekPct = pct;
         }
+      };
+      musicProgressBar.addEventListener('pointerdown', () => { isSeekingMusicBar = true; });
+      musicProgressBar.addEventListener('input', () => {
+        isSeekingMusicBar = true;
+        applySeekFromSlider(true);
       });
+      musicProgressBar.addEventListener('change', () => {
+        applySeekFromSlider(true);
+        isSeekingMusicBar = false;
+        syncMusicPlayerTimes();
+      });
+      window.addEventListener('pointerup', () => {
+        if (isSeekingMusicBar) {
+          isSeekingMusicBar = false;
+          syncMusicPlayerTimes();
+        }
+      }, { passive: true });
     }
     if (musicVolumeRange) {
       if (musicVolumeRange.style && typeof musicVolumeRange.style.setProperty === 'function') musicVolumeRange.style.setProperty('--rprog', `${musicVolumeRange.value || 85}%`);
@@ -13667,6 +14572,16 @@
     let chatActiveVoiceChannel = 'voice-lounge';
     let chatCreateChannelType = 'text';
     let chatMessagesByChannel = {};
+    let chatPinnedByChannel = {};
+    let chatHasMoreByChannel = {};
+    let chatOldestTsByChannel = {};
+    let chatUnreadCountsByChannel = {};
+    let chatPinnedCycleIdx = 0;
+    let chatEditingMsgId = '';
+    let chatPendingAttachments = [];
+    let chatFailedPayload = null;
+    let chatWsReconnectAttempts = 0;
+    let chatWsReconnectTimer = null;
     let chatMembersCache = [];
     let chatRolesCatalog = [];
     let chatUnreadChannels = new Set();
@@ -13816,7 +14731,10 @@
           : (c.adminOnly
               ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3h1l2 4h3l-1-4h5a3 3 0 0 0 3-3V8z"/><line x1="22" y1="8" x2="22" y2="12"/></svg>'
               : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>');
-        const unreadDot = !isVoice && chatUnreadChannels.has(c.id) ? '<span class="chat-ch-unread-dot"></span>' : '';
+        const serverUnread = (typeof chatUnreadCountsByChannel === 'object' && chatUnreadCountsByChannel) ? Number(chatUnreadCountsByChannel[c.id] || 0) : 0;
+        const unreadBadge = (!isVoice && serverUnread > 0)
+          ? `<span class="chat-unread-badge">${serverUnread > 99 ? '99+' : serverUnread}</span>`
+          : (!isVoice && chatUnreadChannels.has(c.id) ? '<span class="chat-ch-unread-dot"></span>' : '');
         const upBtn = idx > 0 ? `<button type="button" class="chat-ch-move-btn" data-move-ch="${escapeMusicHtml(c.id)}" data-dir="-1" title="Move channel up">↑</button>` : '';
         const dnBtn = idx < arr.length - 1 ? `<button type="button" class="chat-ch-move-btn" data-move-ch="${escapeMusicHtml(c.id)}" data-dir="1" title="Move channel down">↓</button>` : '';
         const delBtn = canDel ? `<button type="button" class="chat-ch-del-btn" data-del-channel="${escapeMusicHtml(c.id)}" title="Delete channel">✕</button>` : '';
@@ -13829,7 +14747,7 @@
             <button type="button" class="chat-ch-btn ${isActive ? 'active' : ''}" data-chat-channel="${escapeMusicHtml(c.id)}" data-chat-type="${isVoice ? 'voice' : 'text'}">
               ${iconSvg}
               <span class="chat-ch-name-text">${escapeMusicHtml(c.name)}</span>
-              ${unreadDot}
+              ${unreadBadge}
             </button>
             ${upBtn}
             ${dnBtn}
@@ -14059,6 +14977,12 @@
       const canPost = !chObj.adminOnly || !!(currentUser && currentUser.role === 'admin');
       if (chatChannelTitle) chatChannelTitle.textContent = chObj.name || chatActiveChannel;
       if (chatChannelTopic) chatChannelTopic.textContent = chObj.topic || '';
+      const editTopicBtn = document.getElementById('chatEditTopicBtn');
+      const meUser = currentUser ? currentUser.username : '';
+      const meAdmin = !!(currentUser && currentUser.role === 'admin');
+      if (editTopicBtn) {
+        editTopicBtn.style.display = (meAdmin || (chObj.createdBy && chObj.createdBy === meUser)) ? 'inline-flex' : 'none';
+      }
       renderChatChannels();
       if (chatMessageInput && chatSendBtn) {
         chatMessageInput.disabled = !canPost;
@@ -14068,9 +14992,31 @@
           : `Only coolbacon (admin) can post in #${chObj.name || chatActiveChannel}`;
       }
       if (!chatMessagesFeed) return;
+      const prevScrollBottomGap = chatMessagesFeed.scrollHeight - chatMessagesFeed.scrollTop - chatMessagesFeed.clientHeight;
       const list = chatMessagesByChannel[chatActiveChannel] || [];
-      const meUser = currentUser ? currentUser.username : '';
-      const meAdmin = !!(currentUser && currentUser.role === 'admin');
+
+      const pinnedList = Array.isArray(chatPinnedByChannel[chatActiveChannel])
+        ? chatPinnedByChannel[chatActiveChannel]
+        : list.filter((m) => m && m.pinned);
+      const pinnedBar = document.getElementById('chatPinnedBar');
+      const pinnedBarText = document.getElementById('chatPinnedBarText');
+      const cyclePinnedBtn = document.getElementById('chatCyclePinnedBtn');
+      if (pinnedBar && pinnedBarText && cyclePinnedBtn) {
+        if (pinnedList.length) {
+          chatPinnedCycleIdx = chatPinnedCycleIdx % pinnedList.length;
+          const curPin = pinnedList[chatPinnedCycleIdx];
+          pinnedBar.classList.add('visible');
+          pinnedBarText.textContent = `📌 ${curPin.displayName || curPin.username}: ${String(curPin.text || '[Attachment]').slice(0, 85)}`;
+          cyclePinnedBtn.textContent = `pins (${pinnedList.length})`;
+        } else {
+          pinnedBar.classList.remove('visible');
+        }
+      }
+
+      const hasMore = !!(chatHasMoreByChannel && chatHasMoreByChannel[chatActiveChannel]);
+      const loadOlderHtml = hasMore
+        ? `<div class="chat-load-older-wrap"><button type="button" class="ext-btn" id="chatLoadOlderBtn" style="font-size:11px;padding:4px 12px;">load older messages</button></div>`
+        : '';
 
       const welcomeHtml = `
         <div class="chat-welcome-banner">
@@ -14078,6 +15024,7 @@
           <div style="font-size:20px;font-weight:700;color:#fff;">Welcome to #${escapeMusicHtml(chObj.name || chatActiveChannel)}!</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.58);">${escapeMusicHtml(chObj.topic || 'This is the start of this channel.')}</div>
         </div>
+        ${loadOlderHtml}
       `;
 
       const rowsHtml = list.map((m, idx) => {
@@ -14093,10 +15040,27 @@
         const avatarHtml = m.avatar
           ? `<img src="${escapeMusicHtml(m.avatar)}" class="chat-avatar-img" alt="" />`
           : escapeMusicHtml(initial);
-        const canDelMsg = meAdmin || (meUser && m.username === meUser);
+        const canEditOrDel = !isBotMsg && (meAdmin || (meUser && m.username === meUser));
+        const isEditingThis = chatEditingMsgId === m.id;
+        const editedBadgeHtml = m.editedAt ? '<span class="chat-msg-edited-tag">(edited)</span>' : '';
+        const pinnedBadgeHtml = m.pinned ? '<span class="chat-pin-pill">📌 pinned</span>' : '';
 
         const mediaHtml = m.mediaUrl
           ? `<img src="${escapeMusicHtml(m.mediaUrl)}" class="${m.mediaType === 'sticker' ? 'chat-msg-media-sticker' : 'chat-msg-media-gif'}" alt="" loading="lazy" />`
+          : '';
+
+        const atts = Array.isArray(m.attachments) ? m.attachments : [];
+        const attachmentsHtml = atts.length
+          ? `<div class="chat-attachments-row">${atts.map((att) => {
+              if (!att || !att.url) return '';
+              if (/^image\//i.test(att.mimeType || '')) {
+                return `<a href="${escapeMusicHtml(att.url)}" target="_blank" rel="noopener noreferrer"><img src="${escapeMusicHtml(att.url)}" class="chat-attach-img" alt="${escapeMusicHtml(att.filename || 'image')}" loading="lazy" /></a>`;
+              }
+              if (/^video\//i.test(att.mimeType || '')) {
+                return `<video src="${escapeMusicHtml(att.url)}" controls class="chat-attach-img" preload="metadata"></video>`;
+              }
+              return `<a href="${escapeMusicHtml(att.url)}" target="_blank" rel="noopener noreferrer" class="chat-attach-file">📎 ${escapeMusicHtml(att.filename || 'attachment')}</a>`;
+            }).join('')}</div>`
           : '';
 
         const embedHtml = m.embed && typeof m.embed === 'object'
@@ -14124,6 +15088,14 @@
             }).join('')}</div>`
           : '';
 
+        const bodyTextBlock = isEditingThis
+          ? `<form class="chat-msg-edit-form" data-save-edit-form="${escapeMusicHtml(m.id)}">
+              <input type="text" class="chat-msg-edit-input" value="${escapeMusicHtml(m.text || '')}" maxlength="1200" autofocus />
+              <button type="submit" class="ext-btn" style="padding:4px 10px;font-size:11px;">save</button>
+              <button type="button" class="ext-btn" data-cancel-edit="1" style="padding:4px 9px;font-size:11px;">cancel</button>
+            </form>`
+          : (m.text ? `<div class="chat-msg-text">${formatChatBodyText(m.text)}${editedBadgeHtml}</div>` : (m.editedAt ? `<div class="chat-msg-text">${editedBadgeHtml}</div>` : ''));
+
         const hoverActions = `
           <div class="chat-msg-actions">
             <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="👍" title="React 👍">👍</button>
@@ -14131,18 +15103,21 @@
             <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="😂" title="React 😂">😂</button>
             <button type="button" class="chat-msg-act-btn" data-quick-react="${escapeMusicHtml(m.id)}" data-emoji="🔥" title="React 🔥">🔥</button>
             <button type="button" class="chat-msg-act-btn" data-reply-msg="${escapeMusicHtml(m.id)}" title="Reply">↩</button>
-            ${canDelMsg ? `<button type="button" class="chat-msg-act-btn" data-del-msg="${escapeMusicHtml(m.id)}" title="Delete" style="color:#fca5a5;">🗑</button>` : ''}
+            <button type="button" class="chat-msg-act-btn" data-pin-msg="${escapeMusicHtml(m.id)}" title="${m.pinned ? 'Unpin' : 'Pin'} message">📌</button>
+            ${canEditOrDel ? `<button type="button" class="chat-msg-act-btn" data-edit-msg="${escapeMusicHtml(m.id)}" title="Edit message">✎</button>` : ''}
+            ${canEditOrDel ? `<button type="button" class="chat-msg-act-btn" data-del-msg="${escapeMusicHtml(m.id)}" title="Delete" style="color:#fca5a5;">🗑</button>` : ''}
           </div>
         `;
 
-        if (grouped) {
+        if (grouped && !m.pinned) {
           return `
             <div class="chat-msg-row compact">
               ${hoverActions}
               <div class="chat-msg-compact-time">${escapeMusicHtml(dt)}</div>
               <div class="chat-msg-body">
-                ${m.text ? `<div class="chat-msg-text">${formatChatBodyText(m.text)}</div>` : ''}
+                ${bodyTextBlock}
                 ${mediaHtml}
+                ${attachmentsHtml}
                 ${reactHtml}
               </div>
             </div>
@@ -14159,10 +15134,12 @@
                 <span class="chat-msg-author" data-open-profile="${escapeMusicHtml(m.username)}" style="cursor:pointer;" title="View profile">${escapeMusicHtml(m.displayName || m.username)}</span>
                 ${roleBadge}
                 ${visualRoleBadges}
+                ${pinnedBadgeHtml}
                 <span class="chat-msg-time">${escapeMusicHtml(dt)}</span>
               </div>
-              ${m.text ? `<div class="chat-msg-text">${formatChatBodyText(m.text)}</div>` : ''}
+              ${bodyTextBlock}
               ${mediaHtml}
+              ${attachmentsHtml}
               ${embedHtml}
               ${reactHtml}
             </div>
@@ -14234,6 +15211,79 @@
           if (found) setChatReplyTarget(found);
         });
       });
+      chatMessagesFeed.querySelectorAll('[data-pin-msg]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const messageId = btn.dataset.pinMsg;
+          if (!messageId) return;
+          try {
+            await proxyHealthPromise;
+            const r = await fetch(`${proxyOrigin}/api/chat/pin`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channel: chatActiveChannel, messageId })
+            });
+            const j = await r.json();
+            if (r.ok && j && j.ok && j.message) {
+              const arr = chatMessagesByChannel[chatActiveChannel] || [];
+              const i = arr.findIndex((x) => x.id === j.message.id);
+              if (i >= 0) arr[i] = j.message;
+              chatPinnedByChannel[chatActiveChannel] = arr.filter((x) => x && x.pinned);
+              renderChatMessages();
+            } else if (typeof showToast === 'function') {
+              showToast((j && j.error) || 'Failed to pin message');
+            }
+          } catch {}
+        });
+      });
+      chatMessagesFeed.querySelectorAll('[data-edit-msg]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          chatEditingMsgId = btn.dataset.editMsg || '';
+          renderChatMessages();
+          const inp = chatMessagesFeed.querySelector('.chat-msg-edit-input');
+          if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+        });
+      });
+      chatMessagesFeed.querySelectorAll('[data-cancel-edit]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          chatEditingMsgId = '';
+          renderChatMessages();
+        });
+      });
+      chatMessagesFeed.querySelectorAll('[data-save-edit-form]').forEach((form) => {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const messageId = form.dataset.saveEditForm;
+          const inp = form.querySelector('.chat-msg-edit-input');
+          const nextText = inp ? inp.value.trim() : '';
+          if (!messageId || !nextText) return;
+          try {
+            await proxyHealthPromise;
+            const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
+              method: 'PATCH',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channel: chatActiveChannel, messageId, text: nextText })
+            });
+            const j = await r.json();
+            if (r.ok && j && j.ok && j.message) {
+              chatEditingMsgId = '';
+              const arr = chatMessagesByChannel[chatActiveChannel] || [];
+              const i = arr.findIndex((x) => x.id === j.message.id);
+              if (i >= 0) arr[i] = j.message;
+              renderChatMessages();
+            } else if (typeof showToast === 'function') {
+              showToast((j && j.error) || 'Failed to save message edit');
+            }
+          } catch {
+            if (typeof showToast === 'function') showToast('Database connection error saving edit');
+          }
+        });
+      });
+      const loadOlderBtn = document.getElementById('chatLoadOlderBtn');
+      if (loadOlderBtn && typeof loadOlderChatMessages === 'function') {
+        loadOlderBtn.addEventListener('click', loadOlderChatMessages);
+      }
       chatMessagesFeed.querySelectorAll('[data-del-msg]').forEach((btn) => {
         btn.addEventListener('click', () => deleteChatMessage(btn.dataset.delMsg));
       });
@@ -14546,6 +15596,22 @@
       const wsBase = base.replace(/^http/i, 'ws');
       try {
         chatWs = new WebSocket(`${wsBase}/chat-ws`);
+        chatWs.onopen = () => {
+          chatWsReconnectAttempts = 0;
+          if (chatHubView && chatHubView.classList.contains('visible')) {
+            loadChatChannel(chatActiveChannel);
+          }
+        };
+        chatWs.onclose = () => {
+          chatWs = null;
+          if (!currentUser) return;
+          clearTimeout(chatWsReconnectTimer);
+          const delayMs = Math.min(10000, 1500 * Math.pow(1.6, Math.min(5, chatWsReconnectAttempts++)));
+          chatWsReconnectTimer = setTimeout(() => {
+            if (currentUser) connectChatWebSocket();
+          }, delayMs);
+        };
+        chatWs.onerror = () => {};
         chatWs.onmessage = async (ev) => {
           try {
             const data = JSON.parse(ev.data);
@@ -14565,6 +15631,7 @@
                 loadChatChannel('general');
               } else {
                 renderChatChannels();
+                renderChatMessages();
               }
             } else if (data.type === 'typing' && data.username) {
               chatTypingUsers.set(data.username, { channel: data.channel, displayName: data.displayName, ts: Date.now() });
@@ -14577,9 +15644,17 @@
                 chatMessagesByChannel[ch].push(data.message);
                 chatTypingUsers.delete(data.message.username);
                 renderChatTypingIndicator();
-                if (ch === chatActiveChannel) renderChatMessages();
-                else {
+                if (ch === chatActiveChannel) {
+                  renderChatMessages();
+                  fetch(`${proxyOrigin}/api/chat/read`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel: ch, ts: data.message.ts || Date.now() })
+                  }).catch(() => {});
+                } else {
                   chatUnreadChannels.add(ch);
+                  chatUnreadCountsByChannel[ch] = Number(chatUnreadCountsByChannel[ch] || 0) + 1;
                   renderChatChannels();
                 }
               }
@@ -14588,11 +15663,13 @@
               const arr = chatMessagesByChannel[ch] || [];
               const idx = arr.findIndex((x) => x.id === data.message.id);
               if (idx >= 0) arr[idx] = data.message;
+              chatPinnedByChannel[ch] = arr.filter((x) => x && x.pinned);
               if (ch === chatActiveChannel) renderChatMessages();
             } else if (data.type === 'message-delete' && data.messageId) {
               const ch = data.channel;
               if (Array.isArray(chatMessagesByChannel[ch])) {
                 chatMessagesByChannel[ch] = chatMessagesByChannel[ch].filter((x) => x.id !== data.messageId);
+                chatPinnedByChannel[ch] = chatMessagesByChannel[ch].filter((x) => x && x.pinned);
                 if (ch === chatActiveChannel) renderChatMessages();
               }
             } else if (data.type === 'voice-peers') {
@@ -14626,9 +15703,33 @@
       } catch {}
     }
 
+    async function loadOlderChatMessages() {
+      const ch = chatActiveChannel;
+      const before = chatOldestTsByChannel[ch] || 0;
+      if (!before) return;
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/chat/messages?channel=${encodeURIComponent(ch)}&before=${before}&limit=80`, { credentials: 'same-origin' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.ok && Array.isArray(j.messages)) {
+            const cur = chatMessagesByChannel[ch] || [];
+            const seen = new Set(cur.map((m) => m.id));
+            const prepended = j.messages.filter((m) => m && !seen.has(m.id));
+            chatMessagesByChannel[ch] = [...prepended, ...cur];
+            chatHasMoreByChannel[ch] = !!j.hasMore;
+            chatOldestTsByChannel[ch] = j.oldestTs || before;
+            renderChatMessages();
+          }
+        }
+      } catch {}
+    }
+
     async function loadChatChannel(ch) {
       chatActiveChannel = ch || 'general';
       chatUnreadChannels.delete(chatActiveChannel);
+      chatUnreadCountsByChannel[chatActiveChannel] = 0;
+      chatEditingMsgId = '';
       setChatReplyTarget(null);
       renderChatMessages();
       try {
@@ -14638,8 +15739,19 @@
           const j = await r.json();
           if (j && j.ok) {
             if (Array.isArray(j.channels)) chatChannelsList = j.channels;
-            chatMessagesByChannel[j.channel || chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
-            chatActiveChannel = j.channel || chatActiveChannel;
+            const targetCh = j.channel || chatActiveChannel;
+            chatMessagesByChannel[targetCh] = Array.isArray(j.messages) ? j.messages : [];
+            if (Array.isArray(j.pinnedMessages)) chatPinnedByChannel[targetCh] = j.pinnedMessages;
+            chatHasMoreByChannel[targetCh] = !!j.hasMore;
+            chatOldestTsByChannel[targetCh] = j.oldestTs || 0;
+            if (j.unreadCounts && typeof j.unreadCounts === 'object') {
+              chatUnreadCountsByChannel = j.unreadCounts;
+            }
+            const warnBanner = document.getElementById('chatStorageWarnBanner');
+            if (warnBanner && j.storageInfo) {
+              warnBanner.classList.toggle('visible', j.storageInfo.persistentVolume === false);
+            }
+            chatActiveChannel = targetCh;
             renderChatMessages();
             renderVoicePeers(j.voicePeers);
             if (j.members) renderChatMembers(j.members);
@@ -14888,31 +16000,171 @@
       });
     }
 
+    function syncPendingAttachmentBar() {
+      const bar = document.getElementById('chatPendingAttachBar');
+      const lbl = document.getElementById('chatPendingAttachLabel');
+      if (!bar || !lbl) return;
+      if (chatPendingAttachments.length) {
+        bar.classList.add('visible');
+        lbl.textContent = `📎 Ready (${chatPendingAttachments.length}): ` + chatPendingAttachments.map((a) => a.filename).join(', ');
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
+
+    const chatAttachFileBtn = document.getElementById('chatAttachFileBtn');
+    const chatAttachFileInput = document.getElementById('chatAttachFileInput');
+    const chatClearAttachBtn = document.getElementById('chatClearAttachBtn');
+    if (chatClearAttachBtn) {
+      chatClearAttachBtn.addEventListener('click', () => {
+        chatPendingAttachments = [];
+        syncPendingAttachmentBar();
+      });
+    }
+    if (chatAttachFileBtn && chatAttachFileInput) {
+      chatAttachFileBtn.addEventListener('click', () => chatAttachFileInput.click());
+      chatAttachFileInput.addEventListener('change', () => {
+        const f = chatAttachFileInput.files && chatAttachFileInput.files[0];
+        if (!f) return;
+        if (f.size > 8 * 1024 * 1024) {
+          if (typeof showToast === 'function') showToast('File exceeds 8 MB limit');
+          chatAttachFileInput.value = '';
+          return;
+        }
+        const rd = new FileReader();
+        rd.onload = async () => {
+          try {
+            await proxyHealthPromise;
+            const r = await fetch(`${proxyOrigin}/api/chat/upload`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename: f.name, dataBase64: String(rd.result || '') })
+            });
+            const j = await r.json();
+            if (r.ok && j && j.ok && j.attachment) {
+              chatPendingAttachments.push(j.attachment);
+              syncPendingAttachmentBar();
+            } else if (typeof showToast === 'function') {
+              showToast((j && j.error) || 'Failed to upload attachment');
+            }
+          } catch {
+            if (typeof showToast === 'function') showToast('Upload error');
+          }
+          chatAttachFileInput.value = '';
+        };
+        rd.readAsDataURL(f);
+      });
+    }
+
+    const chatCyclePinnedBtn = document.getElementById('chatCyclePinnedBtn');
+    if (chatCyclePinnedBtn) {
+      chatCyclePinnedBtn.addEventListener('click', () => {
+        chatPinnedCycleIdx++;
+        renderChatMessages();
+      });
+    }
+
+    const chatEditTopicBtn = document.getElementById('chatEditTopicBtn');
+    if (chatEditTopicBtn) {
+      chatEditTopicBtn.addEventListener('click', async () => {
+        const chObj = chatChannelsList.find((c) => c.id === chatActiveChannel);
+        const curTopic = (chObj && chObj.topic) || '';
+        const nextTopic = window.prompt(`Edit description for #${(chObj && chObj.name) || chatActiveChannel}:`, curTopic);
+        if (nextTopic === null) return;
+        try {
+          await proxyHealthPromise;
+          const r = await fetch(`${proxyOrigin}/api/chat/channels`, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: chatActiveChannel, topic: nextTopic.trim() })
+          });
+          const j = await r.json();
+          if (r.ok && j && j.ok && Array.isArray(j.channels)) {
+            chatChannelsList = j.channels;
+            renderChatMessages();
+          } else if (typeof showToast === 'function') {
+            showToast((j && j.error) || 'Could not update topic');
+          }
+        } catch {}
+      });
+    }
+
+    async function dispatchChatMessagePayload(payload) {
+      const failedBar = document.getElementById('chatFailedSendBar');
+      const failedText = document.getElementById('chatFailedSendText');
+      if (failedBar) failedBar.classList.remove('visible');
+      try {
+        await proxyHealthPromise;
+        const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j && j.ok) {
+          chatFailedPayload = null;
+          if (chatMessageInput) chatMessageInput.value = '';
+          chatPendingAttachments = [];
+          syncPendingAttachmentBar();
+          setChatReplyTarget(null);
+          const chKey = payload.channel || chatActiveChannel;
+          chatMessagesByChannel[chKey] = Array.isArray(j.messages) ? j.messages : [];
+          renderChatMessages();
+          return true;
+        }
+        chatFailedPayload = payload;
+        if (failedBar && failedText) {
+          failedText.textContent = (j && j.error) ? `Save failed: ${j.error}` : 'Failed to save message to database.';
+          failedBar.classList.add('visible');
+        }
+        return false;
+      } catch {
+        chatFailedPayload = payload;
+        if (failedBar && failedText) {
+          failedText.textContent = 'Network/server offline — message was not discarded. Click Retry when ready.';
+          failedBar.classList.add('visible');
+        }
+        return false;
+      }
+    }
+
+    const chatRetrySendBtn = document.getElementById('chatRetrySendBtn');
+    const chatDismissFailedBtn = document.getElementById('chatDismissFailedBtn');
+    if (chatRetrySendBtn) {
+      chatRetrySendBtn.addEventListener('click', () => {
+        if (chatFailedPayload) dispatchChatMessagePayload(chatFailedPayload);
+      });
+    }
+    if (chatDismissFailedBtn) {
+      chatDismissFailedBtn.addEventListener('click', () => {
+        chatFailedPayload = null;
+        const failedBar = document.getElementById('chatFailedSendBar');
+        if (failedBar) failedBar.classList.remove('visible');
+      });
+    }
+
+    let chatSubmitInFlight = false;
     if (chatComposerForm) {
       chatComposerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (chatSubmitInFlight) return;
         const text = chatMessageInput ? chatMessageInput.value.trim() : '';
-        if (!text) return;
-        try {
-          await proxyHealthPromise;
-          const payload = { channel: chatActiveChannel, text };
-          if (chatReplyTarget && chatReplyTarget.id) payload.replyToId = chatReplyTarget.id;
-          const r = await fetch(`${proxyOrigin}/api/chat/messages`, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const j = await r.json();
-          if (r.ok && j && j.ok) {
-            if (chatMessageInput) chatMessageInput.value = '';
-            setChatReplyTarget(null);
-            chatMessagesByChannel[chatActiveChannel] = Array.isArray(j.messages) ? j.messages : [];
-            renderChatMessages();
-          } else if (typeof showToast === 'function') {
-            showToast((j && j.error) || 'Cannot post in this channel');
-          }
-        } catch {}
+        if (!text && !chatPendingAttachments.length) return;
+        chatSubmitInFlight = true;
+        if (chatSendBtn) chatSendBtn.disabled = true;
+        const payload = {
+          channel: chatActiveChannel,
+          text,
+          attachments: chatPendingAttachments.slice(),
+          clientTempId: 'cmsg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        };
+        if (chatReplyTarget && chatReplyTarget.id) payload.replyToId = chatReplyTarget.id;
+        await dispatchChatMessagePayload(payload);
+        chatSubmitInFlight = false;
+        if (chatSendBtn) chatSendBtn.disabled = false;
       });
     }
 
@@ -15864,16 +17116,19 @@
     const pillPlayBtn = document.getElementById('pillPlayBtn');
     const pillNextBtn = document.getElementById('pillNextBtn');
     const pillRotateBtn = document.getElementById('pillRotateBtn');
+    const pillExitBtn = document.getElementById('pillExitBtn');
     if (pillPrevBtn) pillPrevBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof playNextMusicTrack === 'function') playNextMusicTrack(-1); });
     if (pillNextBtn) pillNextBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof playNextMusicTrack === 'function') playNextMusicTrack(1); });
     if (pillPlayBtn) pillPlayBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (musicAudioPlayer) {
-        if (musicAudioPlayer.paused) musicAudioPlayer.play().catch(() => {});
-        else musicAudioPlayer.pause();
+      const v = typeof getMusicVideoEl === 'function' ? getMusicVideoEl() : musicAudioPlayer;
+      if (v) {
+        if (v.paused) { musicUserPaused = false; v.play().catch(() => {}); }
+        else { musicUserPaused = true; v.pause(); }
       }
     });
     if (pillRotateBtn) pillRotateBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFloatingPillRotation(); });
+    if (pillExitBtn) pillExitBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof stopAndExitMusicPlayer === 'function') stopAndExitMusicPlayer({ clearQueue: false }); });
     window.addEventListener('resize', () => { syncFloatingMusicPillPosition(); });
     document.addEventListener('pointerdown', () => {
       if (astraAudioCtx && astraAudioCtx.state === 'suspended') astraAudioCtx.resume().catch(() => {});

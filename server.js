@@ -14,11 +14,16 @@ const { WebSocketServer } = require('ws');
 
 const PORT = Number(process.env.PORT) || 6740;
 const ROOT_DIR = __dirname;
+const IS_HOSTED_EPHEMERAL_ENV = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RENDER || process.env.FLY_APP_NAME || process.env.KOYEB_APP_NAME);
 const DATA_DIR = (() => {
   const candidates = [
     process.env.ASTRA_DATA_DIR,
+    process.env.RAILWAY_VOLUME_MOUNT_PATH,
+    process.env.RENDER_DISK_PATH,
+    process.env.DATA_DIR,
     fs.existsSync('/data') ? '/data' : null,
     fs.existsSync('/var/data') ? '/var/data' : null,
+    fs.existsSync('/app/data') ? '/app/data' : null,
     ROOT_DIR
   ].filter(Boolean);
   for (const dir of candidates) {
@@ -30,6 +35,9 @@ const DATA_DIR = (() => {
   }
   return ROOT_DIR;
 })();
+const HAS_PERSISTENT_VOLUME = !IS_HOSTED_EPHEMERAL_ENV || DATA_DIR !== ROOT_DIR;
+const CHAT_UPLOADS_DIR = path.join(DATA_DIR, 'chat-uploads');
+try { fs.mkdirSync(CHAT_UPLOADS_DIR, { recursive: true }); } catch {}
 
 function migrateLegacyStoreFile(filename) {
   const dest = path.join(DATA_DIR, filename);
@@ -78,7 +86,9 @@ const SERVER_BOOT_ID = String(Math.round((Date.now() - os.uptime() * 1000) / 300
 const AUTH_FILE = migrateLegacyStoreFile('auth-store.json');
 const CONFIG_FILE = migrateLegacyStoreFile('astra-server-config.json');
 const CHAT_FILE = migrateLegacyStoreFile('chat-messages.json');
+const CHAT_READ_FILE = migrateLegacyStoreFile('chat-read-states.json');
 let chatStoreCache = null;
+let chatReadStatesCache = null;
 
 const musicStreamCache = new Map();
 let ytdlInstancePromise = null;
@@ -431,6 +441,9 @@ chatWss.on('connection', (ws, req, sessionUser) => {
     } catch {}
   });
 
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   ws.on('close', () => {
     chatClients.delete(ws);
     if (voicePeers.delete(peerId)) {
@@ -439,6 +452,19 @@ chatWss.on('connection', (ws, req, sessionUser) => {
     broadcastChatWs({ type: 'members-update', members: getChatMembersList() });
   });
 });
+
+// Keepalive heartbeat so proxies (Railway / Cloudflare / Nginx) do not drop idle chat WebSockets
+setInterval(() => {
+  for (const ws of chatClients) {
+    if (ws.isAlive === false) {
+      try { ws.terminate(); } catch {}
+      chatClients.delete(ws);
+      continue;
+    }
+    ws.isAlive = false;
+    try { ws.ping(); } catch {}
+  }
+}, 25000).unref();
 
 try {
   wisp.logging.set_level(wisp.logging.WARN);
@@ -5398,7 +5424,200 @@ const server = http.createServer(async (req, res) => {
   const writeChatStore = (data) => {
     chatStoreCache = data;
     writeJsonStoreAtomic(CHAT_FILE, data);
+    if (!fs.existsSync(CHAT_FILE)) {
+      throw new Error('Persistent chat storage write could not be confirmed');
+    }
   };
+
+  const readChatReadStates = () => {
+    if (!chatReadStatesCache || typeof chatReadStatesCache !== 'object') {
+      const parsed = readJsonStoreSafe(CHAT_READ_FILE, {});
+      chatReadStatesCache = (parsed && typeof parsed === 'object') ? parsed : {};
+    }
+    return chatReadStatesCache;
+  };
+  const writeChatReadStates = (states) => {
+    chatReadStatesCache = states;
+    writeJsonStoreAtomic(CHAT_READ_FILE, states);
+  };
+  const computeUnreadCountsForUser = (data, username) => {
+    const allStates = readChatReadStates();
+    const userStates = (username && allStates[username] && typeof allStates[username] === 'object') ? allStates[username] : {};
+    const counts = {};
+    for (const ch of (data._channels || [])) {
+      if (!ch || ch.type === 'voice') continue;
+      const lastRead = Number(userStates[ch.id] || 0);
+      const msgs = Array.isArray(data[ch.id]) ? data[ch.id] : [];
+      counts[ch.id] = lastRead
+        ? msgs.filter((m) => m && Number(m.ts || m.createdAt || 0) > lastRead && m.username !== username).length
+        : 0;
+    }
+    return counts;
+  };
+
+  const hydrateChatMessage = (m) => {
+    if (!m || typeof m !== 'object') return m;
+    if (m.isBot || m.username === 'astra-bot') {
+      return {
+        ...m,
+        authorId: m.authorId || 'astra-bot',
+        serverId: m.serverId || 'astra-main',
+        channelId: m.channelId || m.channel || 'general',
+        createdAt: m.createdAt || m.ts || Date.now(),
+        editedAt: m.editedAt || null,
+        pinned: !!m.pinned,
+        attachments: Array.isArray(m.attachments) ? m.attachments : [],
+        reactions: (m.reactions && typeof m.reactions === 'object') ? m.reactions : {},
+        metadata: (m.metadata && typeof m.metadata === 'object') ? m.metadata : {},
+        avatar: '/assets/chat/astra-bot-pfp.png',
+        visualRoles: [{ id: 'astra-bot-role', name: 'Verified Bot', iconType: 'emoji', icon: '🤖', color: '#5865f2' }]
+      };
+    }
+    const uRec = authStore && authStore.users && authStore.users[m.username];
+    return {
+      ...m,
+      authorId: m.authorId || m.username,
+      serverId: m.serverId || 'astra-main',
+      channelId: m.channelId || m.channel || 'general',
+      createdAt: m.createdAt || m.ts || Date.now(),
+      editedAt: m.editedAt || null,
+      pinned: !!m.pinned,
+      attachments: Array.isArray(m.attachments) ? m.attachments : [],
+      reactions: (m.reactions && typeof m.reactions === 'object') ? m.reactions : {},
+      metadata: (m.metadata && typeof m.metadata === 'object') ? m.metadata : {},
+      displayName: (uRec && uRec.displayName) || m.displayName || m.username,
+      avatar: (uRec && uRec.avatar) || m.avatar || '',
+      banner: (uRec && uRec.banner) || m.banner || '',
+      bio: (uRec && uRec.bio) || '',
+      decoration: (uRec && uRec.decoration) || m.decoration || '',
+      visualRoles: resolveUserVisualRoles(uRec)
+    };
+  };
+
+  if (pathname.startsWith('/api/chat/uploads/') && req.method === 'GET') {
+    const fname = path.basename(pathname.slice('/api/chat/uploads/'.length));
+    if (!/^[a-zA-Z0-9._-]+$/.test(fname)) {
+      res.writeHead(400); res.end('Bad filename'); return;
+    }
+    const fpath = path.join(CHAT_UPLOADS_DIR, fname);
+    if (!fpath.startsWith(CHAT_UPLOADS_DIR) || !fs.existsSync(fpath)) {
+      res.writeHead(404); res.end('Not found'); return;
+    }
+    const ext = path.extname(fname).toLowerCase();
+    const mimeMap = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm', '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8' };
+    res.writeHead(200, {
+      'Content-Type': mimeMap[ext] || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000, immutable'
+    });
+    fs.createReadStream(fpath).pipe(res);
+    return;
+  }
+
+  if (pathname === '/api/chat/upload' && req.method === 'POST') {
+    if (!sessionUser) return sendJson(res, 401, { ok: false, error: 'login required' });
+    try {
+      const body = await readJsonBody(req, 12 * 1024 * 1024);
+      const dataUrl = String((body && body.dataBase64) || '').trim();
+      const rawName = String((body && body.filename) || 'attachment').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 64) || 'attachment';
+      const match = dataUrl.match(/^data:([a-z0-9.+\/-]+);base64,([A-Za-z0-9+/=]+)$/i);
+      if (!match) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid upload data format' });
+      }
+      const mimeType = match[1].toLowerCase();
+      const allowedExts = {
+        'image/png': '.png',
+        'image/jpeg': '.jpg',
+        'image/jpg': '.jpg',
+        'image/webp': '.webp',
+        'image/gif': '.gif',
+        'video/mp4': '.mp4',
+        'video/webm': '.webm',
+        'application/pdf': '.pdf',
+        'text/plain': '.txt'
+      };
+      if (!allowedExts[mimeType]) {
+        return sendJson(res, 400, { ok: false, error: 'Unsupported attachment file type' });
+      }
+      const buf = Buffer.from(match[2], 'base64');
+      if (!buf.length || buf.length > 8 * 1024 * 1024) {
+        return sendJson(res, 400, { ok: false, error: 'Attachment exceeds 8 MB size limit' });
+      }
+      const id = crypto.randomBytes(10).toString('hex');
+      const storedName = `${id}${allowedExts[mimeType]}`;
+      fs.mkdirSync(CHAT_UPLOADS_DIR, { recursive: true });
+      fs.writeFileSync(path.join(CHAT_UPLOADS_DIR, storedName), buf);
+      return sendJson(res, 200, {
+        ok: true,
+        attachment: {
+          id,
+          url: `/api/chat/uploads/${storedName}`,
+          mimeType,
+          filename: rawName,
+          size: buf.length,
+          uploadedAt: Date.now(),
+          authorId: sessionUser.username
+        }
+      });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || 'upload failed' });
+    }
+  }
+
+  if (pathname === '/api/chat/read' && (req.method === 'GET' || req.method === 'POST')) {
+    if (!sessionUser) return sendJson(res, 401, { ok: false, error: 'login required' });
+    if (req.method === 'GET') {
+      const data = readChatStore();
+      const states = readChatReadStates();
+      return sendJson(res, 200, {
+        ok: true,
+        readStates: states[sessionUser.username] || {},
+        unreadCounts: computeUnreadCountsForUser(data, sessionUser.username)
+      });
+    }
+    try {
+      const body = await readJsonBody(req);
+      const chId = String((body && body.channel) || '').trim().toLowerCase();
+      if (!chId) return sendJson(res, 400, { ok: false, error: 'channel required' });
+      const ts = Number((body && body.ts) || Date.now());
+      const states = readChatReadStates();
+      if (!states[sessionUser.username] || typeof states[sessionUser.username] !== 'object') {
+        states[sessionUser.username] = {};
+      }
+      states[sessionUser.username][chId] = Math.max(Number(states[sessionUser.username][chId] || 0), ts);
+      writeChatReadStates(states);
+      const data = readChatStore();
+      return sendJson(res, 200, {
+        ok: true,
+        readStates: states[sessionUser.username],
+        unreadCounts: computeUnreadCountsForUser(data, sessionUser.username)
+      });
+    } catch (e) {
+      return sendJson(res, 500, { ok: false, error: e.message || 'failed to save read state' });
+    }
+  }
+
+  if (pathname === '/api/chat/pin' && req.method === 'POST') {
+    if (!sessionUser) return sendJson(res, 401, { ok: false, error: 'login required' });
+    try {
+      const body = await readJsonBody(req);
+      const chId = String((body && body.channel) || 'general').toLowerCase();
+      const messageId = String((body && body.messageId) || '').trim();
+      if (!messageId) return sendJson(res, 400, { ok: false, error: 'messageId required' });
+      const data = readChatStore();
+      const list = Array.isArray(data[chId]) ? data[chId] : [];
+      const msg = list.find((m) => m && m.id === messageId);
+      if (!msg) return sendJson(res, 404, { ok: false, error: 'Message not found' });
+      msg.pinned = typeof body.pinned === 'boolean' ? body.pinned : !msg.pinned;
+      msg.pinnedAt = msg.pinned ? Date.now() : null;
+      msg.pinnedBy = msg.pinned ? sessionUser.username : null;
+      writeChatStore(data);
+      const hydrated = hydrateChatMessage(msg);
+      broadcastChatWs({ type: 'message-update', channel: chId, message: hydrated });
+      return sendJson(res, 200, { ok: true, message: hydrated });
+    } catch (e) {
+      return sendJson(res, 500, { ok: false, error: e.message || 'failed to pin message' });
+    }
+  }
 
   if (pathname === '/api/chat/channels/reorder' && req.method === 'POST') {
     if (!sessionUser) {
@@ -5438,7 +5657,41 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET') {
       const data = readChatStore();
-      return sendJson(res, 200, { ok: true, channels: data._channels, voicePeers: getVoicePeerList(), members: getChatMembersList() });
+      return sendJson(res, 200, {
+        ok: true,
+        channels: data._channels,
+        voicePeers: getVoicePeerList(),
+        members: getChatMembersList(),
+        unreadCounts: computeUnreadCountsForUser(data, sessionUser.username),
+        storageInfo: { persistentVolume: HAS_PERSISTENT_VOLUME, dataDir: DATA_DIR }
+      });
+    }
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      try {
+        const body = await readJsonBody(req);
+        const chId = String((body && body.id) || '').trim().toLowerCase();
+        if (!chId) return sendJson(res, 400, { ok: false, error: 'channel id required' });
+        const data = readChatStore();
+        const ch = data._channels.find((c) => c.id === chId);
+        if (!ch) return sendJson(res, 404, { ok: false, error: 'Channel not found' });
+        if (sessionUser.role !== 'admin' && ch.createdBy && ch.createdBy !== sessionUser.username) {
+          return sendJson(res, 403, { ok: false, error: 'Only the channel creator or admin can edit channel settings' });
+        }
+        if (typeof body.topic === 'string') {
+          ch.topic = body.topic.replace(/[<>]/g, '').trim().slice(0, 140);
+        }
+        if (typeof body.name === 'string' && !ch.locked) {
+          const nextName = ch.type === 'text'
+            ? body.name.toLowerCase().replace(/[^a-z0-9-_ ]+/g, '').replace(/\s+/g, '-').replace(/^-+|-+$/g, '').slice(0, 28)
+            : body.name.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 28);
+          if (nextName) ch.name = nextName;
+        }
+        writeChatStore(data);
+        broadcastChatWs({ type: 'channels-update', channels: data._channels });
+        return sendJson(res, 200, { ok: true, channel: ch, channels: data._channels });
+      } catch (e) {
+        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+      }
     }
     if (req.method === 'POST') {
       try {
@@ -5452,7 +5705,7 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 400, { ok: false, error: 'Channel name must contain letters or numbers' });
         }
         const slug = rawName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || cleanName.toLowerCase();
-        const topic = String((body && body.topic) || '').trim().slice(0, 100);
+        const topic = String((body && body.topic) || '').trim().slice(0, 140);
         const category = type === 'voice' ? 'Voice Channels' : (String((body && body.category) || 'Text Channels').trim().slice(0, 28) || 'Text Channels');
         const data = readChatStore();
         let finalId = slug;
@@ -5526,15 +5779,7 @@ const server = http.createServer(async (req, res) => {
       if (arr.length) msg.reactions[emoji] = arr;
       else delete msg.reactions[emoji];
       writeChatStore(data);
-      const hydrated = {
-        ...msg,
-        displayName: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].displayName) || msg.displayName || msg.username,
-        avatar: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].avatar) || msg.avatar || '',
-        banner: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].banner) || msg.banner || '',
-        bio: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].bio) || '',
-        decoration: (authStore && authStore.users && authStore.users[msg.username] && authStore.users[msg.username].decoration) || msg.decoration || '',
-        visualRoles: resolveUserVisualRoles(authStore && authStore.users && authStore.users[msg.username])
-      };
+      const hydrated = hydrateChatMessage(msg);
       broadcastChatWs({ type: 'message-update', channel: chId, message: hydrated });
       return sendJson(res, 200, { ok: true, message: hydrated });
     } catch (e) {
@@ -5552,32 +5797,65 @@ const server = http.createServer(async (req, res) => {
       const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice') || data._channels.find((c) => c.type !== 'voice');
       const channel = channelObj ? channelObj.id : 'general';
       const rawMessages = Array.isArray(data[channel]) ? data[channel] : [];
-      const messages = rawMessages.map((m) => {
-        const uRec = authStore && authStore.users && authStore.users[m.username];
-        return {
-          ...m,
-          displayName: (uRec && uRec.displayName) || m.displayName || m.username,
-          avatar: (m.isBot || m.username === 'astra-bot') ? '/assets/chat/astra-bot-pfp.png' : ((uRec && uRec.avatar) || m.avatar || ''),
-          banner: (uRec && uRec.banner) || m.banner || '',
-          bio: (uRec && uRec.bio) || '',
-          decoration: (uRec && uRec.decoration) || m.decoration || '',
-          visualRoles: (m.isBot || m.username === 'astra-bot') ? [{ id: 'astra-bot-role', name: 'Verified Bot', iconType: 'emoji', icon: '🤖', color: '#5865f2' }] : resolveUserVisualRoles(uRec)
-        };
-      });
+      const limitParam = Math.max(1, Math.min(500, Number(reqUrl.searchParams.get('limit')) || 120));
+      const beforeTs = Number(reqUrl.searchParams.get('before')) || 0;
+      const filtered = beforeTs ? rawMessages.filter((m) => m && Number(m.ts || m.createdAt || 0) < beforeTs) : rawMessages;
+      const startIdx = Math.max(0, filtered.length - limitParam);
+      const slice = filtered.slice(startIdx);
+      const messages = slice.map(hydrateChatMessage);
+      const pinnedMessages = rawMessages.filter((m) => m && m.pinned).map(hydrateChatMessage);
+      const states = readChatReadStates();
+      if (!states[sessionUser.username] || typeof states[sessionUser.username] !== 'object') {
+        states[sessionUser.username] = {};
+      }
+      const newestTs = rawMessages.length ? Number(rawMessages[rawMessages.length - 1].ts || Date.now()) : Date.now();
+      states[sessionUser.username][channel] = Math.max(Number(states[sessionUser.username][channel] || 0), newestTs);
+      try { writeChatReadStates(states); } catch {}
       const canPost = !(channelObj && channelObj.adminOnly) || sessionUser.role === 'admin';
       return sendJson(res, 200, {
         ok: true,
         channel,
         channels: data._channels,
         messages,
+        pinnedMessages,
+        hasMore: startIdx > 0,
+        oldestTs: slice.length ? Number(slice[0].ts || slice[0].createdAt || 0) : 0,
         canPost,
+        unreadCounts: computeUnreadCountsForUser(data, sessionUser.username),
+        storageInfo: { persistentVolume: HAS_PERSISTENT_VOLUME, dataDir: DATA_DIR },
         voicePeers: getVoicePeerList(),
         members: getChatMembersList()
       });
     }
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      try {
+        const body = await readJsonBody(req);
+        const ch = String((body && body.channel) || 'general').toLowerCase();
+        const messageId = String((body && body.messageId) || '').trim();
+        const nextText = String((body && body.text) || '').trim().slice(0, 1200);
+        if (!messageId || !nextText) {
+          return sendJson(res, 400, { ok: false, error: 'messageId and non-empty text required' });
+        }
+        const data = readChatStore();
+        const list = Array.isArray(data[ch]) ? data[ch] : [];
+        const msg = list.find((m) => m && m.id === messageId);
+        if (!msg) return sendJson(res, 404, { ok: false, error: 'Message not found' });
+        if (sessionUser.role !== 'admin' && msg.username !== sessionUser.username) {
+          return sendJson(res, 403, { ok: false, error: 'You can only edit your own messages' });
+        }
+        msg.text = nextText;
+        msg.editedAt = Date.now();
+        writeChatStore(data);
+        const hydrated = hydrateChatMessage(msg);
+        broadcastChatWs({ type: 'message-update', channel: ch, message: hydrated });
+        return sendJson(res, 200, { ok: true, message: hydrated });
+      } catch (e) {
+        return sendJson(res, 500, { ok: false, error: e.message || 'failed to edit message' });
+      }
+    }
     if (req.method === 'POST') {
       try {
-        const body = await readJsonBody(req, 2 * 1024 * 1024);
+        const body = await readJsonBody(req, 4 * 1024 * 1024);
         const data = readChatStore();
         const ch = String((body && body.channel) || 'general').toLowerCase();
         const channelObj = data._channels.find((c) => c.id === ch && c.type !== 'voice');
@@ -5588,21 +5866,40 @@ const server = http.createServer(async (req, res) => {
         if (channelObj.adminOnly && sessionUser.role !== 'admin') {
           return sendJson(res, 403, { ok: false, error: 'Only admin (coolbacon) can post in #' + channelObj.name });
         }
+        const clientTempId = body && body.clientTempId ? String(body.clientTempId).slice(0, 64) : '';
+        if (!Array.isArray(data[channel])) data[channel] = [];
+        if (clientTempId) {
+          const existing = data[channel].find((m) => m && m.clientTempId === clientTempId && m.username === sessionUser.username);
+          if (existing) {
+            const hydratedExisting = hydrateChatMessage(existing);
+            return sendJson(res, 200, { ok: true, deduplicated: true, message: hydratedExisting, messages: data[channel].slice(-120).map(hydrateChatMessage) });
+          }
+        }
         const text = String((body && body.text) || '').trim().slice(0, 1200);
         const rawMediaUrl = String((body && body.mediaUrl) || '').trim();
         const validMediaUrl =
           rawMediaUrl && (
             /^https:\/\/(?:media\.tenor\.com|media\.giphy\.com|cdn\.discordapp\.com)\/[^\s"'<>]+$/i.test(rawMediaUrl) ||
             /^\/assets\/chat\/[A-Za-z0-9_.-]+$/.test(rawMediaUrl) ||
+            /^\/api\/chat\/uploads\/[A-Za-z0-9._-]+$/.test(rawMediaUrl) ||
             /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(rawMediaUrl)
           )
             ? rawMediaUrl
             : '';
-        const mediaType = validMediaUrl ? (['gif', 'sticker', 'image'].includes(body && body.mediaType) ? body.mediaType : 'gif') : '';
-        if (!text && !validMediaUrl) {
-          return sendJson(res, 400, { ok: false, error: 'Message text or media required' });
+        const mediaType = validMediaUrl ? (['gif', 'sticker', 'image', 'file'].includes(body && body.mediaType) ? body.mediaType : 'gif') : '';
+        const rawAttachments = Array.isArray(body && body.attachments) ? body.attachments : [];
+        const attachments = rawAttachments.slice(0, 4).filter((att) => att && typeof att.url === 'string' && (/^\/api\/chat\/uploads\/[A-Za-z0-9._-]+$/.test(att.url) || /^\/assets\/chat\/[A-Za-z0-9_.-]+$/.test(att.url))).map((att) => ({
+          id: String(att.id || crypto.randomBytes(6).toString('hex')),
+          url: att.url,
+          mimeType: String(att.mimeType || 'application/octet-stream').slice(0, 64),
+          filename: String(att.filename || 'attachment').slice(0, 80),
+          size: Number(att.size || 0),
+          uploadedAt: Number(att.uploadedAt || Date.now()),
+          authorId: sessionUser.username
+        }));
+        if (!text && !validMediaUrl && !attachments.length) {
+          return sendJson(res, 400, { ok: false, error: 'Message text or attachment required' });
         }
-        if (!Array.isArray(data[channel])) data[channel] = [];
         let replyTo = null;
         if (body && body.replyToId) {
           const ref = data[channel].find((m) => m && m.id === String(body.replyToId));
@@ -5611,31 +5908,36 @@ const server = http.createServer(async (req, res) => {
               id: ref.id,
               username: ref.username,
               displayName: ref.displayName || ref.username,
-              text: String(ref.text || (ref.mediaUrl ? '[GIF / Sticker]' : '')).slice(0, 90)
+              text: String(ref.text || (ref.mediaUrl ? '[Media / GIF]' : '[Attachment]')).slice(0, 90)
             };
           }
         }
         const isBotAnnounce = sessionUser.role === 'admin' && /^\/botupdate\s+(.+)/i.test(text);
         if (isBotAnnounce) {
           const customNote = text.replace(/^\/botupdate\s+/i, '').trim();
-          const botEntry = buildAstraBotMessage(
+          const botEntry = hydrateChatMessage(buildAstraBotMessage(
             channel,
             'Astra Bot — Update Broadcast',
             customNote,
             []
-          );
+          ));
           data[channel].push(botEntry);
-          if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
+          if (data[channel].length > 2000) data[channel] = data[channel].slice(-2000);
           writeChatStore(data);
           broadcastChatWs({ type: 'chat-message', channel, message: botEntry });
-          return sendJson(res, 200, { ok: true, message: botEntry, messages: data[channel] });
+          return sendJson(res, 200, { ok: true, message: botEntry, messages: data[channel].slice(-120).map(hydrateChatMessage) });
         }
         const userRec = authStore && authStore.users && authStore.users[sessionUser.username];
         const userAvatar = (userRec && userRec.avatar) || '';
         const userDecoration = (userRec && userRec.decoration) || '';
+        const nowTs = Date.now();
         const entry = {
           id: crypto.randomBytes(8).toString('hex'),
+          clientTempId: clientTempId || undefined,
+          authorId: sessionUser.username,
+          serverId: 'astra-main',
           channel,
+          channelId: channel,
           username: sessionUser.username,
           displayName: (userRec && userRec.displayName) || sessionUser.displayName || sessionUser.username,
           role: sessionUser.role || 'user',
@@ -5647,39 +5949,45 @@ const server = http.createServer(async (req, res) => {
           text,
           mediaUrl: validMediaUrl || undefined,
           mediaType: mediaType || undefined,
+          attachments,
           replyTo,
           reactions: {},
-          ts: Date.now()
+          pinned: false,
+          metadata: {},
+          createdAt: nowTs,
+          editedAt: null,
+          ts: nowTs
         };
         data[channel].push(entry);
 
         if (/^!(?:updates|whatsnew|bot)$/i.test(text) || /@astra\s*bot/i.test(text)) {
-          const botReply = buildAstraBotMessage(
+          const botReply = hydrateChatMessage(buildAstraBotMessage(
             channel,
             'Astra Bot — Latest Updates',
             'Here is what was just added to Astra:',
             [
-              'LucideBlox Node API Proxy + New Tab Game Launch (no Wisp relay failure)',
-              'Premade robloxcookie= launch links in Astra URL / Search Bar',
-              '20 Genuine Animated Discord Avatar Decorations + Username / Display Name editing',
-              'Drag-and-drop Channel Reordering & compact Discord message spacing',
-              'Admin command: type /botupdate <your message> to post as Astra Bot'
+              'Permanent Atomic Chat Persistence + Edit / Pin / File Uploads / Read States',
+              'Music Player Exit/Stop & Exact Audio-Element Timestamps + Seeking',
+              'Anime Provider Selector (AnimeKai 1, AnimeKai 2, Crunchyroll, Netflix) + Saved Preference',
+              'Full-Width Browser Top Chrome + Fluid WebGL Achroma Waves & Photorealistic Space Themes'
             ]
-          );
+          ));
           data[channel].push(botReply);
-          if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
+          if (data[channel].length > 2000) data[channel] = data[channel].slice(-2000);
           writeChatStore(data);
-          broadcastChatWs({ type: 'chat-message', channel, message: entry });
+          const hydratedEntry = hydrateChatMessage(entry);
+          broadcastChatWs({ type: 'chat-message', channel, message: hydratedEntry });
           broadcastChatWs({ type: 'chat-message', channel, message: botReply });
-          return sendJson(res, 200, { ok: true, message: entry, botMessage: botReply, messages: data[channel] });
+          return sendJson(res, 200, { ok: true, message: hydratedEntry, botMessage: botReply, messages: data[channel].slice(-120).map(hydrateChatMessage) });
         }
 
-        if (data[channel].length > 200) data[channel] = data[channel].slice(-200);
+        if (data[channel].length > 2000) data[channel] = data[channel].slice(-2000);
         writeChatStore(data);
-        broadcastChatWs({ type: 'chat-message', channel, message: entry });
-        return sendJson(res, 200, { ok: true, message: entry, messages: data[channel] });
+        const hydratedEntry = hydrateChatMessage(entry);
+        broadcastChatWs({ type: 'chat-message', channel, message: hydratedEntry });
+        return sendJson(res, 200, { ok: true, message: hydratedEntry, messages: data[channel].slice(-120).map(hydrateChatMessage) });
       } catch (e) {
-        return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
+        return sendJson(res, 500, { ok: false, error: e.message || 'failed to save message' });
       }
     }
     if (req.method === 'DELETE') {
@@ -5699,10 +6007,76 @@ const server = http.createServer(async (req, res) => {
         data[ch] = list;
         writeChatStore(data);
         broadcastChatWs({ type: 'message-delete', channel: ch, messageId });
-        return sendJson(res, 200, { ok: true, messages: list });
+        return sendJson(res, 200, { ok: true, messages: list.slice(-120).map(hydrateChatMessage) });
+      } catch (e) {
+        return sendJson(res, 500, { ok: false, error: e.message || 'failed to delete message' });
+      }
+    }
+  }
+
+  if (pathname === '/api/user/preferences') {
+    if (!sessionUser) {
+      return sendJson(res, 401, { ok: false, error: 'login required' });
+    }
+    const uRec = authStore && authStore.users && authStore.users[sessionUser.username];
+    if (!uRec) return sendJson(res, 404, { ok: false, error: 'user not found' });
+    if (!uRec.preferences || typeof uRec.preferences !== 'object') uRec.preferences = {};
+    if (req.method === 'GET') {
+      return sendJson(res, 200, { ok: true, preferences: uRec.preferences });
+    }
+    if (req.method === 'POST' || req.method === 'PATCH') {
+      try {
+        const body = await readJsonBody(req);
+        if (typeof body.rememberAnimeProvider === 'boolean') {
+          uRec.preferences.rememberAnimeProvider = body.rememberAnimeProvider;
+        }
+        if (typeof body.preferredAnimeProvider === 'string') {
+          uRec.preferences.preferredAnimeProvider = body.preferredAnimeProvider.trim().slice(0, 64);
+        }
+        if (Array.isArray(body.customAnimeProviders)) {
+          uRec.preferences.customAnimeProviders = body.customAnimeProviders.slice(0, 12).filter((p) => {
+            if (!p || typeof p.url !== 'string') return false;
+            try {
+              const parsed = new URL(p.url.trim());
+              return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+            } catch { return false; }
+          }).map((p, idx) => ({
+            id: String(p.id || `custom-${idx}`).replace(/[^a-z0-9_-]/gi, '').slice(0, 40),
+            name: String(p.name || 'Custom Provider').trim().slice(0, 40),
+            url: p.url.trim().slice(0, 260),
+            description: String(p.description || 'User-configured HTTP/HTTPS provider.').trim().slice(0, 120),
+            enabled: p.enabled !== false,
+            order: Number.isFinite(Number(p.order)) ? Number(p.order) : (100 + idx)
+          }));
+        }
+        saveAuthStore();
+        return sendJson(res, 200, { ok: true, preferences: uRec.preferences });
       } catch (e) {
         return sendJson(res, 400, { ok: false, error: e.message || 'bad payload' });
       }
+    }
+  }
+
+  if (pathname === '/api/anime/check' && req.method === 'GET') {
+    const rawUrl = String(reqUrl.searchParams.get('url') || '').trim();
+    let parsed = null;
+    try { parsed = new URL(rawUrl); } catch {}
+    if (!parsed || (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')) {
+      return sendJson(res, 400, { ok: false, reachable: false, error: 'Valid http/https URL required' });
+    }
+    try {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 3500);
+      const resp = await fetch(parsed.href, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: ac.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0' }
+      });
+      clearTimeout(t);
+      return sendJson(res, 200, { ok: true, reachable: resp.status < 500, status: resp.status });
+    } catch (e) {
+      return sendJson(res, 200, { ok: true, reachable: false, status: 0, error: e.name === 'AbortError' ? 'timeout' : 'unreachable' });
     }
   }
 
@@ -6167,13 +6541,17 @@ if (require.main === module) {
   const HOST = process.env.HOST || '0.0.0.0';
   const flushPersistentStores = () => {
     try { if (chatStoreCache) writeJsonStoreAtomic(CHAT_FILE, chatStoreCache); } catch {}
+    try { if (chatReadStatesCache) writeJsonStoreAtomic(CHAT_READ_FILE, chatReadStatesCache); } catch {}
     try { saveAuthStore(); } catch {}
     try { saveTourPrefs(); } catch {}
   };
   process.on('SIGINT', () => { flushPersistentStores(); process.exit(0); });
   process.on('SIGTERM', () => { flushPersistentStores(); process.exit(0); });
   server.listen(PORT, HOST, () => {
-    console.log(`Astra server running at http://${HOST}:${PORT} (DATA_DIR=${DATA_DIR})`);
+    console.log(`Astra server running at http://${HOST}:${PORT} (DATA_DIR=${DATA_DIR}, persistent=${HAS_PERSISTENT_VOLUME})`);
+    if (!HAS_PERSISTENT_VOLUME) {
+      console.warn('[PERSISTENCE WARNING] Running in hosted container without a mounted Persistent Volume (attach a Railway/Render volume at /data or set ASTRA_DATA_DIR so chat messages & uploads survive redeployments).');
+    }
   });
 }
 
