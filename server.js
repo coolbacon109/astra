@@ -995,6 +995,16 @@ function getMergedAdHosts() {
 }
 
 const UBLOCK_CACHE_FILE = path.join(DATA_DIR, 'ublock-domains.txt');
+const ASTRA_NEVER_BLOCK_HOSTS = new Set([
+  'tiktok.com', 'www.tiktok.com', 'm.tiktok.com', 'tiktokv.com', 'tiktokcdn.com',
+  'tiktokcdn-us.com', 'byteoversea.com', 'ttwstatic.com',
+  'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'googlevideo.com', 'ytimg.com',
+  'roblox.com', 'www.roblox.com', 'netflix.com', 'www.netflix.com',
+  'crunchyroll.com', 'www.crunchyroll.com', 'discord.com', 'twitch.tv', 'www.twitch.tv',
+  'reddit.com', 'www.reddit.com', 'instagram.com', 'www.instagram.com',
+  'facebook.com', 'www.facebook.com', 'x.com', 'twitter.com', 'google.com', 'www.google.com',
+  'github.com', 'spotify.com', 'open.spotify.com'
+]);
 const UBLOCK_FILTER_SOURCES = [
   'https://easylist.to/easylist/easylist.txt',
   'https://ublockorigin.github.io/uAssets/filters/filters.min.txt',
@@ -1007,8 +1017,13 @@ let ublockRulesTextCache = '';
 let ublockRulesGzipCache = null;
 
 function rebuildUblockTextCache() {
-  const combined = new Set(ublockDomainSet);
-  for (const h of getMergedAdHosts()) combined.add(h);
+  const combined = new Set();
+  for (const h of ublockDomainSet) {
+    if (h && !ASTRA_NEVER_BLOCK_HOSTS.has(h)) combined.add(h);
+  }
+  for (const h of getMergedAdHosts()) {
+    if (h && !ASTRA_NEVER_BLOCK_HOSTS.has(h)) combined.add(h);
+  }
   ublockRulesTextCache = [...combined].join('\n');
   try {
     ublockRulesGzipCache = zlib.gzipSync(Buffer.from(ublockRulesTextCache, 'utf8'));
@@ -1017,11 +1032,17 @@ function rebuildUblockTextCache() {
   }
 }
 
+let ublockCacheVersionOk = false;
+
 function loadUblockCacheFromDisk() {
   try {
     if (!fs.existsSync(UBLOCK_CACHE_FILE)) return false;
     const raw = fs.readFileSync(UBLOCK_CACHE_FILE, 'utf8');
-    const lines = raw.split(/\r?\n/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+    ublockCacheVersionOk = raw.startsWith('# astra-ublock-v2');
+    const lines = raw
+      .split(/\r?\n/)
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s && !s.startsWith('#') && !ASTRA_NEVER_BLOCK_HOSTS.has(s));
     if (lines.length > 500) {
       ublockDomainSet = new Set(lines);
       rebuildUblockTextCache();
@@ -1034,7 +1055,7 @@ function loadUblockCacheFromDisk() {
 async function refreshUblockFilterLists() {
   const SAFE_TLDS = new Set(['com', 'net', 'org', 'io', 'co', 'tv', 'me', 'info', 'biz', 'xyz', 'top', 'fun', 'ru', 'de', 'uk', 'fr', 'jp', 'br', 'hn', 'be', 'to', 'cc']);
   const blocked = new Set(AD_HOSTS);
-  const allowed = new Set();
+  const allowed = new Set(ASTRA_NEVER_BLOCK_HOSTS);
   for (const srcUrl of UBLOCK_FILTER_SOURCES) {
     try {
       const ac = new AbortController();
@@ -1047,7 +1068,11 @@ async function refreshUblockFilterLists() {
         line = line.trim();
         if (!line || line.startsWith('!') || line.startsWith('#')) continue;
         const hm = line.match(/^127\.0\.0\.1\s+([a-z0-9.-]+\.[a-z]{2,})$/i);
-        if (hm) { blocked.add(hm[1].toLowerCase()); continue; }
+        if (hm) {
+          const dom = hm[1].toLowerCase();
+          if (!allowed.has(dom)) blocked.add(dom);
+          continue;
+        }
         if (line.startsWith('@@||')) {
           const am = line.match(/^@@\|\|([a-z0-9.-]+\.[a-z]{2,})\^?$/i);
           if (am) allowed.add(am[1].toLowerCase());
@@ -1056,9 +1081,10 @@ async function refreshUblockFilterLists() {
         const m = line.match(/^\|\|([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:\^)?(?:\$(.*))?$/i);
         if (!m) continue;
         const host = m[1].toLowerCase();
-        if (SAFE_TLDS.has(host) || host.length < 4) continue;
-        const opts = (m[2] || '').toLowerCase();
-        if (opts && (opts.includes('domain=') || opts.includes('badfilter'))) continue;
+        if (SAFE_TLDS.has(host) || host.length < 4 || allowed.has(host)) continue;
+        const opts = (m[2] || '').trim().toLowerCase();
+        // Skip option-scoped rules ($third-party, $3p, $script, $popup, $domain=, $csp=, etc.) so primary sites aren't blanket-blocked
+        if (opts) continue;
         blocked.add(host);
       }
     } catch {}
@@ -1069,8 +1095,9 @@ async function refreshUblockFilterLists() {
     rebuildUblockTextCache();
     try {
       const tmp = `${UBLOCK_CACHE_FILE}.tmp.${process.pid}`;
-      fs.writeFileSync(tmp, [...blocked].join('\n'), 'utf8');
+      fs.writeFileSync(tmp, '# astra-ublock-v2\n' + [...blocked].join('\n'), 'utf8');
       fs.renameSync(tmp, UBLOCK_CACHE_FILE);
+      ublockCacheVersionOk = true;
     } catch {}
     console.log(`[uBlock] Synced ${ublockDomainSet.size} EasyList/uBlock domains.`);
   }
@@ -1080,7 +1107,7 @@ async function refreshUblockFilterLists() {
   const hadDiskCache = loadUblockCacheFromDisk();
   let stale = true;
   try {
-    if (hadDiskCache) {
+    if (hadDiskCache && ublockCacheVersionOk) {
       const st = fs.statSync(UBLOCK_CACHE_FILE);
       stale = (Date.now() - st.mtimeMs) > 12 * 3600 * 1000;
     }
@@ -3052,6 +3079,7 @@ async function readAstraRoblosecurityFromSwStores() {
   return fromUv || '';
 }
 const ASTRA_AD_HOSTS = ${JSON.stringify(getMergedAdHosts())};
+const ASTRA_NEVER_BLOCK_SET = new Set(${JSON.stringify([...ASTRA_NEVER_BLOCK_HOSTS])});
 const ASTRA_UNITY_FIX_SNIPPET = ${JSON.stringify(unityFixSnippet)};
 const ASTRA_FRAME_FIX_SNIPPET = ${JSON.stringify(
     '<script data-astra-frame-fix="1">(function(){try{Object.defineProperty(window,"outerWidth",{get:function(){return window.innerWidth||1280;},configurable:true});Object.defineProperty(window,"outerHeight",{get:function(){return window.innerHeight||800;},configurable:true});Object.defineProperty(window,"frameElement",{get:function(){return null;},configurable:true});}catch(e){}})();</script>'
@@ -3187,7 +3215,7 @@ function ensureUblockRulesLoaded() {
           const s = new Set();
           for (const line of txt.split('\\n')) {
             const h = line.trim();
-            if (h) s.add(h);
+            if (h && !ASTRA_NEVER_BLOCK_SET.has(h)) s.add(h);
           }
           if (s.size > 0) astraUblockDomainSet = s;
         }
@@ -3432,12 +3460,14 @@ function patchBareClientInstance(client) {
 patchBareClientInstance(scramjet && scramjet.client);
 patchBareClientInstance(uv && uv.bareClient);
 
-function isAdBlockedTarget(urlStr) {
+function isAdBlockedTarget(urlStr, isNav = false) {
   if (!astraAdblockEnabled || !urlStr) return false;
   try {
     const u = new URL(urlStr);
     const h = u.hostname.toLowerCase();
-    if (isSwHostInSet(h, ASTRA_AD_HOST_SET) || isSwHostInSet(h, astraUblockDomainSet)) return true;
+    if (ASTRA_NEVER_BLOCK_SET.has(h)) return false;
+    if (isSwHostInSet(h, ASTRA_AD_HOST_SET)) return true;
+    if (!isNav && isSwHostInSet(h, astraUblockDomainSet)) return true;
     const p = u.pathname || '';
     if ((h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtube-nocookie.com' || h.endsWith('.youtube-nocookie.com')) &&
         /(?:^\\/pagead\\/|^\\/ptracking|^\\/api\\/stats\\/(?:ads|atr)|^\\/youtubei\\/v1\\/player\\/ad_break|^\\/get_midroll_info)/i.test(p)) {
@@ -3670,7 +3700,7 @@ async function handleRequest(event) {
                 }
               } catch {}
             }
-            if (isAdBlockedTarget(d)) {
+            if (isAdBlockedTarget(d, event.request.mode === 'navigate' || event.request.destination === 'document')) {
               notifyAstraAdBlocked(d);
               return event.request.mode === 'navigate'
                 ? new Response(null, { status: 204 })
@@ -3706,7 +3736,7 @@ async function handleRequest(event) {
                 }
               } catch {}
             }
-            if (isAdBlockedTarget(d)) {
+            if (isAdBlockedTarget(d, event.request.mode === 'navigate' || event.request.destination === 'document')) {
               notifyAstraAdBlocked(d);
               return event.request.mode === 'navigate'
                 ? new Response(null, { status: 204 })
