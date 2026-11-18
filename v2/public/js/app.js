@@ -297,7 +297,9 @@ export function navigateRoute(route, opts = {}) {
   tab.loading = false;
 
   if (!opts.skipPush) {
-    const browserPath = target === '/h' ? '/' : target;
+    // The browser path is the route itself. "/" belongs to the Clever page that
+    // fronts the site, so the app never claims it, and a reload comes back here.
+    const browserPath = target;
     if (location.pathname !== browserPath) {
       try { history.pushState({ route: target }, '', browserPath); } catch {}
     }
