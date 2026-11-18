@@ -6,7 +6,40 @@ import { navigateFrameWithFallback, decodeProxyClientUrl, syncRobloxSession } fr
 let frameWatchTimer = null;
 let lastWatchedHref = '';
 
+// Every page the frame lands on gets the same fade in: a link clicked inside
+// the proxied site, a redirect, or a brand new address all go through here.
+// The frame is dropped to zero with transitions off first, so this is a fade
+// in from the real page rather than the previous page fading out.
+function fadeFrameIn(frame) {
+  frame.classList.remove('frame-loaded');
+  frame.style.transition = 'none';
+  frame.style.opacity = '0';
+  void frame.offsetWidth;
+  frame.style.transition = '';
+  requestAnimationFrame(() => {
+    frame.style.opacity = '';
+    frame.classList.add('frame-loaded');
+  });
+}
+
+let frameFadeBound = false;
+function bindFrameFade(frame) {
+  if (frameFadeBound) return;
+  frameFadeBound = true;
+  frame.addEventListener('load', () => {
+    let href = '';
+    try { href = frame.contentWindow?.location?.href || ''; } catch { href = ''; }
+    // A blank reset while switching engines is not a page.
+    if (!href || href === 'about:blank') {
+      frame.classList.remove('frame-loaded');
+      return;
+    }
+    fadeFrameIn(frame);
+  });
+}
+
 export function mountBrowse({ frame, url, forceReload, engineOverride, onTabMeta }) {
+  bindFrameFade(frame);
   const bar = document.getElementById('browseLoadingBar');
   const banner = document.getElementById('browseStatusBanner');
   const statusText = document.getElementById('browseStatusText');
@@ -44,7 +77,7 @@ export function mountBrowse({ frame, url, forceReload, engineOverride, onTabMeta
 
   function handleLoaded(info) {
     frame.dataset.hasRendered = '1';
-    frame.classList.add('frame-loaded');
+    fadeFrameIn(frame);
     if (banner) banner.classList.remove('visible');
     if (bar) {
       bar.classList.remove('active');

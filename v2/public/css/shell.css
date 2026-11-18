@@ -25,26 +25,50 @@
   display: none;
 }
 
-/* Smooth view transition fade (re-triggered on every route mount) */
-#routeMount.view-enter {
-  animation: astraViewFade 0.34s cubic-bezier(0.2, 0, 0, 1) both;
+/* ---- Page fade -----------------------------------------------------------
+ * One curve for the whole app. Content comes up from transparent and stops
+ * there: no slide, no zoom, no bounce. Route pages, the browser stage and the
+ * proxied site inside it all use the same timing, so every page you enter
+ * fades in the same way. */
+@keyframes astraFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-@keyframes astraViewFade {
-  from { opacity: 0; transform: translateY(12px) scale(0.996); }
-  to { opacity: 1; transform: none; }
+
+#routeMount.view-enter {
+  animation: astraFadeIn 0.24s cubic-bezier(0.33, 0.7, 0.4, 1) both;
 }
 
 .browse-stage.visible {
-  animation: astraViewFade 0.34s cubic-bezier(0.2, 0, 0, 1) both;
+  animation: astraFadeIn 0.24s cubic-bezier(0.33, 0.7, 0.4, 1) both;
 }
 
-/* Site frame fades in once the proxied page finishes loading */
+/* The shell comes up once when the app opens. */
+.astra-shell {
+  animation: astraFadeIn 0.28s ease-out both;
+}
+
+/* Site frame. It sits at zero until a page has actually arrived, then eases up,
+ * so a half-built page is never shown. */
 #browserFrame {
   opacity: 0;
-  transition: opacity 0.32s ease;
+  transition: opacity 0.26s cubic-bezier(0.33, 0.7, 0.4, 1);
 }
 #browserFrame.frame-loaded {
   opacity: 1;
+}
+
+/* Motion off means no fade, and the page stays visible rather than waiting. */
+@media (prefers-reduced-motion: reduce) {
+  #routeMount.view-enter,
+  .browse-stage.visible,
+  .astra-shell {
+    animation: none;
+  }
+  #browserFrame {
+    opacity: 1;
+    transition: none;
+  }
 }
 
 /* Winter snowfall layer (lives inside .bg-stage) */
