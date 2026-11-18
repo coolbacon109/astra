@@ -22,7 +22,8 @@ const { spawn } = require('child_process');
 
 const ROOT = __dirname;
 const FRONT_PORT = Number(process.env.PORT || 6741);
-const HOST = process.env.HOST || '127.0.0.1';
+/* containers (Railway etc.) must be reachable on all interfaces; local runs set HOST explicitly */
+const HOST = process.env.HOST || '0.0.0.0';
 const V1_PORT = Number(process.env.V1_PORT || 6740);
 const V2_PORT = Number(process.env.V2_PORT || 6742);
 const LANDING_FILE = path.join(ROOT, 'index.html');
