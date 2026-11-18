@@ -102,6 +102,7 @@ export function applyWallpaper(mode) {
   if (bgVideo) {
     try { bgVideo.pause(); } catch {}
     bgVideo.style.display = 'none';
+    bgVideo.style.opacity = '';
     bgVideo.removeAttribute('src');
     try { bgVideo.load(); } catch {}
   }
@@ -125,7 +126,13 @@ export function applyWallpaper(mode) {
   const vidMap = {
     'backrooms': '/assets/themes/backrooms.mp4',
     'electric-space': '/assets/themes/electric-space.mp4',
-    'bw-topo': '/assets/themes/bw-topo-lines.mp4'
+    'bw-topo': '/assets/themes/bw-topo-lines.mp4',
+    'achromaon-bg': '/assets/themes/achromaon-bg.mp4'
+  };
+  /* The ACH clip is mostly dark with a warm glow, so it needs more of itself on
+   * screen than the brighter loops do. */
+  const vidOpacity = {
+    'achromaon-bg': '0.62'
   };
   if (appState.wallpaper === 'yt-video') {
     const vid = appState.wallpaperVideo;
@@ -144,6 +151,7 @@ export function applyWallpaper(mode) {
     bgStage.style.backgroundImage = `${tint}, url("${imgMap[appState.wallpaper]}")`;
   } else if (vidMap[appState.wallpaper] && bgVideo) {
     bgVideo.src = vidMap[appState.wallpaper];
+    bgVideo.style.opacity = vidOpacity[appState.wallpaper] || '';
     bgVideo.style.display = 'block';
     bgVideo.play().catch(() => {});
   }
