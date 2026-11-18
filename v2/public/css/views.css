@@ -714,6 +714,27 @@
   margin-bottom: 10px;
 }
 .rbx-details summary:hover { color: var(--text); }
+
+/* Roblox's own sign in page, opened inside the wizard. Same origin through the
+ * proxy, so it renders in Firefox and on networks that block outside frames. */
+.rbx-login-frame-wrap {
+  width: 100%;
+  max-width: 640px;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b0b0c;
+}
+.rbx-login-frame {
+  display: block;
+  width: 100%;
+  height: 420px;
+  border: 0;
+  background: #0b0b0c;
+}
+@media (max-width: 640px) {
+  .rbx-login-frame { height: 380px; }
+}
 .rbx-nav { display: flex; justify-content: space-between; gap: 10px; }
 @media (max-width: 640px) {
   .rbx-wizard { padding: 20px 18px 16px; margin-top: 18px; }

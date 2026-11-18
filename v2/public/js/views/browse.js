@@ -6,20 +6,20 @@ import { navigateFrameWithFallback, decodeProxyClientUrl, syncRobloxSession } fr
 let frameWatchTimer = null;
 let lastWatchedHref = '';
 
-// Every page the frame lands on gets the same fade in: a link clicked inside
-// the proxied site, a redirect, or a brand new address all go through here.
-// The frame is dropped to zero with transitions off first, so this is a fade
-// in from the real page rather than the previous page fading out.
-function fadeFrameIn(frame) {
-  frame.classList.remove('frame-loaded');
-  frame.style.transition = 'none';
-  frame.style.opacity = '0';
-  void frame.offsetWidth;
-  frame.style.transition = '';
-  requestAnimationFrame(() => {
-    frame.style.opacity = '';
-    frame.classList.add('frame-loaded');
-  });
+// The frame is visible unless it is hidden on purpose. It is only hidden while
+// a new page is on its way, and a timer always brings it back, so a missed event
+// can never leave an empty area on screen.
+let revealTimer = null;
+
+function hideFrame(frame) {
+  frame.classList.add('frame-hidden');
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(() => frame.classList.remove('frame-hidden'), 12000);
+}
+
+function revealFrame(frame) {
+  clearTimeout(revealTimer);
+  frame.classList.remove('frame-hidden');
 }
 
 let frameFadeBound = false;
@@ -30,11 +30,8 @@ function bindFrameFade(frame) {
     let href = '';
     try { href = frame.contentWindow?.location?.href || ''; } catch { href = ''; }
     // A blank reset while switching engines is not a page.
-    if (!href || href === 'about:blank') {
-      frame.classList.remove('frame-loaded');
-      return;
-    }
-    fadeFrameIn(frame);
+    if (!href || href === 'about:blank') return;
+    revealFrame(frame);
   });
 }
 
@@ -62,7 +59,7 @@ export function mountBrowse({ frame, url, forceReload, engineOverride, onTabMeta
   }
 
   function handleStatus(st) {
-    if (st.loading && frame.classList.contains('frame-loaded')) frame.classList.remove('frame-loaded');
+    if (!st.loading) revealFrame(frame);
     if (bar) {
       bar.classList.toggle('active', !!st.loading);
       bar.style.width = st.loading ? '68%' : '100%';
@@ -77,7 +74,7 @@ export function mountBrowse({ frame, url, forceReload, engineOverride, onTabMeta
 
   function handleLoaded(info) {
     frame.dataset.hasRendered = '1';
-    fadeFrameIn(frame);
+    revealFrame(frame);
     if (banner) banner.classList.remove('visible');
     if (bar) {
       bar.classList.remove('active');
@@ -104,6 +101,7 @@ export function mountBrowse({ frame, url, forceReload, engineOverride, onTabMeta
   }, 900);
 
   if (forceReload) delete frame.dataset.hasRendered;
+  hideFrame(frame);
   syncRobloxSession();
   navigateFrameWithFallback(frame, url, {
     forceReload,

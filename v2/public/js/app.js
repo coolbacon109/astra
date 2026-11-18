@@ -19,7 +19,7 @@ export const appState = {
   user: null,
   serverConfig: { motd: '', motdList: [], defaultEngine: 'scramjet', adblockDefault: true, dnsMode: 'cloudflare', dnsAdFilter: true, version: 'v2.0.0' },
   theme: 'void',
-  wallpaper: 'dot-grid', // dot-grid | black-hole | lunar-moon | solar-eclipse | saturn-cosmos | milky-way | backrooms | custom-color
+  wallpaper: 'achromaon-bg', // achromaon-bg | dot-grid | black-hole | lunar-moon | solar-eclipse | saturn-cosmos | milky-way | backrooms
   shortcuts: null,
   bookmarks: [],
   tabs: [{ id: 1, route: '/h', title: 'Home', url: null, loading: false, engine: null }],
@@ -96,7 +96,7 @@ export function applyTheme(themeId) {
 export function applyWallpaper(mode) {
   const bgStage = document.getElementById('bgStage');
   const bgVideo = document.getElementById('bgVideoLayer');
-  appState.wallpaper = mode || 'dot-grid';
+  appState.wallpaper = mode || 'achromaon-bg';
   if (!bgStage) return;
 
   if (bgVideo) {
@@ -573,6 +573,17 @@ function startTourNow() {
 }
 window.addEventListener('astra:start-tour', startTourNow);
 
+// The ACH background is the new default. The first load after this update puts
+// it in place even if an older wallpaper was saved, so nobody is left on the old
+// look by accident. From then on their own pick is kept.
+function migrateDefaultWallpaper(saved) {
+  try {
+    if (localStorage.getItem('astra.wallpaper.default') === 'ach') return saved;
+    localStorage.setItem('astra.wallpaper.default', 'ach');
+  } catch {}
+  return 'achromaon-bg';
+}
+
 async function onAuthenticated(userData, srvCfg) {
   appState.user = userData;
   if (srvCfg) appState.serverConfig = srvCfg;
@@ -594,7 +605,12 @@ async function onAuthenticated(userData, srvCfg) {
       if (s.wallpaperVideo && typeof s.wallpaperVideo === 'object' && s.wallpaperVideo.id) {
         appState.wallpaperVideo = s.wallpaperVideo;
       }
-      if (s.wallpaper) applyWallpaper(s.wallpaper);
+      if (s.wallpaper) {
+        const nextWallpaper = migrateDefaultWallpaper(s.wallpaper);
+        applyWallpaper(nextWallpaper);
+        // Keep the new default for next time instead of restoring the old one.
+        if (nextWallpaper !== s.wallpaper) saveUserState();
+      }
       if (s.engine === 'scramjet' || s.engine === 'ultraviolet') proxyPrefs.engine = s.engine;
       if (s.transport === 'epoxy' || s.transport === 'libcurl') proxyPrefs.transport = s.transport;
       if (typeof s.adblock === 'boolean') proxyPrefs.adblock = s.adblock;

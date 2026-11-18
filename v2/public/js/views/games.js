@@ -24,10 +24,10 @@ export async function mount(container, ctx) {
   const sub = container.querySelector('#gamesCountSub');
   const searchEl = container.querySelector('#gamesSearchInput');
 
-  // Game files and covers come straight off GitHub raw now. jsDelivr has
-  // blocked the gn-math account, so every cdn.jsdelivr.net URL used to die
-  // with a "user gn-math is blocked" page instead of a game.
-  const GN_HTML_BASE = 'https://raw.githubusercontent.com/gn-math/html/main';
+  // Game files come from the repo's own GitHub Pages site, because raw
+  // GitHub serves HTML as plain text and the proxy then shows an error page
+  // instead of the game. Covers are images, so they stay on raw.
+  const GN_HTML_BASE = 'https://gn-math.github.io/html';
   const GN_COVER_BASE = 'https://raw.githubusercontent.com/gn-math/covers/main';
 
   function gameUrl(g) {

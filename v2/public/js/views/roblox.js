@@ -1,11 +1,13 @@
 // Roblox (/roblox): sign in with your Roblox account, then play.
 //
-// The sign in talks straight to Astra's own server, which passes it to Roblox
-// and keeps the login on your Astra account. No frame from another site and no
-// service worker of its own, so this works in Firefox and on networks that
-// block outside login pages.
+// The sign in happens on Roblox's own login page, opened through the proxy right
+// inside this page. Roblox decides what it asks for (password, an emailed code,
+// a puzzle), so nothing here can go stale. Astra then lifts the finished session
+// out of the proxy's cookie jar and hands it to the player.
 import { ICONS } from '/js/icons.js';
-import { syncRobloxSession } from '/js/proxy-engine.js';
+import { syncRobloxSession, askSwForRobloxCookie, buildProxyUrl } from '/js/proxy-engine.js';
+
+const ROBLOX_LOGIN = 'https://www.roblox.com/login';
 
 const STEP_NAMES = ['Welcome', 'Sign in', 'Play'];
 
@@ -28,7 +30,6 @@ export async function mount(container, ctx) {
     step: 1,
     returning: false,
     note: '',
-    pending2fa: null,
     charts: null,
     activeChart: null
   };
@@ -86,25 +87,21 @@ export async function mount(container, ctx) {
       `;
     }
     if (state.step === 2) {
+      const loginSrc = buildProxyUrl(ROBLOX_LOGIN, 'scramjet');
       return `
         <h1 class="rbx-title">Sign in to Roblox</h1>
-        <p class="rbx-body">Type your Roblox username and password. If Roblox asks for a code, type the newest code it sends you.</p>
-        <div class="rbx-fields" id="rbxLoginForm">
-          <input class="field-input" id="rbxUser" type="text" placeholder="Username" autocomplete="username" spellcheck="false" />
-          <input class="field-input" id="rbxPass" type="password" placeholder="Password" autocomplete="current-password" />
-          <button type="button" class="rbx-cta" id="rbxLoginBtn">Sign in</button>
+        <p class="rbx-body">Use Roblox's own sign in below. Astra takes the finished login from there, so your password never passes through this page.</p>
+        <div class="rbx-login-frame-wrap">
+          <iframe class="rbx-login-frame" id="rbxLoginFrame" src="${ctx.escapeHtml(loginSrc)}" title="Roblox sign in" allow="clipboard-write"></iframe>
         </div>
-        <div class="rbx-fields" id="rbx2faForm" style="display:none;">
-          <input class="field-input" id="rbx2faCode" type="text" inputmode="numeric" maxlength="8" placeholder="6-digit code" autocomplete="one-time-code" />
-          <button type="button" class="rbx-cta" id="rbx2faBtn">Check code</button>
-        </div>
-        <p class="rbx-note" id="rbxLoginHint"></p>
+        <p class="rbx-note" id="rbxLoginHint">Waiting for Roblox to finish signing you in.</p>
         <div class="rbx-row">
+          <button type="button" class="rbx-cta" id="rbxLoginCheckBtn">I'm signed in</button>
           <button type="button" class="rbx-ghost" id="rbxHelpBtn">Sign-in help</button>
         </div>
         <details class="rbx-details">
           <summary>Paste a login instead</summary>
-          <p class="rbx-note">Only if the form above won't work for you. Copy the value from a browser that is already signed in to Roblox.</p>
+          <p class="rbx-note">Only if the page above will not load. Copy your Roblox login from a browser that is already signed in.</p>
           <div class="rbx-fields">
             <input class="field-input" id="rbxCookieInput" type="password" placeholder="Paste your Roblox login" autocomplete="off" />
             <button type="button" class="rbx-ghost" id="rbxVerifyBtn">Use this login</button>
@@ -153,6 +150,7 @@ export async function mount(container, ctx) {
   }
 
   function render() {
+    stopLoginWatch();
     container.innerHTML = `
       <div class="page-wrap">
         <div class="rbx-wizard spot">
@@ -176,9 +174,9 @@ export async function mount(container, ctx) {
       <div class="rbx-help-card" role="dialog" aria-modal="true" aria-labelledby="rbxHelpTitle">
         <h2 id="rbxHelpTitle">Before you sign in</h2>
         <ul class="rbx-help-points">
-          <li><div><strong>Username and password</strong><span>Use the same ones you use on roblox.com. Nothing is saved on this device until Roblox accepts them.</span></div></li>
-          <li><div><strong>A code may pop up</strong><span>Roblox sometimes asks for a code. Type the newest one it sends and you land straight in.</span></div></li>
-          <li><div><strong>If a puzzle blocks you</strong><span>Finish the puzzle and try again. If it keeps coming back, sign in on roblox.com and paste your login in the box at the bottom.</span></div></li>
+          <li><div><strong>Sign in on Roblox's page</strong><span>The box in the middle is roblox.com's own sign in, opened here. Roblox handles your password and any code it sends.</span></div></li>
+          <li><div><strong>It moves on by itself</strong><span>Once Roblox finishes, this page notices and takes you to the play step. Nothing else to click.</span></div></li>
+          <li><div><strong>If the box stays blank</strong><span>Reload the page and try again. If it keeps happening, sign in on roblox.com in another tab and paste your login in the box at the bottom.</span></div></li>
           <li><div><strong>Shared computers</strong><span>Sign out when you're done so the next person doesn't land in your account.</span></div></li>
         </ul>
         <button type="button" class="rbx-cta" id="rbxHelpOk">Got it</button>
@@ -227,6 +225,46 @@ export async function mount(container, ctx) {
     state.note = msg;
     const el = container.querySelector('#rbxLoginHint');
     if (el) el.textContent = msg || '';
+  }
+
+  // Polls the proxy cookie jar while the Roblox page is open. Roblox writes the
+  // session cookie itself, so there is nothing to type a code into here.
+  let loginWatch = null;
+
+  function stopLoginWatch() {
+    if (loginWatch) { clearInterval(loginWatch); loginWatch = null; }
+  }
+
+  async function checkRobloxLogin({ quiet = false } = {}) {
+    let cookie = '';
+    try { cookie = await askSwForRobloxCookie(); } catch {}
+    if (!cookie) {
+      if (!quiet) setNote('Roblox has not finished signing you in. Finish it on the page above.');
+      return false;
+    }
+    try {
+      const j = await fetch('/api/roblox/verify', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookie })
+      }).then((r) => r.json());
+      if (j && j.signedIn) { signedIn(j); return true; }
+      if (!quiet) setNote((j && j.error) || 'That login did not work. Sign in again on the page above.');
+    } catch {
+      if (!quiet) setNote('That did not go through. Check your connection and try again.');
+    }
+    return false;
+  }
+
+  function startLoginWatch() {
+    stopLoginWatch();
+    loginWatch = setInterval(() => {
+      if (state.step !== 2 || !container.querySelector('#rbxLoginFrame')) {
+        stopLoginWatch();
+        return;
+      }
+      checkRobloxLogin({ quiet: true });
+    }, 2500);
   }
 
   async function refreshServerStatus() {
@@ -351,81 +389,19 @@ export async function mount(container, ctx) {
     const returnSignOutBtn = container.querySelector('#rbxReturnSignOutBtn');
     if (returnSignOutBtn) returnSignOutBtn.onclick = signOut;
 
-    // username and password
-    const loginBtn = container.querySelector('#rbxLoginBtn');
-    if (loginBtn) {
-      loginBtn.onclick = async () => {
-        const userEl = container.querySelector('#rbxUser');
-        const passEl = container.querySelector('#rbxPass');
-        const username = userEl.value.trim();
-        const password = passEl.value;
-        if (!username || !password) {
-          (username ? passEl : userEl).focus();
-          return ctx.showToast('Type your username and password first');
-        }
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Signing in…';
-        setNote('');
-        try {
-          const r = await fetch('/api/roblox/login', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
-          const j = await r.json();
-          if (j && j.needs2FA) {
-            state.pending2fa = { challengeId: j.challengeId, fieldType: j.fieldType || 'TOTP' };
-            container.querySelector('#rbxLoginForm').style.display = 'none';
-            container.querySelector('#rbx2faForm').style.display = 'flex';
-            container.querySelector('#rbx2faCode').focus();
-            setNote('Roblox wants a security code. Type the newest one it sent you.');
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Sign in';
-            return;
-          }
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Sign in';
-          if (!j || !j.ok || !j.signedIn) {
-            const msg = (j && j.error) || 'Roblox said that username or password is wrong.';
-            setNote(msg);
-            return ctx.showToast(msg);
-          }
-          signedIn(j);
-        } catch {
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Sign in';
-          setNote("That didn't go through. Check your connection and try again.");
-        }
-      };
-    }
-
-    const twoFaBtn = container.querySelector('#rbx2faBtn');
-    if (twoFaBtn) {
-      twoFaBtn.onclick = async () => {
-        const codeEl = container.querySelector('#rbx2faCode');
-        const code = codeEl.value.replace(/\D/g, '');
-        if (!code || !state.pending2fa) return ctx.showToast('Type the 6-digit code Roblox sent');
-        twoFaBtn.disabled = true;
-        twoFaBtn.textContent = 'Checking…';
-        try {
-          const r = await fetch('/api/roblox/login/2fa', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...state.pending2fa, code })
-          });
-          const j = await r.json();
-          if (!j || !j.ok || !j.signedIn) {
-            twoFaBtn.disabled = false;
-            twoFaBtn.textContent = 'Check code';
-            const msg = (j && j.error) || "That code didn't work. Try the newest one.";
-            setNote(msg);
-            return ctx.showToast(msg);
-          }
-          signedIn(j);
-        } catch {
-          twoFaBtn.disabled = false;
-          twoFaBtn.textContent = 'Check code';
-          ctx.showToast("That didn't go through. Try again.");
+    // Sign in happens on Roblox's own page inside the wizard. This watches the
+    // proxy's cookie jar and moves on the moment Roblox drops a finished session
+    // in it, so the user never has to press anything.
+    const checkBtn = container.querySelector('#rbxLoginCheckBtn');
+    if (checkBtn) {
+      startLoginWatch();
+      checkBtn.onclick = async () => {
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Checking...';
+        const ok = await checkRobloxLogin();
+        if (!ok && document.body.contains(checkBtn)) {
+          checkBtn.disabled = false;
+          checkBtn.textContent = "I'm signed in";
         }
       };
     }

@@ -48,17 +48,17 @@
   animation: astraFadeIn 0.28s ease-out both;
 }
 
-/* Site frame. It sits at zero until a page has actually arrived, then eases up,
- * so a half-built page is never shown. */
+/* Site frame. It is visible unless a new page is on its way, so a missed event
+ * can never leave a blank area where the site should be. */
 #browserFrame {
-  opacity: 0;
-  transition: opacity 0.26s cubic-bezier(0.33, 0.7, 0.4, 1);
-}
-#browserFrame.frame-loaded {
   opacity: 1;
+  transition: opacity 0.24s cubic-bezier(0.33, 0.7, 0.4, 1);
+}
+#browserFrame.frame-hidden {
+  opacity: 0;
 }
 
-/* Motion off means no fade, and the page stays visible rather than waiting. */
+/* Motion off means no fade; the frame is simply there. */
 @media (prefers-reduced-motion: reduce) {
   #routeMount.view-enter,
   .browse-stage.visible,
@@ -66,7 +66,6 @@
     animation: none;
   }
   #browserFrame {
-    opacity: 1;
     transition: none;
   }
 }

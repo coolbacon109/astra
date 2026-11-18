@@ -4218,10 +4218,28 @@ function readProxyCookiesStore() {
   return (obj && typeof obj === 'object') ? obj : {};
 }
 
+// Ultraviolet reaches the internet through a bare server. Without one it answers
+// every page with its own "Error processing your request" screen, which is what
+// made games look broken whenever the browser was set to Ultraviolet.
+const { createBareServer } = require('@tomphttp/bare-server-node');
+const bareServer = createBareServer('/bare/');
+
 const server = http.createServer(async (req, res) => {
   const reqUrl = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const pathname = reqUrl.pathname;
   const sessionUser = getSessionUser(req);
+
+  if (bareServer.shouldRoute(req)) {
+    try {
+      await bareServer.routeRequest(req, res);
+    } catch {
+      try {
+        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Bad gateway');
+      } catch {}
+    }
+    return;
+  }
 
   if (pathname === '/sw.js') {
     res.writeHead(200, {
@@ -7272,6 +7290,10 @@ const server = http.createServer(async (req, res) => {
 
 server.on('upgrade', (req, socket, head) => {
   try {
+    if (bareServer.shouldRoute(req)) {
+      bareServer.routeUpgrade(req, socket, head);
+      return;
+    }
     const reqUrl = new URL(req.url, `http://127.0.0.1:${PORT}`);
     if (reqUrl.pathname === '/wisp' || reqUrl.pathname === '/wisp/') {
       if (req.url === '/wisp') req.url = '/wisp/';

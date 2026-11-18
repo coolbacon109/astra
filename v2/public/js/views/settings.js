@@ -340,7 +340,7 @@ export async function mount(container, ctx) {
       }
     });
     container.querySelector('#wpStopVideoBtn')?.addEventListener('click', () => {
-      ctx.applyWallpaper('dot-grid');
+      ctx.applyWallpaper('achromaon-bg');
       ctx.saveUserState();
       render();
       ctx.showToast('Video background stopped');

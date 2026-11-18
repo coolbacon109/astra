@@ -311,7 +311,7 @@ let rbxSyncedToServer = ''; // cookie value last submitted to /api/roblox/verify
 let rbxInjectedCookie = ''; // cookie value last checked against the server jar
 let rbxJarCookie = ''; // cookie value last written into the local player jar
 
-function askSwForRobloxCookie() {
+export function askSwForRobloxCookie() {
   return new Promise((resolve) => {
     try {
       const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
@@ -446,7 +446,11 @@ export async function navigateFrameWithFallback(browserFrameEl, cleanUrl, option
       const bodyText = (doc?.body?.innerText || '').trim();
       const brokenProxy =
         /Something went wrong\.\s*Refresh the page/i.test(bodyText) ||
-        /could not reach site/i.test(bodyText);
+        /could not reach site/i.test(bodyText) ||
+        /* ultraviolet's own failure page: the engine could not fetch the site,
+         * so the other engine gets a turn instead of leaving this on screen */
+        /Error processing your request/i.test(bodyText) ||
+        /^Internal Server Error/i.test(bodyText);
       if (!alreadyRetried && (brokenProxy || (doc && doc.readyState === 'complete' && (doc.body?.innerHTML || '').trim().length < 40 && !bodyText))) {
         triggerFallback('blank/error');
         return;
