@@ -3,6 +3,7 @@ import {
   DEVICE_UA_PRESETS, switchTransport, syncIdentityToSw,
   restoreProxyCookiesFromAccount, scheduleProxyCookieUpload
 } from '/js/proxy-engine.js';
+import { getCloak, setCloak } from '/js/cloak.js';
 
 const THEMES = [
   { id: 'rose', name: 'Cherri', color: '#ff6b8b' },
@@ -36,6 +37,7 @@ export async function mount(container, ctx) {
 
   function render() {
     const cfg = ctx.appState.serverConfig || {};
+    const cloak = getCloak();
     container.innerHTML = `
       <div class="page-wrap">
         <div class="page-header">
@@ -51,6 +53,7 @@ export async function mount(container, ctx) {
             <button type="button" class="settings-nav-btn ${activeSection === 'wallpaper' ? 'active' : ''}" data-ssec="wallpaper">Wallpaper</button>
             <button type="button" class="settings-nav-btn ${activeSection === 'proxy' ? 'active' : ''}" data-ssec="proxy">Speed</button>
             <button type="button" class="settings-nav-btn ${activeSection === 'spoof' ? 'active' : ''}" data-ssec="spoof">Privacy</button>
+            <button type="button" class="settings-nav-btn ${activeSection === 'cloak' ? 'active' : ''}" data-ssec="cloak">Cloak</button>
             <button type="button" class="settings-nav-btn ${activeSection === 'cookies' ? 'active' : ''}" data-ssec="cookies">Logins</button>
           </div>
 
@@ -161,6 +164,33 @@ export async function mount(container, ctx) {
               </div>
             ` : ''}
 
+            ${activeSection === 'cloak' ? `
+              <div class="surface-card">
+                <div style="font-size:15px;font-weight:700;color:var(--bright-text);">Tab cloak</div>
+                <div class="page-sub">The tab at the top of the browser shows this name and icon instead of whatever page you have open.</div>
+                <div class="seg-row">
+                  <button type="button" class="seg-btn ${cloak.on ? 'active' : ''}" data-cloak-on="1">On</button>
+                  <button type="button" class="seg-btn ${!cloak.on ? 'active' : ''}" data-cloak-on="0">Off</button>
+                </div>
+              </div>
+              <div class="surface-card">
+                <div style="font-size:15px;font-weight:700;color:var(--bright-text);">What the tab says</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                  <input class="field-input" id="cloakTitleInput" placeholder="Clever" value="${ctx.escapeHtml(cloak.title)}" style="max-width:200px;" />
+                  <input class="field-input" id="cloakIconInput" placeholder="Leave empty for the Clever icon" value="${ctx.escapeHtml(cloak.icon)}" style="max-width:320px;" />
+                  <button type="button" class="btn" id="cloakSaveBtn">Save</button>
+                </div>
+              </div>
+              <div class="surface-card">
+                <div style="font-size:15px;font-weight:700;color:var(--bright-text);">Open a link cloaked</div>
+                <div class="page-sub">Paste any link. It opens in Astra with the tab above, not the site's own name.</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                  <input class="field-input" id="cloakLinkInput" placeholder="Paste a link" />
+                  <button type="button" class="btn btn-accent" id="cloakOpenBtn">Open it</button>
+                </div>
+              </div>
+            ` : ''}
+
             ${activeSection === 'cookies' ? `
               <div class="surface-card">
                 <div style="font-size:15px;font-weight:700;color:var(--bright-text);">Stay signed in everywhere</div>
@@ -185,6 +215,41 @@ export async function mount(container, ctx) {
     container.querySelectorAll('[data-pick-wp]').forEach((b) => {
       b.onclick = () => { ctx.applyWallpaper(b.dataset.pickWp); ctx.saveUserState(); render(); };
     });
+
+    // Tab cloak: name and icon in the browser tab, and a way to open a pasted link
+    // under that tab.
+    container.querySelectorAll('[data-cloak-on]').forEach((b) => {
+      b.onclick = () => {
+        const on = b.dataset.cloakOn === '1';
+        setCloak({ on });
+        ctx.showToast(on ? 'Tab cloak on' : 'Tab cloak off');
+        render();
+      };
+    });
+    const cloakSave = container.querySelector('#cloakSaveBtn');
+    if (cloakSave) {
+      cloakSave.onclick = () => {
+        const title = container.querySelector('#cloakTitleInput').value;
+        const icon = container.querySelector('#cloakIconInput').value;
+        const saved = setCloak({ title, icon });
+        container.querySelector('#cloakTitleInput').value = saved.title;
+        container.querySelector('#cloakIconInput').value = saved.icon;
+        ctx.showToast('Tab cloak saved');
+      };
+    }
+    const cloakOpen = container.querySelector('#cloakOpenBtn');
+    if (cloakOpen) {
+      const openLink = () => {
+        const input = container.querySelector('#cloakLinkInput');
+        const val = input.value.trim();
+        if (!val) { input.focus(); return ctx.showToast('Paste a link first'); }
+        setCloak({ on: true });
+        ctx.openExternalUrl(val);
+      };
+      cloakOpen.onclick = openLink;
+      const linkInput = container.querySelector('#cloakLinkInput');
+      if (linkInput) linkInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); openLink(); } };
+    }
 
     // Wallpaper tab: YouTube video background search
     const renderVideoGrid = (results, activeId) => {

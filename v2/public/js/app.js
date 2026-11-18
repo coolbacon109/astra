@@ -8,6 +8,10 @@ import {
   proxyPrefs, ensureProxyRuntimeReady, restoreProxyCookiesFromAccount,
   syncIdentityToSw, resolveEngineForUrl, decodeProxyClientUrl, syncRobloxSession
 } from '/js/proxy-engine.js';
+import { initTabCloak, applyCloak } from '/js/cloak.js';
+
+// The tab reads as the saved cloak (Clever by default) from the first paint.
+initTabCloak();
 
 export const appState = {
   user: null,
@@ -548,7 +552,7 @@ const authForm = document.getElementById('authForm');
 const authError = document.getElementById('authError');
 
 document.getElementById('openCloakBtn')?.addEventListener('click', () => {
-  location.href = '/clever-cloak/Clever.html';
+  location.href = '/';
 });
 
 function startTourNow() {

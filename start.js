@@ -163,6 +163,10 @@ const server = http.createServer((req, res) => {
   }
 
   /* Clever page assets */
+  if (p === '/clever-cloak/Clever.html') {
+    res.writeHead(302, { Location: '/' });
+    return res.end();
+  }
   if (p.startsWith('/clever-cloak/')) {
     return serveCleverStatic(p, res);
   }
