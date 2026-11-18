@@ -1680,7 +1680,7 @@ self.addEventListener('fetch', function(event) {
     if (!ctx || !ctx.base) return fetch(event.request);
     if (
       reqUrl.origin === self.location.origin &&
-      (reqPath === '/' || reqPath === '/index.html' || reqPath.startsWith('/clever-cloak/') || reqPath.startsWith('/api/auth/') || reqPath === '/api/games' || reqPath === '/api/config' || reqPath.startsWith('/api/admin/') || reqPath.startsWith('/api/ai/'))
+      (reqPath === '/' || reqPath === '/index.html' || reqPath === '/v1.html' || /^\/v2[a-z0-9]*$/i.test(reqPath) || reqPath.startsWith('/clever-cloak/') || reqPath.startsWith('/api/auth/') || reqPath === '/api/games' || reqPath === '/api/config' || reqPath.startsWith('/api/admin/') || reqPath.startsWith('/api/ai/'))
     ) {
       return fetch(event.request);
     }
@@ -6497,6 +6497,16 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/' || pathname === '/index.html') {
+    return serveStaticFile(path.join(ROOT_DIR, 'index.html'), req, res, { 'Cache-Control': 'no-store' });
+  }
+
+  if (pathname === '/v1.html') {
+    return serveStaticFile(path.join(ROOT_DIR, 'v1.html'), req, res, { 'Cache-Control': 'no-store' });
+  }
+
+  // Astra V2 entry points: /v2 plus app deep links like /v2a (ai) and /v2b (browse).
+  // They open the landing page, which forwards to the V2 app once it has a public home.
+  if (pathname === '/v2' || /^\/v2[a-z0-9]*$/i.test(pathname)) {
     return serveStaticFile(path.join(ROOT_DIR, 'index.html'), req, res, { 'Cache-Control': 'no-store' });
   }
 

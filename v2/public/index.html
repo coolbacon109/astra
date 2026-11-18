@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="void">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/tokens.css" />
+  <link rel="stylesheet" href="/css/shell.css" />
+  <script src="/baremux/index.js" defer></script>
+  <script src="/scram/scramjet.all.js" defer></script>
+  <script src="/uv/uv.bundle.js" defer></script>
+  <script src="/uv/uv.config.js" defer></script>
+</head>
+<body>
+  <div class="bg-stage" id="bgStage">
+    <video class="bg-video-layer" id="bgVideoLayer" muted playsinline preload="none" loop></video>
+  </div>
+
+  <!-- Auth Gate Overlay -->
+  <div class="auth-gate hidden" id="authGate">
+    <form class="auth-card" id="authForm">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:21px;font-weight:800;letter-spacing:-0.02em;color:var(--bright-text);">astra</div>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">sign in to sync cookies, music &amp; chat</div>
+        </div>
+        <button type="button" class="tb-icon-btn" id="openCloakBtn" title="Switch to Clever Cloak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input class="field-input" id="authUser" type="text" placeholder="Username" autocomplete="username" required />
+        <input class="field-input" id="authPass" type="password" placeholder="Password" autocomplete="current-password" required />
+      </div>
+      <div id="authError" style="font-size:12px;color:#fda4af;min-height:16px;"></div>
+      <button type="submit" class="btn btn-accent" id="authSubmitBtn" style="width:100%;">Sign in</button>
+    </form>
+  </div>
+
+  <!-- Unified Shell -->
+  <div class="astra-shell" id="astraShell">
+    <aside class="rail" id="sideRail">
+      <div class="rail-group">
+        <button type="button" class="rail-btn" data-route="/h" title="Home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/b" title="Browse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/g" title="Games">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4M8 10v4"/><circle cx="15.5" cy="11" r="1"/><circle cx="17.5" cy="13" r="1"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/music" title="Music">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/chat" title="Chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/ai" title="AI">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c.5 4.5 4.5 8.5 9 9-4.5.5-8.5 4.5-9 9-.5-4.5-4.5-8.5-9-9 4.5-.5 8.5-4.5 9-9z"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/a" title="Anime">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/m" title="Movies">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/roblox" title="Roblox">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M18.926 23.998 0 18.892 5.075.002 24 5.108ZM15.348 10.09l-5.282-1.453-1.414 5.273 5.282 1.453z"/></svg>
+        </button>
+      </div>
+
+      <div class="rail-group">
+        <div class="rail-divider"></div>
+        <button type="button" class="rail-btn" data-route="/admin" id="railAdminBtn" style="display:none;" title="Admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+        <button type="button" class="rail-btn" data-route="/s" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <button type="button" class="rail-btn" id="railLogoutBtn" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="tabstrip" id="tabStrip">
+        <div id="tabList" style="display:flex;align-items:center;gap:6px;"></div>
+        <button type="button" class="tab-add-btn" id="newTabBtn" title="New Tab">+</button>
+      </header>
+
+      <div class="toolbar">
+        <div class="nav-btns">
+          <button type="button" class="tb-icon-btn" id="navBackBtn" title="Back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <button type="button" class="tb-icon-btn" id="navFwdBtn" title="Forward">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <button type="button" class="tb-icon-btn" id="navReloadBtn" title="Reload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        </div>
+
+        <form class="omnibox-form" id="omniboxForm">
+          <span class="omnibox-lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="omnibox-input" id="omniboxInput" type="text" placeholder="Search or enter website..." autocomplete="off" />
+          <button type="button" class="engine-badge-btn" id="engineBadgeBtn" title="Click to switch how sites load">scramjet</button>
+        </form>
+
+        <!-- Synced Top Mini Music Bar -->
+        <div class="mini-music-pill" id="topMiniMusic">
+          <button type="button" class="mini-music-jump" id="miniMusicJumpBtn" title="Open Music">
+            <span>♫</span>
+            <span class="mini-music-label" id="miniMusicLabel">Nothing playing</span>
+          </button>
+          <button type="button" class="mini-music-ctrl" id="miniPrevBtn" title="Previous">‹</button>
+          <button type="button" class="mini-music-ctrl" id="miniPlayBtn" title="Play / Pause">▶</button>
+          <button type="button" class="mini-music-ctrl" id="miniNextBtn" title="Next">›</button>
+          <button type="button" class="mini-music-ctrl exit-btn" id="miniExitBtn" title="Stop &amp; Exit Music">✕</button>
+        </div>
+
+        <div class="nav-btns">
+          <button type="button" class="tb-icon-btn" id="toggleRailBtn" title="Toggle Sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </button>
+          <button type="button" class="tb-icon-btn" id="bookmarkBtn" title="Bookmark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+          <button type="button" class="tb-icon-btn" id="popoutBlankBtn" title="Open in about:blank cloak">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button type="button" class="tb-icon-btn" id="fullscreenBtn" title="Fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <main class="view-stage" id="viewStage">
+        <div class="route-mount" id="routeMount"></div>
+        <div class="browse-stage" id="browseStage">
+          <div class="browse-frame-wrap" id="browseFrameWrap">
+            <div class="browse-loading-bar" id="browseLoadingBar"></div>
+            <div class="browse-status-banner" id="browseStatusBanner">
+              <div class="tab-pill-spinner" style="width:24px;height:24px;color:var(--accent);"></div>
+              <div id="browseStatusText" style="font-size:13.5px;color:var(--bright-text);font-weight:600;">Connecting...</div>
+              <button type="button" class="btn" id="browseSwitchNowBtn" style="margin-top:4px;">Switch Engine</button>
+            </div>
+            <iframe id="browserFrame" allow="display-capture *; camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *; autoplay *" allowfullscreen></iframe>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalHost"></div>
+  <div class="toast-host" id="toastHost"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
+

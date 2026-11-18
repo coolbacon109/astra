@@ -1,8 +1,13 @@
 node_modules/
-auth-store.json
-chat-history.json
-music-playlists.json
-.env
+node node/
+chat-uploads/
+data/
+*.key
 *.log
-user-profiles.json
-user-cookies.json
+*.bak
+astra-server-config.json
+auth-store.json
+chat-*.json
+music-*.json
+tour-*.json
+user-*.json

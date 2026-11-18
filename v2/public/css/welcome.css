@@ -1,0 +1,285 @@
+/* Welcome card: glassy panel with a glowing orb and two orbiting sparks.
+   All colors come from the theme, so it matches whichever look is active. */
+
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 2, 3, 0.55);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  animation: welcome-fade 0.24s var(--ease-ui);
+}
+
+.welcome-overlay.closing {
+  animation: welcome-out 0.19s var(--ease-ui) forwards;
+}
+
+.welcome-card {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 30px 30px 22px;
+  text-align: center;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 45%),
+    color-mix(in srgb, var(--bg-2-base) 86%, transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
+  box-shadow: var(--shadow-modal);
+  animation: welcome-pop 0.34s var(--ease-ui);
+}
+
+.welcome-card h1 {
+  margin: 0 0 10px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--bright-text);
+}
+
+.welcome-sub {
+  margin: 0 0 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.welcome-points {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+
+.welcome-points li {
+  position: relative;
+  padding-left: 17px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.welcome-points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 6.5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 7px var(--accent-glow);
+}
+
+.welcome-ask {
+  margin: 2px 0 13px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--bright-text);
+}
+
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.welcome-cta {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 22px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent-contrast);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-ui), box-shadow 0.15s var(--ease-ui);
+}
+
+.welcome-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 48%, transparent);
+}
+
+.welcome-cta:active {
+  transform: translateY(0);
+}
+
+.welcome-ghost {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease-ui), color 0.15s var(--ease-ui);
+}
+
+.welcome-ghost:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--bright-text);
+}
+
+.welcome-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease-ui), color 0.15s var(--ease-ui);
+}
+
+.welcome-x:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--bright-text);
+}
+
+/* Never show me again slider */
+.welcome-never {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 15px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.welcome-never input {
+  display: none;
+}
+
+.welcome-slider {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 19px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--text-muted) 32%, transparent);
+  transition: background 0.18s var(--ease-ui);
+}
+
+.welcome-slider::after {
+  content: '';
+  position: absolute;
+  top: 2.5px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bright-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s var(--ease-ui);
+}
+
+.welcome-never input:checked + .welcome-slider {
+  background: var(--accent);
+}
+
+.welcome-never input:checked + .welcome-slider::after {
+  transform: translateX(14px);
+}
+
+/* Glowing orb with two orbiting sparks */
+.welcome-orb {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 2px auto 16px;
+}
+
+.welcome-core {
+  position: absolute;
+  inset: 25px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--bright-text) 0%, var(--accent) 52%, var(--accent-2) 100%);
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    0 0 54px color-mix(in srgb, var(--accent) 42%, transparent);
+  animation: welcome-pulse 3.2s ease-in-out infinite;
+}
+
+.welcome-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  animation: welcome-spin 7s linear infinite;
+}
+
+.welcome-orbit.b {
+  inset: -11px;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+  animation: welcome-spin 11s linear infinite reverse;
+}
+
+.welcome-orbit::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 24px var(--accent-glow);
+}
+
+@keyframes welcome-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes welcome-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+
+@keyframes welcome-fade {
+  from { opacity: 0; }
+}
+
+@keyframes welcome-out {
+  to { opacity: 0; }
+}
+
+@keyframes welcome-pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-orbit,
+  .welcome-core {
+    animation: none;
+  }
+}

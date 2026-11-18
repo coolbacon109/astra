@@ -1,0 +1,336 @@
+/* Astra v2 Home Stage (Cherri Layout + Achroma Trace Cursive Hero) */
+.home-stage {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 20px 14px;
+  gap: 18px;
+  position: relative;
+}
+
+.home-center-stack {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/* Astra Hero Wordmark - neon-script write-in + idle motion (CSS-only, cannot hide the logo) */
+.hero-logo-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-brand-row {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.astra-hero-svg {
+  width: clamp(250px, 28vw, 380px);
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* The hero wordmark is decorative - never selectable (an accidental drag would
+   otherwise paint Chromium's selection box behind the SVG text) */
+.astra-hero-svg {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Cherri-style wordmark: soft glow tinted by the auto-detected bright palette color */
+.hero-word {
+  filter:
+    drop-shadow(0 0 5px color-mix(in srgb, var(--hero-glow, var(--accent)) 45%, transparent))
+    drop-shadow(0 0 16px color-mix(in srgb, var(--hero-glow, var(--accent)) 40%, transparent))
+    drop-shadow(0 0 34px color-mix(in srgb, var(--hero-glow, var(--accent)) 22%, transparent));
+}
+@keyframes heroWordIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* On light wallpapers the glow switches to a soft dark halo */
+.astra-hero-svg.hero-on-light .hero-word {
+  filter: drop-shadow(0 2px 16px rgba(10, 10, 16, 0.3));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-clock {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-motd {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bright-text);
+  letter-spacing: -0.01em;
+  opacity: 0.9;
+  text-align: center;
+  min-height: 18px;
+  transition: opacity 0.22s ease;
+}
+
+.hero-motd.motd-out {
+  opacity: 0;
+}
+
+/* Cherri Pill Search Bar */
+.home-search-form {
+  width: 100%;
+  max-width: 600px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px 5px 16px;
+  border-radius: 16px;
+  background: var(--bg-1-base);
+  border: 1px solid var(--border-3);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.home-search-form:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-card);
+}
+
+/* Orbiting glow: a highlight that travels around the search bar outline.
+   Two rings ride a registered custom property as the rotation angle: a crisp
+   2px band masked to sit exactly on the border, and a blurred twin behind it
+   for the soft halo. The head of the conic gradient is the moving spark. */
+@property --search-glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.home-search-form::before,
+.home-search-form::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--search-glow-angle),
+    transparent 0deg,
+    transparent 272deg,
+    color-mix(in srgb, var(--accent) 92%, transparent) 318deg,
+    #fff 350deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: searchGlowOrbit 3.8s linear infinite;
+}
+.home-search-form::before {
+  filter: blur(6px);
+  opacity: 0.5;
+}
+.home-search-form:focus-within::before { opacity: 0.85; }
+@keyframes searchGlowOrbit {
+  to { --search-glow-angle: 360deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-search-form::before,
+  .home-search-form::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+.home-search-icon {
+  color: var(--text-muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.home-search-icon svg { width: 17px; height: 17px; }
+.home-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--bright-text);
+}
+.home-search-input::placeholder { color: var(--text-muted); }
+
+.home-search-go {
+  appearance: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+.home-search-go:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--accent) 88%, #fff);
+}
+.home-search-go:active { transform: scale(0.96); }
+
+/* Rounded-Square Quick App Icons (Cherri App Row) */
+.apps-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.app-tile {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: color 0.12s ease, transform 0.14s var(--ease-ui);
+}
+.app-tile:hover {
+  color: var(--bright-text);
+  transform: translateY(-2px);
+}
+.app-tile-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  background: var(--bg-1-base);
+  border: 1px solid var(--border-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bright-text);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.app-tile:hover .app-tile-box {
+  border-color: var(--border);
+  background: var(--bg-2-base);
+}
+.app-tile-box svg { width: 21px; height: 21px; }
+.app-tile-box img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+.app-tile-box.dashed {
+  border-style: dashed;
+  border-color: var(--border-2);
+  color: var(--text-muted);
+}
+
+/* Status Pills (Online Count + Community Link) */
+.status-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.status-pill {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--bg-1-base);
+  border: 1px solid var(--border-3);
+  color: var(--bright-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.status-pill:hover {
+  border-color: var(--border);
+  background: var(--bg-2-base);
+}
+.status-pill .muted {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Live time + date above the wordmark - pure text, no card */
+.hero-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  animation: heroWordIn 0.55s cubic-bezier(0.2, 0, 0, 1) 0.45s backwards;
+}
+.hero-clock-time {
+  font-size: clamp(34px, 4.2vw, 54px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--bright-text);
+  font-variant-numeric: tabular-nums;
+}
+.hero-clock-date {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.92;
+}
+
+/* All Apps Modal Grid */
+.all-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.all-app-item {
+  appearance: none;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-2-base);
+  border: 1px solid var(--border-3);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  color: var(--bright-text);
+  text-align: left;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+.all-app-item:hover {
+  border-color: var(--accent);
+  background: var(--bg-3-base);
+}
+.all-app-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* All Apps Modal Grid */

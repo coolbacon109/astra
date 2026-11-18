@@ -1,0 +1,240 @@
+/* Astra v2 Design Tokens - Studied from Cherri + Astra Midnight/Space Presets */
+@property --accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ff6b8b;
+}
+@property --accent-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #c4344f;
+}
+
+:root {
+  --font-ui: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Default look: Obsidian Void */
+  --bg-base: #050507;
+  --bg-1-base: #0b0b0f;
+  --bg-2-base: #111116;
+  --bg-3-base: #17171d;
+  --bg-4-base: #202028;
+
+  --accent: #f4f4f7;
+  --accent-2: #a1a1b2;
+  --accent-glow: rgba(255, 255, 255, 0.5);
+  --accent-contrast: #08080c;
+
+  --text: #e7e7ee;
+  --text-muted: #8a8a99;
+  --bright-text: #ffffff;
+
+  --border: rgba(255, 255, 255, 0.18);
+  --border-2: rgba(255, 255, 255, 0.11);
+  --border-3: rgba(255, 255, 255, 0.07);
+  --border-4: rgba(255, 255, 255, 0.04);
+
+  --dot-color: rgba(255, 255, 255, 0.07);
+  --glass-alpha: 78%;
+  --glass-blur: 18px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+  --shadow-card: 0 3px 10px rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.72);
+}
+
+[data-theme="midnight"] {
+  --bg-base: #07080d;
+  --bg-1-base: #0d0f17;
+  --bg-2-base: #131622;
+  --bg-3-base: #191d2d;
+  --bg-4-base: #21263b;
+  --accent: #7c8cff;
+  --accent-2: #4f5de6;
+  --accent-glow: rgba(124, 140, 255, 0.65);
+  --accent-contrast: #07080f;
+  --text: #e2e6f3;
+  --text-muted: #8b93b0;
+  --bright-text: #ffffff;
+  --border: rgba(200, 215, 255, 0.2);
+  --border-2: rgba(200, 215, 255, 0.13);
+  --border-3: rgba(200, 215, 255, 0.08);
+  --border-4: rgba(200, 215, 255, 0.04);
+  --dot-color: rgba(200, 215, 255, 0.07);
+}
+
+/* Obsidian Void is the default (see :root); the alias keeps saved prefs resolving */
+[data-theme="void"] {
+}
+
+[data-theme="rose"] {
+  --bg-base: #0c0405;
+  --bg-1-base: #11070a;
+  --bg-2-base: #170a0d;
+  --bg-3-base: #1d0d11;
+  --bg-4-base: #261015;
+
+  --accent: #ff6b8b;
+  --accent-2: #c4344f;
+  --accent-glow: rgba(255, 107, 139, 0.72);
+  --accent-contrast: #160609;
+
+  --text: #f0d8dc;
+  --text-muted: #b08791;
+  --bright-text: #fff5f7;
+
+  --border: rgba(255, 200, 210, 0.22);
+  --border-2: rgba(255, 200, 210, 0.14);
+  --border-3: rgba(255, 200, 210, 0.09);
+  --border-4: rgba(255, 200, 210, 0.05);
+
+  --dot-color: rgba(255, 200, 210, 0.075);
+}
+
+[data-theme="nord"] {
+  --bg-base: #0c1017;
+  --bg-1-base: #121822;
+  --bg-2-base: #18202c;
+  --bg-3-base: #1f2938;
+  --bg-4-base: #273447;
+  --accent: #88c0d0;
+  --accent-2: #5e81ac;
+  --accent-glow: rgba(136, 192, 208, 0.65);
+  --accent-contrast: #091017;
+  --text: #e5e9f0;
+  --text-muted: #8e9bb0;
+  --bright-text: #ffffff;
+  --border: rgba(168, 212, 232, 0.2);
+  --border-2: rgba(168, 212, 232, 0.12);
+  --border-3: rgba(168, 212, 232, 0.08);
+  --border-4: rgba(168, 212, 232, 0.04);
+  --dot-color: rgba(168, 212, 232, 0.075);
+}
+
+[data-theme="forest"] {
+  --bg-base: #050b08;
+  --bg-1-base: #0a140f;
+  --bg-2-base: #0f1c15;
+  --bg-3-base: #15261d;
+  --bg-4-base: #1c3226;
+  --accent: #4ade80;
+  --accent-2: #16a34a;
+  --accent-glow: rgba(74, 222, 128, 0.62);
+  --accent-contrast: #041008;
+  --text: #dbf2e4;
+  --text-muted: #7da68d;
+  --bright-text: #f3fff7;
+  --border: rgba(140, 235, 175, 0.2);
+  --border-2: rgba(140, 235, 175, 0.12);
+  --border-3: rgba(140, 235, 175, 0.08);
+  --border-4: rgba(140, 235, 175, 0.04);
+  --dot-color: rgba(140, 235, 175, 0.07);
+}
+
+[data-theme="sunset"] {
+  --bg-base: #0d0605;
+  --bg-1-base: #150b09;
+  --bg-2-base: #1e100d;
+  --bg-3-base: #261511;
+  --bg-4-base: #321c16;
+  --accent: #fb923c;
+  --accent-2: #ea580c;
+  --accent-glow: rgba(251, 146, 60, 0.68);
+  --accent-contrast: #170804;
+  --text: #f6e1d7;
+  --text-muted: #b88b7d;
+  --bright-text: #fff8f5;
+  --border: rgba(255, 195, 165, 0.22);
+  --border-2: rgba(255, 195, 165, 0.13);
+  --border-3: rgba(255, 195, 165, 0.08);
+  --border-4: rgba(255, 195, 165, 0.04);
+  --dot-color: rgba(255, 195, 165, 0.075);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-base);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s var(--ease-ui), color 0.2s var(--ease-ui), --accent 0.2s var(--ease-ui), --accent-2 0.2s var(--ease-ui);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes npBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+/* Cherri cursor-tracked spotlight card highlight */
+.spot {
+  isolation: isolate;
+  position: relative;
+}
+.spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--sx, 50%) var(--sy, 50%),
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 70%
+  );
+  transition: opacity 0.2s ease;
+}
+.spot:hover::after {
+  opacity: 1;
+}

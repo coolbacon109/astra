@@ -1,0 +1,49 @@
+/* Astra v2 interactive spotlight tour (ported from the original tutorial; accent-driven via color-mix) */
+.tour-backdrop { position: fixed; inset: 0; z-index: 9500; display: none; background: transparent; }
+.tour-backdrop.visible { display: block; }
+
+.tour-spotlight {
+  position: fixed; top: 50%; left: 50%; width: 120px; height: 54px; z-index: 9501;
+  border-radius: 16px; pointer-events: none;
+  border: 2px solid color-mix(in srgb, var(--accent) 92%, transparent);
+  box-shadow: 0 0 0 9999px rgba(4, 5, 11, 0.72), 0 0 28px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 0 14px color-mix(in srgb, var(--accent) 18%, transparent);
+  transition: left .34s cubic-bezier(.22,1,.36,1), top .34s cubic-bezier(.22,1,.36,1), width .34s cubic-bezier(.22,1,.36,1), height .34s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+  animation: tourPulseRing 2s ease-in-out infinite;
+}
+.tour-hotspot { position: fixed; z-index: 9502; border-radius: 14px; cursor: pointer; background: transparent; transition: background .2s ease; }
+.tour-hotspot:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+
+.tour-pointer-svg { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9503; overflow: visible; }
+.tour-pointer-path {
+  fill: none; stroke: color-mix(in srgb, var(--accent) 95%, transparent); stroke-width: 2.8; stroke-linecap: round; stroke-dasharray: 6 5;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 70%, transparent)); animation: tourDashFlow 1.2s linear infinite;
+  transition: opacity .2s ease;
+}
+@keyframes tourPulseRing {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(4,5,11,.72), 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 0 12px color-mix(in srgb, var(--accent) 16%, transparent); }
+  50% { box-shadow: 0 0 0 9999px rgba(4,5,11,.72), 0 0 42px color-mix(in srgb, var(--accent) 75%, transparent), inset 0 0 20px color-mix(in srgb, var(--accent) 28%, transparent); }
+}
+@keyframes tourDashFlow { to { stroke-dashoffset: -22; } }
+
+.tour-card-glow {
+  position: fixed; z-index: 9504; width: min(440px, calc(100vw - 24px)); border-radius: 22px; padding: 1px; overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 28px 80px rgba(0,0,0,.88), 0 0 28px color-mix(in srgb, var(--accent) 14%, transparent);
+  transition: left .34s cubic-bezier(.22,1,.36,1), top .34s cubic-bezier(.22,1,.36,1);
+}
+.tour-card { border-radius: 21px; background: var(--bg-1-base); padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; text-transform: lowercase; }
+.tour-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tour-badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.tour-title { font-size: 16px; font-weight: 700; color: var(--bright-text); }
+.tour-body { font-size: 12.5px; color: var(--text); opacity: .86; line-height: 1.52; }
+.tour-hint { font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+.tour-dots { display: flex; align-items: center; gap: 5px; }
+.tour-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--border-2); transition: all .25s ease; }
+.tour-dot.active { width: 18px; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+.tour-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.tour-foot-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tour-btn { height: 30px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--border-3); background: var(--bg-3-base); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; text-transform: lowercase; transition: border-color .15s, background .15s; }
+.tour-btn:hover { border-color: var(--border); background: var(--bg-4-base); }
+.tour-btn:disabled { opacity: .4; cursor: default; }
+.tour-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); padding: 0 16px; }
+.tour-btn.primary:hover { filter: brightness(1.08); }
