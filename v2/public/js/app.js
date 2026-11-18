@@ -676,9 +676,12 @@ async function onAuthenticated(userData, srvCfg) {
   const initPath = ROUTE_TITLES[location.pathname] ? location.pathname : '/h';
   navigateRoute(initPath, { skipPush: true });
   const forceTour = new URLSearchParams(location.search).get('tour') === '1';
-  if (forceTour || userData.needsTour) {
+  // The tour always starts from home, so it only runs there. Opening a link
+  // straight to a page such as /roblox stays on that page.
+  const onHome = initPath === '/h';
+  if (forceTour || (userData.needsTour && onHome)) {
     setTimeout(startTourNow, 700);
-  } else {
+  } else if (!userData.needsTour) {
     // Returning users get the hello card; brand new users get the tour above.
     setTimeout(() => {
       import('/js/welcome.js').then((m) => m.maybeShowWelcome({ appState, ensureCssLoaded })).catch(() => {});
