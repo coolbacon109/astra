@@ -3287,6 +3287,42 @@ const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
 const uv = new UVServiceWorker();
 
+/* Ultraviolet asks bare-mux for a transport it never receives in this worker, so
+ * every page it handled ended on its own error screen. It now goes through the
+ * server's /bare/ endpoint instead, which is a hop the browser can make anyway. */
+async function astraBareFetch(remote, init) {
+  const opts = init || {};
+  const method = String(opts.method || 'GET').toUpperCase();
+  const srcHeaders = opts.headers;
+  const headerObj = srcHeaders instanceof Headers ? Object.fromEntries(srcHeaders.entries()) : (srcHeaders || {});
+  const target = typeof remote === 'string' ? remote : (remote && remote.url) || String(remote || '');
+  let body;
+  if (method !== 'GET' && method !== 'HEAD' && opts.body) {
+    try { body = await new Response(opts.body).arrayBuffer(); } catch { body = undefined; }
+  }
+  const res = await fetch('/bare/v3/', {
+    method,
+    headers: { 'x-bare-url': target, 'x-bare-headers': JSON.stringify(headerObj) },
+    body,
+    credentials: 'omit'
+  });
+  let raw = {};
+  try { raw = JSON.parse(res.headers.get('x-bare-headers') || '{}'); } catch {}
+  const outHeaders = new Headers();
+  for (const name of Object.keys(raw)) {
+    const val = raw[name];
+    if (Array.isArray(val)) { for (const one of val) outHeaders.append(name, String(one)); }
+    else outHeaders.set(name, String(val));
+  }
+  const status = Number(res.headers.get('x-bare-status') || res.status) || 200;
+  const statusText = res.headers.get('x-bare-status-text') || '';
+  const emptyBody = status === 204 || status === 205 || status === 304 || method === 'HEAD';
+  const reply = new Response(emptyBody ? null : res.body, { status, statusText, headers: outHeaders });
+  try { reply.finalURL = res.headers.get('x-bare-url') || target; } catch {}
+  return reply;
+}
+try { uv.bareClient = { fetch: astraBareFetch }; } catch {}
+
 let astraAdblockEnabled = true;
 let astraCapturedRoblosecurity = '';
 function findRoblosecurityInJarObj(obj) {

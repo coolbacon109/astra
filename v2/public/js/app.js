@@ -584,6 +584,18 @@ function migrateDefaultWallpaper(saved) {
   return 'achromaon-bg';
 }
 
+// Scramjet is the engine that actually loads pages here. A saved Ultraviolet
+// choice from before is dropped once, so links and games open straight away
+// instead of waiting for an engine that cannot fetch. Picking it after this is
+// still honoured.
+function migrateSavedEngine(saved) {
+  try {
+    if (localStorage.getItem('astra.engine.default') === 'scramjet') return saved;
+    localStorage.setItem('astra.engine.default', 'scramjet');
+  } catch {}
+  return 'scramjet';
+}
+
 async function onAuthenticated(userData, srvCfg) {
   appState.user = userData;
   if (srvCfg) appState.serverConfig = srvCfg;
@@ -611,7 +623,11 @@ async function onAuthenticated(userData, srvCfg) {
         // Keep the new default for next time instead of restoring the old one.
         if (nextWallpaper !== s.wallpaper) saveUserState();
       }
-      if (s.engine === 'scramjet' || s.engine === 'ultraviolet') proxyPrefs.engine = s.engine;
+      if (s.engine === 'scramjet' || s.engine === 'ultraviolet') {
+        const nextEngine = migrateSavedEngine(s.engine);
+        proxyPrefs.engine = nextEngine;
+        if (nextEngine !== s.engine) saveUserState();
+      }
       if (s.transport === 'epoxy' || s.transport === 'libcurl') proxyPrefs.transport = s.transport;
       if (typeof s.adblock === 'boolean') proxyPrefs.adblock = s.adblock;
       if (Array.isArray(s.bookmarks)) appState.bookmarks = s.bookmarks;
