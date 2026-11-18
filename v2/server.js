@@ -975,6 +975,19 @@ function loadAuthStore() {
     }
   }
 
+  if (!store.users.brayden) {
+    const { salt, hash } = hashPassword('brayden123456789');
+    store.users.brayden = {
+      username: 'brayden',
+      displayName: 'Brayden',
+      role: 'user',
+      salt,
+      hash,
+      tourCompleted: false
+    };
+    changed = true;
+  }
+
   if (changed) {
     try {
       writeJsonStoreAtomic(AUTH_FILE, store);
@@ -2419,65 +2432,88 @@ function normalizeRoblosecurityInput(raw) {
   return v.startsWith('_|WARNING:-DO-NOT-SHARE-THIS.') ? v : '';
 }
 
-function verifyRoblosecurityWithRoblox(cookieVal) {
+function robloxGetJson(urlStr, cookieVal, timeoutMs = 8000) {
   return new Promise((resolve) => {
-    const clean = typeof cookieVal === 'string' ? cookieVal.trim() : '';
-    if (!clean) return resolve({ ok: true, valid: false, status: 401, error: 'No .ROBLOSECURITY cookie detected.' });
-    const req = https.get(
-      'https://users.roblox.com/v1/users/authenticated',
-      {
-        headers: {
-          Cookie: `.ROBLOSECURITY=${clean}`,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
-          Accept: 'application/json',
-          Origin: 'https://www.roblox.com',
-          Referer: 'https://www.roblox.com/'
+    let settled = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    try {
+      const req = https.get(
+        urlStr,
+        {
+          headers: {
+            Cookie: `.ROBLOSECURITY=${cookieVal}`,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
+            Accept: 'application/json',
+            Origin: 'https://www.roblox.com',
+            Referer: 'https://www.roblox.com/'
+          },
+          timeout: timeoutMs
         },
-        timeout: 8000
-      },
-      (resp) => {
-        const chunks = [];
-        resp.on('data', (c) => chunks.push(c));
-        resp.on('end', async () => {
-          const text = Buffer.concat(chunks).toString('utf8');
-          if (resp.statusCode !== 200) {
-            return resolve({
-              ok: true,
-              valid: false,
-              status: resp.statusCode || 401,
-              error: resp.statusCode === 401 ? 'Roblox session expired or not logged in.' : `Roblox returned HTTP ${resp.statusCode}`
-            });
-          }
-          try {
-            const u = JSON.parse(text);
-            let avatarUrl = '';
-            try {
-              const av = await fetchJsonWithTimeout(
-                `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(u.id)}&size=150x150&format=Png&isCircular=true`,
-                4000
-              );
-              avatarUrl = (av && av.data && av.data[0] && av.data[0].imageUrl) || '';
-            } catch {}
-            resolve({
-              ok: true,
-              valid: true,
-              status: 200,
-              user: { id: u.id, name: u.name, displayName: u.displayName || u.name, avatarUrl }
-            });
-          } catch {
-            resolve({ ok: true, valid: false, status: 502, error: 'Invalid response from Roblox auth check.' });
-          }
-        });
-      }
-    );
-    req.on('timeout', () => {
-      req.destroy(new Error('timeout'));
-      resolve({ ok: false, valid: false, status: 504, error: 'Roblox authentication check timed out.' });
-    });
-    req.on('error', (err) => {
-      resolve({ ok: false, valid: false, status: 502, error: err.message || 'Network error verifying Roblox session.' });
-    });
+        (resp) => {
+          const chunks = [];
+          resp.on('data', (c) => chunks.push(c));
+          resp.on('end', () => {
+            const text = Buffer.concat(chunks).toString('utf8');
+            let json = null;
+            try { json = JSON.parse(text); } catch {}
+            finish({ status: resp.statusCode || 0, json, text });
+          });
+        }
+      );
+      req.on('timeout', () => { req.destroy(new Error('timeout')); finish({ status: 0, json: null, text: '', err: 'timeout' }); });
+      req.on('error', (err) => finish({ status: 0, json: null, text: '', err: (err && err.message) || 'network error' }));
+    } catch (err) {
+      finish({ status: 0, json: null, text: '', err: (err && err.message) || 'network error' });
+    }
   });
+}
+
+// A login is only thrown away when Roblox itself says the session is dead (401).
+// Anything else (a block, a rate limit, a timeout) is not proof the cookie is bad,
+// so the cookie is kept and the caller can decide to carry on with it.
+async function verifyRoblosecurityWithRoblox(cookieVal) {
+  const clean = typeof cookieVal === 'string' ? cookieVal.trim() : '';
+  if (!clean) return { ok: true, valid: false, status: 401, error: 'No .ROBLOSECURITY cookie detected.' };
+
+  const primary = await robloxGetJson('https://users.roblox.com/v1/users/authenticated', clean);
+  if (primary.status === 200 && primary.json && primary.json.id) {
+    const u = primary.json;
+    let avatarUrl = '';
+    try {
+      const av = await fetchJsonWithTimeout(
+        `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${encodeURIComponent(u.id)}&size=150x150&format=Png&isCircular=true`,
+        4000
+      );
+      avatarUrl = (av && av.data && av.data[0] && av.data[0].imageUrl) || '';
+    } catch {}
+    return { ok: true, valid: true, status: 200, user: { id: u.id, name: u.name, displayName: u.displayName || u.name, avatarUrl } };
+  }
+  if (primary.status === 401) {
+    return { ok: true, valid: false, status: 401, error: 'Roblox session expired or not logged in.' };
+  }
+
+  // Second opinion from the page endpoint the Roblox site itself uses.
+  const mobile = await robloxGetJson('https://www.roblox.com/mobileapi/userinfo', clean);
+  const mUser = mobile.json && (mobile.json.Username || mobile.json.UserID) ? mobile.json : null;
+  if (mobile.status === 200 && mUser) {
+    return {
+      ok: true,
+      valid: true,
+      status: 200,
+      user: { id: mUser.UserID || 0, name: mUser.Username || '', displayName: mUser.DisplayName || mUser.Username || '', avatarUrl: '' }
+    };
+  }
+  if (mobile.status === 401) {
+    return { ok: true, valid: false, status: 401, error: 'Roblox session expired or not logged in.' };
+  }
+  const seen = primary.status || mobile.status || 0;
+  return {
+    ok: false,
+    valid: false,
+    unknown: true,
+    status: seen,
+    error: seen ? `Roblox did not answer the login check (HTTP ${seen}).` : 'Roblox could not be reached to check the login.'
+  };
 }
 
 // --- Roblox account sign-in (server-side auth.roblox.com dance) ---
@@ -2552,11 +2588,11 @@ async function robloxFinishLogin(resp, sessionUser) {
   }
   const clean = normalizeRoblosecurityInput(cookieVal) || cookieVal;
   const check = await verifyRoblosecurityWithRoblox(clean);
-  if (!check.valid) {
+  if (!check.valid && !check.unknown) {
     return { ok: false, error: check.error || 'Roblox rejected the new session.' };
   }
   setUserRoblosecurityCookie(sessionUser.username, clean);
-  return { ok: true, user: check.user };
+  return { ok: true, user: check.user || null };
 }
 
 async function robloxLoginWithCredentials(username, password) {
@@ -3325,18 +3361,39 @@ try { uv.bareClient = { fetch: astraBareFetch }; } catch {}
 
 let astraAdblockEnabled = true;
 let astraCapturedRoblosecurity = '';
-function findRoblosecurityInJarObj(obj) {
-  if (!obj) return '';
-  const list = Array.isArray(obj) ? obj : (typeof obj === 'object' ? Object.values(obj) : []);
-  for (const c of list) {
-    if (!c || typeof c !== 'object') continue;
-    const dom = String(c.domain || c.d || '').replace(/^\\./, '').toLowerCase();
-    const nm = c.name || c.n;
-    const val = c.value || c.v;
-    if (nm === '.ROBLOSECURITY' && typeof val === 'string' && val && (!dom || dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
-      return val;
+
+// Scramjet nests its jar by domain and path, and the version shipped here also
+// keeps a second copy on the fetch client. So walk whatever shape we get rather
+// than assuming a flat list.
+function findRoblosecurityInJarObj(obj, depth = 0) {
+  if (!obj || depth > 6) return '';
+  if (Array.isArray(obj)) {
+    for (const entry of obj) {
+      const hit = findRoblosecurityInJarObj(entry, depth + 1);
+      if (hit) return hit;
     }
+    return '';
   }
+  if (typeof obj !== 'object') return '';
+  const dom = String(obj.domain || obj.d || '').replace(/^\\./, '').toLowerCase();
+  const nm = obj.name || obj.n;
+  const val = obj.value || obj.v;
+  if (nm === '.ROBLOSECURITY' && typeof val === 'string' && val && (!dom || dom === 'roblox.com' || dom.endsWith('.roblox.com'))) {
+    return val;
+  }
+  for (const key of Object.keys(obj)) {
+    if (key === 'domain' || key === 'path') continue;
+    const hit = findRoblosecurityInJarObj(obj[key], depth + 1);
+    if (hit) return hit;
+  }
+  return '';
+}
+
+function astraJarDumpText(jar) {
+  if (!jar) return '';
+  try {
+    if (typeof jar.dump === 'function') return String(jar.dump() || '');
+  } catch {}
   return '';
 }
 function saveAstraRoblosecurityCookie(val) {
@@ -3378,13 +3435,26 @@ function readIdbSafe(dbName, fn) {
   });
 }
 async function readAstraRoblosecurityFromSwStores() {
+  // A cookie Roblox set on a login response lives in the fetch client's jar, not
+  // in the worker's own jar that the page messages write to. Check both, and only
+  // fall back to the saved copy if neither has one right now.
+  const jars = [];
+  try { if (scramjet && scramjet.client && scramjet.client.cookieStore) jars.push(scramjet.client.cookieStore); } catch {}
+  try { if (scramjet && scramjet.cookieStore) jars.push(scramjet.cookieStore); } catch {}
+  for (const jar of jars) {
+    try {
+      const dumpText = astraJarDumpText(jar);
+      if (dumpText) {
+        const hit = findRoblosecurityInJarObj(JSON.parse(dumpText || '{}'));
+        if (hit) { saveAstraRoblosecurityCookie(hit); return hit; }
+      }
+      if (jar.cookies) {
+        const hit = findRoblosecurityInJarObj(jar.cookies);
+        if (hit) { saveAstraRoblosecurityCookie(hit); return hit; }
+      }
+    } catch {}
+  }
   if (astraCapturedRoblosecurity) return astraCapturedRoblosecurity;
-  try {
-    if (scramjet && scramjet.cookieStore) {
-      const hit = findRoblosecurityInJarObj(scramjet.cookieStore.cookies || (typeof scramjet.cookieStore.dump === 'function' ? JSON.parse(scramjet.cookieStore.dump() || '{}') : null));
-      if (hit) return hit;
-    }
-  } catch {}
   const fromAstra = await readIdbSafe('$astra_rbx', (db, done) => {
     try {
       if (!db.objectStoreNames.contains('kv')) return done('');
@@ -4306,7 +4376,7 @@ const server = http.createServer(async (req, res) => {
     let verifyErr = '';
     if (sessionUser && candidate) {
       const check = await verifyRoblosecurityWithRoblox(candidate);
-      if (check.valid) {
+      if (check.valid || check.unknown) {
         setUserRoblosecurityCookie(sessionUser.username, candidate);
         verifiedUser = check.user || null;
       } else {
@@ -4816,13 +4886,14 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ok: true, hasCookie: false, signedIn: false, user: null, cookie: '' });
     }
     const check = await verifyRoblosecurityWithRoblox(saved);
+    const usable = !!(check.valid || check.unknown);
     return sendJson(res, 200, {
       ok: true,
       hasCookie: true,
-      signedIn: !!check.valid,
+      signedIn: usable,
       user: check.user || null,
-      cookie: check.valid ? saved : '',
-      error: check.valid ? '' : (check.error || 'Session not valid')
+      cookie: usable ? saved : '',
+      error: usable ? '' : (check.error || 'Session not valid')
     });
   }
 
@@ -4845,7 +4916,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
       const check = await verifyRoblosecurityWithRoblox(candidate);
-      if (!check.valid) {
+      if (!check.valid && !check.unknown) {
         return sendJson(res, 200, {
           ok: true,
           signedIn: false,
@@ -4858,8 +4929,9 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         signedIn: true,
         hasCookie: true,
+        unverified: !!check.unknown,
         cookie: candidate,
-        user: check.user
+        user: check.user || null
       });
     } catch (err) {
       return sendJson(res, 400, { ok: false, error: err.message || 'Invalid request' });

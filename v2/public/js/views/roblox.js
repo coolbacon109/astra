@@ -5,7 +5,7 @@
 // a puzzle), so nothing here can go stale. Astra then lifts the finished session
 // out of the proxy's cookie jar and hands it to the player.
 import { ICONS } from '/js/icons.js';
-import { syncRobloxSession, askSwForRobloxCookie, buildProxyUrl } from '/js/proxy-engine.js';
+import { syncRobloxSession, askSwForRobloxCookie, buildProxyUrl, ensureProxyRuntimeReady } from '/js/proxy-engine.js';
 
 const ROBLOX_LOGIN = 'https://www.roblox.com/login';
 
@@ -92,9 +92,9 @@ export async function mount(container, ctx) {
         <h1 class="rbx-title">Sign in to Roblox</h1>
         <p class="rbx-body">Use Roblox's own sign in below. Astra takes the finished login from there, so your password never passes through this page.</p>
         <div class="rbx-login-frame-wrap">
-          <iframe class="rbx-login-frame" id="rbxLoginFrame" src="${ctx.escapeHtml(loginSrc)}" title="Roblox sign in" allow="clipboard-write"></iframe>
+          <iframe class="rbx-login-frame" id="rbxLoginFrame" data-src="${ctx.escapeHtml(loginSrc)}" title="Roblox sign in" allow="clipboard-write"></iframe>
         </div>
-        <p class="rbx-note" id="rbxLoginHint">Waiting for Roblox to finish signing you in.</p>
+        <p class="rbx-note" id="rbxLoginHint">Getting the sign in ready.</p>
         <div class="rbx-row">
           <button type="button" class="rbx-cta" id="rbxLoginCheckBtn">I'm signed in</button>
           <button type="button" class="rbx-ghost" id="rbxHelpBtn">Sign-in help</button>
@@ -389,12 +389,31 @@ export async function mount(container, ctx) {
     const returnSignOutBtn = container.querySelector('#rbxReturnSignOutBtn');
     if (returnSignOutBtn) returnSignOutBtn.onclick = signOut;
 
-    // Sign in happens on Roblox's own page inside the wizard. This watches the
-    // proxy's cookie jar and moves on the moment Roblox drops a finished session
-    // in it, so the user never has to press anything.
+    // Sign in happens on Roblox's own page inside the wizard. Roblox can only keep
+    // a session if the proxy worker is the one loading the page, so the frame waits
+    // for the worker before it navigates. Then the watcher moves on by itself.
+    const loginFrame = container.querySelector('#rbxLoginFrame');
+    if (loginFrame) {
+      const target = loginFrame.dataset.src;
+      (async () => {
+        let ready = false;
+        try { ready = await ensureProxyRuntimeReady(); } catch {}
+        for (let i = 0; i < 24 && !navigator.serviceWorker.controller; i++) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        if (!document.body.contains(loginFrame) || state.step !== 2) return;
+        if (!ready || !navigator.serviceWorker.controller) {
+          setNote('The sign in could not start. Reload this page once and it will work.');
+          return;
+        }
+        loginFrame.src = target;
+        setNote('Waiting for Roblox to finish signing you in.');
+        startLoginWatch();
+      })();
+    }
+
     const checkBtn = container.querySelector('#rbxLoginCheckBtn');
     if (checkBtn) {
-      startLoginWatch();
       checkBtn.onclick = async () => {
         checkBtn.disabled = true;
         checkBtn.textContent = 'Checking...';

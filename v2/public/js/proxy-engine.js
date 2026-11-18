@@ -313,14 +313,40 @@ let rbxJarCookie = ''; // cookie value last written into the local player jar
 
 export function askSwForRobloxCookie() {
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      if (value) return resolve(value);
+      // No worker answered, which is normal on the very first load. The worker
+      // also writes every session it catches into this origin's store, so read
+      // that instead of giving up.
+      readRobloxCookieFromPageIdb().then((stored) => resolve(stored || ''));
+    };
     try {
       const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
-      if (!ctrl || !ctrl.postMessage) return resolve('');
+      if (!ctrl || !ctrl.postMessage) return finish('');
       const ch = new MessageChannel();
-      ch.port1.onmessage = (e) => resolve(String((e && e.data && e.data.cookie) || ''));
-      ch.port1.onerror = () => resolve('');
+      ch.port1.onmessage = (e) => finish(String((e && e.data && e.data.cookie) || ''));
+      ch.port1.onerror = () => finish('');
       ctrl.postMessage({ type: 'astra-get-roblox-cookie' }, [ch.port2]);
-      setTimeout(() => resolve(''), 2500);
+      setTimeout(() => finish(''), 2500);
+    } catch { finish(''); }
+  });
+}
+
+function readRobloxCookieFromPageIdb() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open('$astra_rbx');
+      req.onerror = () => resolve('');
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('kv')) { db.close(); return resolve(''); }
+        const r = db.transaction('kv', 'readonly').objectStore('kv').get('cookie');
+        r.onsuccess = () => { const v = r.result; db.close(); resolve(typeof v === 'string' ? v : ''); };
+        r.onerror = () => { db.close(); resolve(''); };
+      };
     } catch { resolve(''); }
   });
 }
