@@ -2237,7 +2237,11 @@ function decompressBuffer(buf, encoding) {
   });
 }
 
-const USER_COOKIES_FILE = path.join(ROOT_DIR, 'user-cookies.json');
+const USER_COOKIES_FILE = process.env.ASTRA_VAULT_FILE
+  ? path.resolve(process.env.ASTRA_VAULT_FILE)
+  : (process.env.ASTRA_DATA_DIR
+      ? path.join(DATA_DIR, 'user-cookies.json')
+      : path.join(ROOT_DIR, 'user-cookies.json'));
 
 // ---- login vault ----
 // Saved logins live in one AES-256-GCM vault file. The key never sits next to

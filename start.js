@@ -312,9 +312,17 @@ server.on('upgrade', (req, clientSocket, head) => {
 /* ------------------------------------------------------------------ */
 
 function startChild(tag, cwd, port) {
+  /* on hosts with a mounted volume (ASTRA_DATA_DIR set), give each app its
+   * own subfolder so their stores never collide */
+  const env = Object.assign({}, process.env, { PORT: String(port), HOST: '127.0.0.1' });
+  if (process.env.ASTRA_DATA_DIR) {
+    const childData = path.join(process.env.ASTRA_DATA_DIR, tag);
+    try { fs.mkdirSync(childData, { recursive: true }); } catch (e) {}
+    env.ASTRA_DATA_DIR = childData;
+  }
   const child = spawn(process.execPath, ['--max-http-header-size=131072', 'server.js'], {
     cwd,
-    env: Object.assign({}, process.env, { PORT: String(port), HOST: '127.0.0.1' }),
+    env,
     stdio: ['ignore', 'pipe', 'pipe']
   });
   const pipe = (stream, out) => stream.on('data', (d) => {

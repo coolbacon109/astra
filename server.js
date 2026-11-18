@@ -2134,7 +2134,11 @@ function decompressBuffer(buf, encoding) {
   });
 }
 
-const USER_COOKIES_FILE = path.join(ROOT_DIR, 'user-cookies.json');
+const USER_COOKIES_FILE = process.env.ASTRA_VAULT_FILE
+  ? path.resolve(process.env.ASTRA_VAULT_FILE)
+  : (process.env.ASTRA_DATA_DIR
+      ? path.join(DATA_DIR, 'user-cookies.json')
+      : path.join(ROOT_DIR, 'user-cookies.json'));
 let userCookieJars = {};
 try {
   const rawJar = JSON.parse(fs.readFileSync(USER_COOKIES_FILE, 'utf8'));
