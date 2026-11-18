@@ -35,7 +35,7 @@ export function maybeShowWelcome(deps) {
       <h1 id="welcomeTitle">${name ? `Hello ${esc(name)}, welcome to astra-v2!` : 'Welcome to astra-v2!'}</h1>
       <p class="welcome-sub">Here's what's new:</p>
       <ul class="welcome-points">
-        <li>a fresh cherry pink look, and any theme you like in settings</li>
+        <li>fresh new look, with customizable wallpapers in settings</li>
         <li>roblox works right in your browser, sign in with your email code</li>
         <li>music keeps playing while you switch tabs</li>
         <li>games, anime, chat and more, all in one place</li>

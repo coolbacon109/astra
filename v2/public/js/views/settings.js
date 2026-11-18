@@ -4,6 +4,7 @@ import {
   restoreProxyCookiesFromAccount, scheduleProxyCookieUpload
 } from '/js/proxy-engine.js';
 import { getCloak, setCloak } from '/js/cloak.js';
+import { guardOn, setGuard } from '/js/guard.js';
 
 const THEMES = [
   { id: 'rose', name: 'Cherri', color: '#ff6b8b' },
@@ -22,6 +23,7 @@ const WALLPAPERS = [
   { id: 'saturn-cosmos', label: 'Saturn Cosmos' },
   { id: 'milky-way', label: 'Milky Way' },
   { id: 'achromaon', label: 'ACH Campus' },
+  { id: 'achromaon-hero', label: 'ACH Hero' },
   { id: 'backrooms', label: 'Backrooms (video)' },
   { id: 'electric-space', label: 'Electric Space (video)' },
   { id: 'bw-topo', label: 'BW Topo (video)' }
@@ -38,6 +40,7 @@ export async function mount(container, ctx) {
   function render() {
     const cfg = ctx.appState.serverConfig || {};
     const cloak = getCloak();
+    const guard = guardOn();
     container.innerHTML = `
       <div class="page-wrap">
         <div class="page-header">
@@ -162,6 +165,14 @@ export async function mount(container, ctx) {
                   <input class="field-input" id="customUaInput" placeholder="Or type your own device string..." value="${ctx.escapeHtml(ctx.proxyPrefs.customUa || '')}" />
                 </div>
               </div>
+              <div class="surface-card">
+                <div style="font-size:15px;font-weight:700;color:var(--bright-text);">Page guard</div>
+                <div class="page-sub">Stops the shortcuts that open the developer tools or the page source, stops the right click menu, and covers the page with the cloak if the tools are opened anyway.</div>
+                <div class="seg-row">
+                  <button type="button" class="seg-btn ${guard ? 'active' : ''}" data-guard-on="1">On</button>
+                  <button type="button" class="seg-btn ${!guard ? 'active' : ''}" data-guard-on="0">Off</button>
+                </div>
+              </div>
             ` : ''}
 
             ${activeSection === 'cloak' ? `
@@ -239,6 +250,14 @@ export async function mount(container, ctx) {
         const on = b.dataset.shieldOn === '1';
         setCloak({ shield: on });
         ctx.showToast(on ? 'Covers the page when you click away' : 'Cover off');
+        render();
+      };
+    });
+    container.querySelectorAll('[data-guard-on]').forEach((b) => {
+      b.onclick = () => {
+        const on = b.dataset.guardOn === '1';
+        setGuard(on);
+        ctx.showToast(on ? 'Page guard on' : 'Page guard off');
         render();
       };
     });

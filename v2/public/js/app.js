@@ -9,9 +9,11 @@ import {
   syncIdentityToSw, resolveEngineForUrl, decodeProxyClientUrl, syncRobloxSession
 } from '/js/proxy-engine.js';
 import { initTabCloak, applyCloak } from '/js/cloak.js';
+import { initGuard } from '/js/guard.js';
 
 // The tab reads as the saved cloak (Clever by default) from the first paint.
 initTabCloak();
+initGuard();
 
 export const appState = {
   user: null,
@@ -112,7 +114,13 @@ export function applyWallpaper(mode) {
     'saturn-cosmos': '/assets/themes/saturn-cosmos.jpg',
     'solar-eclipse': '/assets/themes/solar-eclipse.jpg',
     'milky-way': '/assets/themes/milky-way.jpg',
-    'achromaon': '/assets/wallpapers/achromaon-campus.jpg'
+    'achromaon': '/assets/wallpapers/achromaon-campus.jpg',
+    'achromaon-hero': '/assets/wallpapers/achromaon-hero.jpg'
+  };
+  /* The ACH hero uses the school district's own navy wash over the campus photo,
+   * so the photo reads as a backdrop rather than a bright picture. */
+  const imgTint = {
+    'achromaon-hero': 'linear-gradient(180deg, rgba(7, 24, 45, 0.75) 0%, rgba(7, 24, 45, 0.88) 100%)'
   };
   const vidMap = {
     'backrooms': '/assets/themes/backrooms.mp4',
@@ -132,7 +140,8 @@ export function applyWallpaper(mode) {
     }
   } else if (imgMap[appState.wallpaper]) {
     bgStage.classList.add('custom-image');
-    bgStage.style.backgroundImage = `linear-gradient(rgba(8,6,10,0.45), rgba(8,6,10,0.65)), url("${imgMap[appState.wallpaper]}")`;
+    const tint = imgTint[appState.wallpaper] || 'linear-gradient(rgba(8,6,10,0.45), rgba(8,6,10,0.65))';
+    bgStage.style.backgroundImage = `${tint}, url("${imgMap[appState.wallpaper]}")`;
   } else if (vidMap[appState.wallpaper] && bgVideo) {
     bgVideo.src = vidMap[appState.wallpaper];
     bgVideo.style.display = 'block';
