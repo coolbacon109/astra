@@ -27,6 +27,8 @@ const FRONT_PORT = Number(process.env.PORT || 6741);
 /* containers (Railway etc.) must be reachable on all interfaces; local runs set HOST explicitly */
 const HOST = process.env.HOST || '0.0.0.0';
 const V2_PORT = Number(process.env.V2_PORT || 6742);
+const V2_RETRY_MS = 250;
+const V2_RETRIES = 40;
 const LANDING_FILE = path.join(ROOT, 'index.html');
 const CLEVER_FILE = path.join(ROOT, 'clever-cloak', 'Clever.html');
 
@@ -101,7 +103,30 @@ function sendSimple(res, code, msg) {
   res.end(msg);
 }
 
-function proxyTo(req, res, targetPath) {
+/* Shown only if the app really is not up after the retries. It keeps the Clever
+ * tab and reloads itself, so a visitor sees a page loading rather than an error. */
+function sendStartingPage(res) {
+  if (res.headersSent) return res.end();
+  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+  res.end([
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<title>Clever</title>',
+    '<link rel="icon" href="/clever-cloak/Clever_files/favicon-32.png">',
+    '<meta http-equiv="refresh" content="3">',
+    '<style>html,body{height:100%;margin:0;background:#0b0b10;color:#e7e7ee;',
+    "font-family:system-ui,-apple-system,'Segoe UI',sans-serif;display:flex;",
+    'align-items:center;justify-content:center}.c{width:min(360px,84vw);text-align:center}',
+    '.b{height:3px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:14px}',
+    '.b i{display:block;height:100%;width:40%;border-radius:99px;background:#8ea0ff;',
+    'animation:s 1.1s ease-in-out infinite}@keyframes s{0%{transform:translateX(-60%)}',
+    '100%{transform:translateX(260%)}}p{color:#9a9aa8;font-size:13px;margin:10px 0 0}</style>',
+    '</head><body><div class="c"><div>Astra is starting</div>',
+    '<p>This page reloads itself in a second.</p><div class="b"><i></i></div></div></body></html>'
+  ].join(''));
+}
+
+function proxyTo(req, res, targetPath, attempt = 0) {
   const headers = Object.assign({}, req.headers);
   delete headers['accept-encoding'];
   const upstreamReq = http.request(
@@ -113,8 +138,22 @@ function proxyTo(req, res, targetPath) {
       up.pipe(res);
     }
   );
-  upstreamReq.on('error', (e) => {
-    sendSimple(res, 502, `Astra is starting up (${String((e && e.message) || e)})`);
+  upstreamReq.on('error', () => {
+    if (res.writableEnded) return;
+    /* The app is a child process. While it is booting, or right after a restart,
+     * a request can arrive before it is listening. Wait for it instead of
+     * answering with an error page. */
+    const retryable = req.method === 'GET' || req.method === 'HEAD';
+    if (retryable && attempt < V2_RETRIES) {
+      ensureV2();
+      setTimeout(() => proxyTo(req, res, targetPath, attempt + 1), V2_RETRY_MS);
+      return;
+    }
+    if (targetPath.startsWith('/api/')) {
+      if (!res.headersSent) res.writeHead(503, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end(JSON.stringify({ ok: false, error: 'Astra is starting, try again in a moment.' }));
+    }
+    sendStartingPage(res);
   });
   req.pipe(upstreamReq);
 }
@@ -216,10 +255,16 @@ server.on('upgrade', (req, clientSocket, head) => {
 /* Child                                                               */
 /* ------------------------------------------------------------------ */
 
+let v2Child = null;
+let v2Restarts = 0;
+let shuttingDown = false;
+
+/* The app binds every interface, so it is reachable the same way whether it
+ * runs here, in a container, or on a machine someone else connects to. */
 function startChild(tag, cwd, port) {
   /* on hosts with a mounted volume (ASTRA_DATA_DIR set), the child keeps
    * its stores in its own subfolder so they survive redeploys */
-  const env = Object.assign({}, process.env, { PORT: String(port), HOST: '127.0.0.1' });
+  const env = Object.assign({}, process.env, { PORT: String(port), HOST: '0.0.0.0' });
   if (process.env.ASTRA_DATA_DIR) {
     const childData = path.join(process.env.ASTRA_DATA_DIR, tag);
     try { fs.mkdirSync(childData, { recursive: true }); } catch (e) {}
@@ -240,16 +285,36 @@ function startChild(tag, cwd, port) {
   return child;
 }
 
-let v2Child = null;
+/* Start the app if it is not running, and bring it back if it stops. The front
+ * router keeps serving the page and its assets the whole time, so the site never
+ * falls back to a bare error while the app comes back up. */
+function ensureV2() {
+  if (v2Child || shuttingDown) return v2Child;
+  const startedAt = Date.now();
+  const child = startChild('v2', path.join(ROOT, 'v2'), V2_PORT);
+  v2Child = child;
+  child.on('exit', (code, sig) => {
+    if (v2Child === child) v2Child = null;
+    if (shuttingDown) return;
+    /* a child that stayed up for a while is not crash looping; start the
+     * backoff from the beginning again */
+    if (Date.now() - startedAt > 30000) v2Restarts = 0;
+    const delay = Math.round(Math.min(10000, 400 * Math.pow(1.7, v2Restarts++)));
+    console.log(`[v2] restarting in ${delay}ms (exit code=${code} sig=${sig})`);
+    setTimeout(ensureV2, delay);
+  });
+  return child;
+}
 
 function shutdown() {
+  shuttingDown = true;
   try { if (v2Child) v2Child.kill(); } catch (e) {}
   process.exit(0);
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-v2Child = startChild('v2', path.join(ROOT, 'v2'), V2_PORT);
+ensureV2();
 
 server.listen(FRONT_PORT, HOST, () => {
   console.log(`astra front router on http://${HOST}:${FRONT_PORT} (landing /, v2 :${V2_PORT})`);
