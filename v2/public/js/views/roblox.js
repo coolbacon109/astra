@@ -2,9 +2,12 @@
 // The sign-in frame is the real Roblox login hosted by a community relay,
 // so the challenge is clickable and the email one-time code works.
 // The frame loads immediately (saved server first), and a watchdog swaps
-// to the next server if the current one is dead.
+// to the next server if the current one is dead. Relays blocked on this
+// network (api.spf50krem.com is a common one) ride our own scramjet proxy
+// instead, which also keeps the sign-in box same-origin so the service
+// worker it needs is allowed to start.
 import { ICONS } from '/js/icons.js';
-import { syncRobloxSession } from '/js/proxy-engine.js';
+import { syncRobloxSession, buildProxyUrl, ensureProxyRuntimeReady } from '/js/proxy-engine.js';
 
 const STEP_NAMES = ['Welcome', 'Sign in', 'Play'];
 
@@ -49,15 +52,44 @@ function jarOrigin() {
   try { return jarHost ? new URL(jarHost).origin : ''; } catch { return ''; }
 }
 
-function alive(host, timeoutMs = 3500) {
-  return new Promise((resolve) => {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    fetch(host + '/_rbx/ping', { cache: 'no-store', credentials: 'omit', signal: ctrl.signal })
-      .then((r) => resolve(!!r.ok))
-      .catch(() => resolve(false))
-      .finally(() => clearTimeout(timer));
-  });
+// Relays can be unreachable straight out of this browser (api.spf50krem.com
+// is blocked on some school and work networks). Every host is therefore
+// reachable two ways: direct, or wrapped in our own scramjet proxy. alive()
+// tries direct first and only flips a host onto the proxy when the direct
+// route is dead here.
+const proxiedHosts = new Set();
+
+function jarFrameSrc(host, pathName) {
+  return proxiedHosts.has(host) ? buildProxyUrl(host + pathName) : host + pathName;
+}
+
+// Where relay frames post their messages: same-origin under the proxy, the
+// relay's own origin when loaded direct.
+function frameOriginFor(host) {
+  if (proxiedHosts.has(host)) return location.origin;
+  try { return new URL(host).origin; } catch { return ''; }
+}
+
+function pingOnce(url, timeoutMs) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  return fetch(url, { cache: 'no-store', credentials: 'omit', signal: ctrl.signal })
+    .then((r) => !!r.ok)
+    .catch(() => false)
+    .finally(() => clearTimeout(timer));
+}
+
+async function alive(host) {
+  if (await pingOnce(host + '/_rbx/ping', 3500)) {
+    proxiedHosts.delete(host);
+    return true;
+  }
+  try { await ensureProxyRuntimeReady(); } catch {}
+  if (await pingOnce(buildProxyUrl(host + '/_rbx/ping'), 6000)) {
+    proxiedHosts.add(host);
+    return true;
+  }
+  return false;
 }
 
 function savedHost() {
@@ -96,7 +128,7 @@ function jarRequest(payload, timeoutMs = 12000) {
   if (!jarBridgeFrame) {
     jarBridgeFrame = document.createElement('iframe');
     jarBridgeFrame.style.display = 'none';
-    jarBridgeFrame.src = origin + '/_jar';
+    jarBridgeFrame.src = jarFrameSrc(jarHost, '/_jar');
     jarBridgeReady = new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         jarBridgeFrame && jarBridgeFrame.remove();
@@ -105,7 +137,7 @@ function jarRequest(payload, timeoutMs = 12000) {
         reject(new Error('relay did not answer'));
       }, timeoutMs);
       window.addEventListener('message', function onReady(e) {
-        if (e.origin !== origin || !e.data || e.data.type !== 'jar:ready') return;
+        if ((e.origin !== origin && e.origin !== location.origin) || !e.data || e.data.type !== 'jar:ready') return;
         clearTimeout(timer);
         window.removeEventListener('message', onReady);
         resolve();
@@ -120,13 +152,14 @@ function jarRequest(payload, timeoutMs = 12000) {
       reject(new Error('relay was too slow'));
     }, timeoutMs);
     jarWaiters.set(id, { resolve, reject, timer });
-    jarBridgeFrame.contentWindow.postMessage({ ...payload, id }, origin);
+    jarBridgeFrame.contentWindow.postMessage({ ...payload, id }, frameOriginFor(jarHost));
   }));
 }
 
 window.addEventListener('message', (e) => {
   const w = jarWaiters.get(e.data && e.data.id);
-  if (e.origin === jarOrigin() && e.data && e.data.type === 'jar:reply' && w) {
+  const trusted = e.origin === jarOrigin() || e.origin === location.origin;
+  if (trusted && e.data && e.data.type === 'jar:reply' && w) {
     clearTimeout(w.timer);
     jarWaiters.delete(e.data.id);
     w.resolve(e.data);
@@ -137,7 +170,7 @@ window.addEventListener('message', (e) => {
 function watchSignin(onSignedIn, onSignedOut) {
   if (!jarOrigin()) return () => {};
   const handler = (e) => {
-    if (e.origin !== jarOrigin() || !e.data) return;
+    if ((e.origin !== jarOrigin() && e.origin !== location.origin) || !e.data) return;
     if (e.data.type === 'webblox:signed-in') onSignedIn && onSignedIn();
     if (e.data.type === 'webblox:signed-out') onSignedOut && onSignedOut();
   };
@@ -329,7 +362,7 @@ export async function mount(container, ctx) {
         <span class="rbx-app-title">Roblox</span>
         <button type="button" class="rbx-ghost" id="rbxAppExit">Exit</button>
       </div>
-      <iframe class="rbx-app-frame" src="${ctx.escapeHtml(jarHost + '/_rbx/app/')}" title="Roblox"></iframe>
+      <iframe class="rbx-app-frame" src="${ctx.escapeHtml(jarFrameSrc(jarHost, '/_rbx/app/'))}" title="Roblox"></iframe>
     `;
     ov.querySelector('#rbxAppExit').onclick = () => { ov.remove(); checkJar(true); };
     document.body.appendChild(ov);
@@ -379,7 +412,7 @@ export async function mount(container, ctx) {
   let frameTimer = null;
   function loadSignin() {
     if (frameTimer) { clearTimeout(frameTimer); frameTimer = null; }
-    state.signinSrc = jarHost ? jarHost + '/_rbx/signin' : '';
+    state.signinSrc = jarHost ? jarFrameSrc(jarHost, '/_rbx/signin') : '';
   }
 
   async function refreshServerStatus() {
@@ -475,6 +508,11 @@ export async function mount(container, ctx) {
         if (h && h !== jarHost) {
           jarHost = h;
           try { localStorage.setItem(JAR_KEY, h); } catch {}
+          loadSignin();
+          render();
+        } else if (h && proxiedHosts.has(h)) {
+          // Same host, but alive() flipped it onto our proxy while the direct
+          // frame was staring at a dead wall - reload the box through scramjet.
           loadSignin();
           render();
         }
@@ -701,6 +739,28 @@ export async function mount(container, ctx) {
 
   if (jarHost) {
     try { localStorage.setItem(JAR_KEY, jarHost); } catch {}
+    // Quietly sort the relay route out in the background: when the saved host
+    // is blocked on this network, alive() flips it onto our own proxy and the
+    // sign-in box reloads through scramjet instead of a dead frame.
+    (async () => {
+      try { await ensureProxyRuntimeReady(); } catch {}
+      if (!jarHost) return;
+      const wasProxied = proxiedHosts.has(jarHost);
+      const ok = await alive(jarHost);
+      if (ok && proxiedHosts.has(jarHost) === wasProxied) return;
+      jarBridgeFrame && jarBridgeFrame.remove();
+      jarBridgeFrame = null;
+      jarBridgeReady = null;
+      if (!ok) {
+        const h = await nextHost();
+        if (h && h !== jarHost) {
+          jarHost = h;
+          try { localStorage.setItem(JAR_KEY, h); } catch {}
+        }
+      }
+      loadSignin();
+      render();
+    })();
     checkJar(true);
     const unwatch = watchSignin(async () => {
       state.jarSignedIn = true;

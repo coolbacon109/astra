@@ -24,15 +24,25 @@ export async function mount(container, ctx) {
   const sub = container.querySelector('#gamesCountSub');
   const searchEl = container.querySelector('#gamesSearchInput');
 
+  // Game files and covers come straight off GitHub raw now. jsDelivr has
+  // blocked the gn-math account, so every cdn.jsdelivr.net URL used to die
+  // with a "user gn-math is blocked" page instead of a game.
+  const GN_HTML_BASE = 'https://raw.githubusercontent.com/gn-math/html/main';
+  const GN_COVER_BASE = 'https://raw.githubusercontent.com/gn-math/covers/main';
+
+  function gameUrl(g) {
+    let u = String(g.url || '');
+    if (!/^https?:\/\//i.test(u)) {
+      u = `${GN_HTML_BASE}/${String(u).replace(/^\{HTML_URL\}\/?/, '').replace(/^\/+/, '')}`;
+    } else {
+      u = u.replace(/\{HTML_URL\}/g, GN_HTML_BASE);
+    }
+    return u;
+  }
+
   function openGame(g) {
     if (!g || !g.url) return;
-    let u = g.url;
-    if (!/^https?:\/\//i.test(u)) {
-      u = `https://cdn.jsdelivr.net/gh/gn-math/html@main/${String(u).replace(/^\{HTML_URL\}\/?/, '').replace(/^\/+/, '')}`;
-    } else {
-      u = u.replace(/\{HTML_URL\}/g, 'https://cdn.jsdelivr.net/gh/gn-math/html@main');
-    }
-    ctx.openExternalUrl(u, { title: g.name || 'Game' });
+    ctx.openExternalUrl(gameUrl(g), { title: g.name || 'Game' });
   }
 
   function renderGames() {
@@ -40,7 +50,7 @@ export async function mount(container, ctx) {
     const list = q ? cachedGames.filter((g) => (g.name || '').toLowerCase().includes(q)) : cachedGames;
     sub.textContent = `${list.length} games ready`;
     grid.innerHTML = list.slice(0, 120).map((g, idx) => {
-      const thumb = String(g.cover || '').replace(/\{COVER_URL\}/g, 'https://cdn.jsdelivr.net/gh/gn-math/covers@main');
+      const thumb = String(g.cover || '').replace(/\{COVER_URL\}/g, GN_COVER_BASE);
       return `
         <div class="surface-card spot" style="cursor:pointer;" data-game-idx="${idx}">
           ${thumb ? `<img class="game-thumb" src="${ctx.escapeHtml(thumb)}" loading="lazy" alt="" />` : ''}

@@ -69,7 +69,6 @@ export function isIvyUrl(url) {
 // Per-URL hint WITHOUT mutating user's saved global engine preference!
 export function resolveEngineForUrl(url, explicitOverride = null) {
   if (explicitOverride === 'scramjet' || explicitOverride === 'ultraviolet') return explicitOverride;
-  if (isTikTokUrl(url)) return 'ultraviolet';
   if (isIvyUrl(url)) return 'scramjet';
   return proxyPrefs.engine === 'ultraviolet' ? 'ultraviolet' : 'scramjet';
 }

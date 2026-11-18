@@ -89,7 +89,6 @@ function writeJsonStoreAtomic(filePath, data) {
 const EPOXY_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'epoxy-transport', 'dist');
 const LIBCURL_PATH = path.join(ROOT_DIR, 'node_modules', '@mercuryworkshop', 'libcurl-transport', 'dist');
 const SERVER_START_MS = Date.now();
-const SERVER_BOOT_ID = String(Math.round((Date.now() - os.uptime() * 1000) / 300000));
 const AUTH_FILE = migrateLegacyStoreFile('auth-store.json');
 const CONFIG_FILE = migrateLegacyStoreFile('astra-server-config.json');
 const CHAT_FILE = migrateLegacyStoreFile('chat-messages.json');
@@ -1018,7 +1017,7 @@ function shouldShowUserTour(record) {
 
 function signSessionToken(username) {
   const payload = Buffer.from(
-    JSON.stringify({ u: username, boot: SERVER_BOOT_ID, exp: Date.now() + 1000 * 60 * 60 * 24 * 7 })
+    JSON.stringify({ u: username, exp: Date.now() + 1000 * 60 * 60 * 24 * 7 })
   ).toString('base64url');
   const sig = crypto.createHmac('sha256', serverConfig.sessionSecret).update(payload).digest('base64url');
   return `${payload}.${sig}`;
@@ -1050,7 +1049,7 @@ function getSessionUser(req) {
     const b = Buffer.from(expectedSig);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (!data || !data.u || data.boot !== SERVER_BOOT_ID || (data.exp && Date.now() > data.exp)) return null;
+    if (!data || !data.u || (data.exp && Date.now() > data.exp)) return null;
     return authStore.users[String(data.u).toLowerCase()] || null;
   } catch {
     return null;
@@ -7110,9 +7109,7 @@ const server = http.createServer(async (req, res) => {
     }
     const mirrors = [
       'https://raw.githubusercontent.com/gn-math/assets/main/zones.json',
-      'https://raw.githack.com/gn-math/assets/main/zones.json',
-      'https://cdn.jsdelivr.net/gh/gn-math/assets@latest/zones.json',
-      'https://gn-math.dev/zones.json'
+      'https://raw.githack.com/gn-math/assets/main/zones.json'
     ];
     for (const mirror of mirrors) {
       try {
