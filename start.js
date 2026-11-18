@@ -2,13 +2,16 @@
 /*
  * Astra front router (V2 only).
  *
- * The landing at "/" opens straight into Astra, which is one app now.
+ * The front door is the saved Clever page, so the site reads as a school page
+ * to whoever looks at it first. Astra's own landing sits behind it at /astra,
+ * and that landing opens straight into the app, which is one thing now.
  * V2 (v2/server.js) runs as a child process on an internal port and is
  * never modified here - requests pass straight through.
  *
- *   /                 landing (index.html)
- *   /clever           the saved Clever page; pressing "Help" comes back here
+ *   /                 the saved Clever page
+ *   /clever           same page (older links still point here)
  *   /clever-cloak/*   Clever page assets
+ *   /astra            Astra's landing, "Help" on the Clever page comes back here
  *   /v1, /v1/*        retired: 302 to /v2
  *   everything else   V2 (app routes, api, service worker, wisp upgrades)
  */
@@ -37,7 +40,7 @@ const CLEVER_HOOK = [
   '<script>(function(){',
   '  function goHome(e){',
   '    if (e) { e.preventDefault(); e.stopPropagation(); }',
-  "    try { window.location.href = '/'; } catch (err) {}",
+  "    try { window.location.href = '/astra'; } catch (err) {}",
   '  }',
   "  document.addEventListener('click', function(e){",
   '    var t = e.target;',
@@ -135,23 +138,28 @@ const server = http.createServer((req, res) => {
     return res.end('astra front ok');
   }
 
-  /* landing */
-  if (p === '/' || p === '/index.html') {
-    return fs.readFile(LANDING_FILE, (e, buf) => {
-      if (e) return sendSimple(res, 500, 'landing page missing');
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
-      res.end(buf);
-    });
-  }
-
-  /* the Clever page: /clever shows it, "Help" returns to the landing */
-  if (p === '/clever') {
+  /* the front door: the saved Clever page, served at the root so the site
+   * reads as a school page before anything else. "Help" opens the landing. */
+  if (p === '/' || p === '/index.html' || p === '/clever' || p === '/clever/') {
     try {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       return res.end(cleverHtml());
     } catch (e) {
       return sendSimple(res, 500, 'clever page missing');
     }
+  }
+
+  /* the landing behind the front door */
+  if (p === '/astra' || p === '/astra/' || p === '/home') {
+    if (p !== '/astra') {
+      res.writeHead(302, { Location: '/astra' });
+      return res.end();
+    }
+    return fs.readFile(LANDING_FILE, (e, buf) => {
+      if (e) return sendSimple(res, 500, 'landing page missing');
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      res.end(buf);
+    });
   }
 
   /* Clever page assets */

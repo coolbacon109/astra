@@ -309,6 +309,7 @@ export function scheduleProxyCookieUpload() {
 let rbxSyncLastTs = 0;
 let rbxSyncedToServer = ''; // cookie value last submitted to /api/roblox/verify
 let rbxInjectedCookie = ''; // cookie value last checked against the server jar
+let rbxJarCookie = ''; // cookie value last written into the local player jar
 
 function askSwForRobloxCookie() {
   return new Promise((resolve) => {
@@ -359,31 +360,36 @@ export async function syncRobloxSession({ force = false, showToast = null } = {}
       } catch {}
     }
 
-    // 2) The server jar has a valid session (signed in here or on another device)
-    //    that this browser's proxy store doesn't → inject it so roblox.com opens
-    //    already logged in. Checked once per session unless the SW side changes.
-    if (rbxInjectedCookie === '' || (swCookie && swCookie !== rbxInjectedCookie)) {
+    // 2) Whatever login Astra has saved for this account (signed in here, or on
+    //    another device). One read per sync; both stores below are fed from it.
+    let serverCookie = '';
+    try {
+      const j = await fetch('/api/roblox/status', { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      serverCookie = (j && j.cookie) || '';
+    } catch {}
+
+    // 2a) Put it into the proxy store too, so roblox.com opens already logged in.
+    //     Skipped once this browser already has a session unless that one changes.
+    if (serverCookie && serverCookie !== rbxInjectedCookie) {
+      rbxInjectedCookie = serverCookie;
+      if (serverCookie !== swCookie) injectRobloxCookieIntoScramjet(serverCookie);
+    }
+
+    // 2b) The player Astra hosts reads the login from this browser's own jar, not
+    //     from the proxy store. A login saved after the player last asked (signing
+    //     in on this page) has to reach the jar, so it is rewritten on every change.
+    if (serverCookie && serverCookie !== rbxJarCookie) {
       try {
-        const j = await fetch('/api/roblox/status', { credentials: 'same-origin' })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null);
-        const serverCookie = (j && j.cookie) || '';
-        if (serverCookie) {
-          rbxInjectedCookie = serverCookie;
-          if (serverCookie !== swCookie) injectRobloxCookieIntoScramjet(serverCookie);
-          // Keep the webblox bridge's localStorage jar in sync too
-          try {
-            const arr = [];
-            try { arr.push(...JSON.parse(localStorage.getItem('cobalt-cookies') || '[]')); } catch {}
-            const cleaned = arr.filter((c) => !(c && (c.n === '.ROBLOSECURITY' || c.name === '.ROBLOSECURITY')));
-            for (const d of ['roblox.com', 'rbxcdn.com', 'robloxlabs.com']) {
-              cleaned.push({ n: '.ROBLOSECURITY', v: serverCookie, d, h: false, p: '/', s: true, o: true, e: 0, ss: 'none' });
-            }
-            localStorage.setItem('cobalt-cookies', JSON.stringify(cleaned));
-          } catch {}
-        } else {
-          rbxInjectedCookie = swCookie || 'none'; // nothing valid server-side; don't re-check this session
+        const arr = [];
+        try { arr.push(...JSON.parse(localStorage.getItem('cobalt-cookies') || '[]')); } catch {}
+        const cleaned = arr.filter((c) => !(c && (c.n === '.ROBLOSECURITY' || c.name === '.ROBLOSECURITY')));
+        for (const d of ['roblox.com', 'rbxcdn.com', 'robloxlabs.com']) {
+          cleaned.push({ n: '.ROBLOSECURITY', v: serverCookie, d, h: false, p: '/', s: true, o: true, e: 0, ss: 'none' });
         }
+        localStorage.setItem('cobalt-cookies', JSON.stringify(cleaned));
+        rbxJarCookie = serverCookie;
       } catch {}
     }
   } catch {}
