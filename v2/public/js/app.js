@@ -114,25 +114,12 @@ export function applyWallpaper(mode) {
     'black-hole': '/assets/themes/black-hole.jpg',
     'saturn-cosmos': '/assets/themes/saturn-cosmos.jpg',
     'solar-eclipse': '/assets/themes/solar-eclipse.jpg',
-    'milky-way': '/assets/themes/milky-way.jpg',
-    'achromaon': '/assets/wallpapers/achromaon-campus.jpg',
-    'achromaon-hero': '/assets/wallpapers/achromaon-hero.jpg'
-  };
-  /* The ACH hero uses the school district's own navy wash over the campus photo,
-   * so the photo reads as a backdrop rather than a bright picture. */
-  const imgTint = {
-    'achromaon-hero': 'linear-gradient(180deg, rgba(7, 24, 45, 0.75) 0%, rgba(7, 24, 45, 0.88) 100%)'
+    'milky-way': '/assets/themes/milky-way.jpg'
   };
   const vidMap = {
     'backrooms': '/assets/themes/backrooms.mp4',
     'electric-space': '/assets/themes/electric-space.mp4',
-    'bw-topo': '/assets/themes/bw-topo-lines.mp4',
-    'achromaon-bg': '/assets/themes/achromaon-bg.mp4'
-  };
-  /* The ACH clip is mostly dark with a warm glow, so it needs more of itself on
-   * screen than the brighter loops do. */
-  const vidOpacity = {
-    'achromaon-bg': '0.62'
+    'bw-topo': '/assets/themes/bw-topo-lines.mp4'
   };
   if (appState.wallpaper === 'yt-video') {
     const vid = appState.wallpaperVideo;
@@ -147,13 +134,15 @@ export function applyWallpaper(mode) {
     }
   } else if (imgMap[appState.wallpaper]) {
     bgStage.classList.add('custom-image');
-    const tint = imgTint[appState.wallpaper] || 'linear-gradient(rgba(8,6,10,0.45), rgba(8,6,10,0.65))';
-    bgStage.style.backgroundImage = `${tint}, url("${imgMap[appState.wallpaper]}")`;
+    bgStage.style.backgroundImage = `linear-gradient(rgba(8,6,10,0.45), rgba(8,6,10,0.65)), url("${imgMap[appState.wallpaper]}")`;
   } else if (vidMap[appState.wallpaper] && bgVideo) {
     bgVideo.src = vidMap[appState.wallpaper];
-    bgVideo.style.opacity = vidOpacity[appState.wallpaper] || '';
     bgVideo.style.display = 'block';
     bgVideo.play().catch(() => {});
+  } else if (appState.wallpaper !== 'dot-grid' && appState.wallpaper !== 'yt-video') {
+    /* A saved wallpaper that is no longer shipped falls back to the default
+     * instead of leaving the page with no active choice. */
+    appState.wallpaper = 'dot-grid';
   }
 }
 

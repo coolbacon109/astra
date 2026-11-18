@@ -22,9 +22,6 @@ const WALLPAPERS = [
   { id: 'solar-eclipse', label: 'Solar Eclipse' },
   { id: 'saturn-cosmos', label: 'Saturn Cosmos' },
   { id: 'milky-way', label: 'Milky Way' },
-  { id: 'achromaon', label: 'ACH Campus' },
-  { id: 'achromaon-hero', label: 'ACH Hero' },
-  { id: 'achromaon-bg', label: 'ACH Background (video)' },
   { id: 'backrooms', label: 'Backrooms (video)' },
   { id: 'electric-space', label: 'Electric Space (video)' },
   { id: 'bw-topo', label: 'BW Topo (video)' }
