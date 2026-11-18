@@ -182,6 +182,14 @@ export async function mount(container, ctx) {
                 </div>
               </div>
               <div class="surface-card">
+                <div style="font-size:15px;font-weight:700;color:var(--bright-text);">When you click away</div>
+                <div class="page-sub">Click another window and the whole page turns into Clever. The first click back in returns you to the app.</div>
+                <div class="seg-row">
+                  <button type="button" class="seg-btn ${cloak.shield ? 'active' : ''}" data-shield-on="1">On</button>
+                  <button type="button" class="seg-btn ${!cloak.shield ? 'active' : ''}" data-shield-on="0">Off</button>
+                </div>
+              </div>
+              <div class="surface-card">
                 <div style="font-size:15px;font-weight:700;color:var(--bright-text);">Open a link cloaked</div>
                 <div class="page-sub">Paste any link. It opens in Astra with the tab above, not the site's own name.</div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
@@ -223,6 +231,14 @@ export async function mount(container, ctx) {
         const on = b.dataset.cloakOn === '1';
         setCloak({ on });
         ctx.showToast(on ? 'Tab cloak on' : 'Tab cloak off');
+        render();
+      };
+    });
+    container.querySelectorAll('[data-shield-on]').forEach((b) => {
+      b.onclick = () => {
+        const on = b.dataset.shieldOn === '1';
+        setCloak({ shield: on });
+        ctx.showToast(on ? 'Covers the page when you click away' : 'Cover off');
         render();
       };
     });
